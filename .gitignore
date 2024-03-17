@@ -5,6 +5,10 @@
 /Packaged/
 /Saved/
 
+# Ignore Blender files
+*.blend
+*.blend1
+
 # Ignore Plugins build and temp folders
 /Plugins/**/Binaries
 /Plugins/**/Intermediate
