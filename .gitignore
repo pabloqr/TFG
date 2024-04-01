@@ -39,3 +39,10 @@ Session.vim
 # Visual Studio
 .vs
 .vscode
+TFG.code-workspace
+
+# Rider
+.idea
+.ignore
+CMakeLists.txt
+cmake-build-debug
