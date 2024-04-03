@@ -7,7 +7,7 @@
 #include "Tile.generated.h"
 
 UENUM()
-enum class ETileType
+enum class ETileType : uint8
 {
 	None,
 	Plains,

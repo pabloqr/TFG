@@ -6,7 +6,19 @@
 #include "GameFramework/Actor.h"
 #include "TileMap.generated.h"
 
+enum class ETileType;
 class ATile;
+
+struct FSTileProbability
+{
+	float PlainsProbability = 0.f;
+	float HillsProbability = 0.f;
+	float ForestProbability = 0.f;
+	float SnowProbability = 0.f;
+	float IceProbability = 0.f;
+	float MountainsProbability = 0.f;
+	float WaterProbability = 0.f;
+};
 
 UCLASS()
 class TFG_API ATileMap : public AActor
@@ -53,6 +65,8 @@ public:
 private:
 	int32 GetPositionInArray(const int32 Row, const int32 Col) const;
 	int32 GetPositionInArray(const FIntPoint& Pos) const;
+
+	TSubclassOf<ATile> GenerateTileType(int32 Row, int32 Col, TArray<FSTileProbability> &Probabilities);
 
 protected:
 	// Called when the game starts or when spawned
