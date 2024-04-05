@@ -6,8 +6,25 @@
 #include "GameFramework/Actor.h"
 #include "TileMap.generated.h"
 
-enum class ETileType;
+enum class ETileType : uint8;
 class ATile;
+
+UENUM(BlueprintType)
+enum class EMapTemperature : uint8
+{
+	Desert = 0 UMETA(DisplayName="Desert"),
+	Hot = 1 UMETA(DisplayName="Hot"),
+	Temperate = 2 UMETA(DisplayName="Temperate"),
+	Cold = 3 UMETA(DisplayName="Cold"),
+};
+
+UENUM(BlueprintType)
+enum class EMapSeaLevel : uint8
+{
+	Arid = 0 UMETA(DisplayName="Arid"),
+	Standard = 1 UMETA(DisplayName="Standard"),
+	Wet = 2 UMETA(DisplayName="Wet"),
+};
 
 struct FSTileProbability
 {
@@ -18,6 +35,8 @@ struct FSTileProbability
 	float IceProbability = 0.f;
 	float MountainsProbability = 0.f;
 	float WaterProbability = 0.f;
+	
+	int Error = 0;
 };
 
 UCLASS()
@@ -29,9 +48,9 @@ protected:
 	TArray<ATile*> Tiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
-	int32 Width;
+	int32 Rows;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
-	int32 Height;
+	int32 Cols;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float RowOffset;
@@ -40,23 +59,32 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float VerticalOffset;
 
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> PlainsTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> HillsTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> ForestTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> SnowTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> IceTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> MountainsTile;
-	UPROPERTY(EditAnywhere, Category="Map|Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
 	TSubclassOf<ATile> WaterTile;
 
+	UPROPERTY(VisibleAnywhere, Category="Map|Parameters")
+	float WaterTileChance = 0.4f;
+	float WaterProbabilityModifier;
+	
 	UPROPERTY(EditAnywhere, Category="Map|Parameters")
-	float WaterTileChance = 0.3f;
+	EMapTemperature MapTemperature;
+	UPROPERTY(EditAnywhere, Category="Map|Parameters")
+	EMapSeaLevel MapSeaLevel;
+
+	int32 NumIceRows;
+	int32 NumSnowRows;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -66,7 +94,16 @@ private:
 	int32 GetPositionInArray(const int32 Row, const int32 Col) const;
 	int32 GetPositionInArray(const FIntPoint& Pos) const;
 
-	TSubclassOf<ATile> GenerateTileType(int32 Row, int32 Col, TArray<FSTileProbability> &Probabilities);
+	FIntPoint GetCoordsInMap(const int32 Pos) const;
+	int32 GetRowInMap(const int32 Pos) const;
+	int32 GetColInMap(const int32 Pos) const;
+
+	float ProbabilityOfIce(const int32 Pos, int32 &IceRow) const;
+
+	void UpdateProbability(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const;
+	void UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const;
+
+	TSubclassOf<ATile> GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability> &Probabilities) const;
 
 protected:
 	// Called when the game starts or when spawned

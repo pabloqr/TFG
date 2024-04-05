@@ -6,18 +6,18 @@
 #include "GameFramework/Actor.h"
 #include "Tile.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class ETileType : uint8
 {
-	None,
-	Plains,
-	Hills,
-	Forest,
-	Snow,
-	Ice,
-	Mountains,
-	Water,
-	Max UMETA(Hidden)
+	None = 0 UMETA(DisplayName="None"),
+	Plains = 1 UMETA(DisplayName="PLains"),
+	Hills = 2 UMETA(DisplayName="Hills"),
+	Forest = 3 UMETA(DisplayName="Forest"),
+	Snow = 4 UMETA(DisplayName="Snow"),
+	Ice = 5 UMETA(DisplayName="Ice"),
+	Mountains = 6 UMETA(DisplayName="Mountains"),
+	Water = 7 UMETA(DisplayName="Water"),
+	Max = 255 UMETA(Hidden)
 };
 
 UCLASS()
@@ -30,7 +30,7 @@ protected:
 	FIntPoint MapPosition;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tile")
 	ETileType TileType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
