@@ -13,11 +13,11 @@ ATileMap::ATileMap()
 //--------------------------------------------------------------------------------------------------------------------//
 
 /**
- * @brief Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en un Array2D
+ * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
  * 
  * @param Row Indice de la fila
  * @param Col Indice de la columna
- * @return Posicion en el Array2D
+ * @return Posicion en el Array1D
  */
 int32 ATileMap::GetPositionInArray(const int32 Row, const int32 Col) const
 {
@@ -25,26 +25,32 @@ int32 ATileMap::GetPositionInArray(const int32 Row, const int32 Col) const
 }
 
 /**
- * @brief Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en un Array2D
+ * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
  * 
- * @param Pos Pareja de valores con las coordenadas de la fila y la columna
- * @return Posicion en el Array2D
+ * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ * @return Posicion en el Array1D
  */
 int32 ATileMap::GetPositionInArray(const FIntPoint& Pos) const
 {
 	return Pos.X * Cols + Pos.Y;
 }
 
+/**
+ * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
+ * 
+ * @param Pos Posicion en el Array1D
+ * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ */
 FIntPoint ATileMap::GetCoordsInMap(const int32 Pos) const
 {
 	return FIntPoint(GetRowInMap(Pos), GetColInMap(Pos));
 }
 
 /**
- * @brief Metodo privado que obtiene la coordenada de la fila en el Array2D
+ * Metodo privado que obtiene la coordenada de la fila en el Array2D
  * 
  * @param Pos Posicion en el Array1D
- * @return Posicion en el Array2D
+ * @return Valor de la fila en el Array2D
  */
 int32 ATileMap::GetRowInMap(const int32 Pos) const
 {
@@ -52,10 +58,10 @@ int32 ATileMap::GetRowInMap(const int32 Pos) const
 }
 
 /**
- * @brief Metodo privado que obtiene la coordenada de la columna en el Array2D
+ * Metodo privado que obtiene la coordenada de la columna en el Array2D
  * 
  * @param Pos Posicion en el Array1D
- * @return Posicion en el Array2D
+ * @return Valor de la columna en el Array2D
  */
 int32 ATileMap::GetColInMap(const int32 Pos) const
 {
@@ -63,7 +69,7 @@ int32 ATileMap::GetColInMap(const int32 Pos) const
 }
 
 /**
- * @brief Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
+ * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
  * en los polos
  * 
  * @param Pos Posicion en el Array1D
@@ -100,6 +106,15 @@ float ATileMap::ProbabilityOfIce(const int32 Pos, int32 &IceRow) const
 	return CurrentProbability;
 }
 
+/**
+ * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en las casillas
+ * circundantes a la actual
+ * 
+ * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ * @param TileType Tipo de casilla a modificar
+ * @param Probability Variacion en el valor de la probabilidad
+ * @param Probabilities Array de probabilidades
+ */
 void ATileMap::UpdateProbability(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	UpdateProbabilityAtPos(FIntPoint(Pos.X+1, Pos.Y), TileType, Probability, Probabilities);
@@ -108,10 +123,21 @@ void ATileMap::UpdateProbability(const FIntPoint& Pos, const ETileType TileType,
 	UpdateProbabilityAtPos(FIntPoint(Pos.X+1, Pos.Y+1), TileType, Probability, Probabilities);
 }
 
+/**
+ * Metodo privado que actualiza el valore de la probabilidad de aparicion de un tipo de casilla en una posicion
+ * concreta del Array2D
+ * 
+ * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ * @param TileType Tipo de casilla a modificar
+ * @param Probability Variacion en el valor de la probabilidad
+ * @param Probabilities Array de probabilidades
+ */
 void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const
 {
+	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
 	if (Pos.X-1 >= 0 && Pos.X+1 < Rows && Pos.Y+1 < Cols)
 	{
+		// Se obtiene la posicion en el Array1D y se actualiza segun el tipo de casilla a modificar
 		const int32 UpdatePos = GetPositionInArray(Pos);
 		switch (TileType)
 		{
@@ -128,7 +154,7 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType Tile
 }
 
 /**
- * @brief Metodo privado que calcula el tipo de casilla a generar en el mapa
+ * Metodo privado que calcula el tipo de casilla a generar en el mapa
  * 
  * @param Pos1D Posicion en el Array1D
  * @param Pos2D Coordenadas en el Array2D

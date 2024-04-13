@@ -29,15 +29,16 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile")
 	FIntPoint MapPosition;
 
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tile")
 	ETileType TileType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
 	UStaticMeshComponent *TileMesh;
 	
-public:	
-	// Sets default values for this actor's properties
+public:
+	/**
+	 * Constructor de la clase que inicializa los parametros del actor
+	 */
 	ATile();
 
 protected:
@@ -48,7 +49,17 @@ public:
 	// Called every frame
 	// virtual void Tick(float DeltaTime) override;
 
+	/**
+	 * Getter del atributo MapPosition
+	 * 
+	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 */
 	FIntPoint GetMapPosition() const;
 
+	/**
+	 * Setter del atributo MapPosition
+	 * 
+	 * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 */
 	void SetPosition(const FIntPoint& Position);
 };

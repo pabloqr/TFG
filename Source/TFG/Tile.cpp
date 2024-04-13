@@ -5,7 +5,9 @@
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 
-// Sets default values
+/**
+ * Constructor de la clase que inicializa los parametros del actor
+ */
 ATile::ATile()
 {
  	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
@@ -15,11 +17,21 @@ ATile::ATile()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+/**
+ * Getter del atributo MapPosition
+ * 
+ * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ */
 FIntPoint ATile::GetMapPosition() const
 {
 	return MapPosition;
 }
 
+/**
+ * Setter del atributo MapPosition
+ * 
+ * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+ */
 void ATile::SetPosition(const FIntPoint& Position)
 {
 	this->MapPosition = Position;
