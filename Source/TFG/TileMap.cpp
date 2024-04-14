@@ -3,11 +3,27 @@
 #include "TileMap.h"
 #include "Tile.h"
 
-// Sets default values
+/**
+ * Constructor de la clase que inicializa los parametros del actor
+ */
 ATileMap::ATileMap()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	// PrimaryActorTick.bCanEverTick = true;
+
+	Rows = 4;
+	Cols = 12;
+
+	RowOffset = 0.0;
+	HorizontalOffset = 0.0;
+	VerticalOffset = 0.0;
+
+	WaterProbabilityModifier = 0.0;
+	MapTemperature = EMapTemperature::Temperate;
+	MapSeaLevel = EMapSeaLevel::Standard;
+
+	NumIceRows = 0;
+	NumSnowRows = 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -161,14 +177,14 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType Tile
  * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
  * @return Tipo de casilla a generar
  */
-TSubclassOf<ATile> ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
+ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
 {
-	TSubclassOf<ATile> GeneratedTile;
+	ETileType GeneratedTile = ETileType::None;
 	if (Probabilities[Pos1D].IceProbability > 0.0)
 	{
 		if (FMath::RandRange(0.f, 1.f) <= Probabilities[Pos1D].IceProbability)
 		{
-			GeneratedTile = IceTile;
+			GeneratedTile = ETileType::Ice;
 			// UpdateProbability(Pos2D, ETileType::Snow, 0.05, Probabilities);
 		}
 		else
@@ -176,11 +192,11 @@ TSubclassOf<ATile> ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint
 			const float RandVal = FMath::RandRange(0.f, 1.f);
 			if (RandVal > Probabilities[Pos1D].WaterProbability-Probabilities[Pos1D].SnowProbability)
 			{
-				GeneratedTile = SnowTile;
+				GeneratedTile = ETileType::Snow;
 			}
 			else
 			{
-				GeneratedTile = WaterTile;
+				GeneratedTile = ETileType::Water;
 				UpdateProbability(Pos2D, ETileType::Hills, -0.1, Probabilities);
 				UpdateProbability(Pos2D, ETileType::Water, WaterProbabilityModifier, Probabilities);
 			}
@@ -188,7 +204,7 @@ TSubclassOf<ATile> ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint
 	}
 	else if (FMath::RandRange(0.f, 1.0f) <= Probabilities[Pos1D].WaterProbability)
 	{
-		GeneratedTile = WaterTile;
+		GeneratedTile = ETileType::Water;
 		UpdateProbability(Pos2D, ETileType::Mountains, -0.2, Probabilities);
 		UpdateProbability(Pos2D, ETileType::Water, WaterProbabilityModifier, Probabilities);
 	}
@@ -207,23 +223,23 @@ TSubclassOf<ATile> ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint
 		{
 			if (Pos2D.X < NumIceRows+NumSnowRows || (Pos2D.X >= Rows-NumIceRows-NumSnowRows && Pos2D.X <= Rows-NumIceRows))
 			{
-				GeneratedTile = SnowTile;
+				GeneratedTile = ETileType::Snow;
 			}
-			else GeneratedTile = PlainsTile;
+			else GeneratedTile = ETileType::Plains;
 		}
 
 		PrevAccumProbability = AccumProbability;
 		AccumProbability += Probabilities[Pos1D].HillsProbability;
 		if (PrevAccumProbability < RandVal && RandVal <= AccumProbability)
 		{
-			GeneratedTile = HillsTile;
+			GeneratedTile = ETileType::Hills;
 		}
 
 		PrevAccumProbability = AccumProbability;
 		AccumProbability += Probabilities[Pos1D].ForestProbability;
 		if (PrevAccumProbability < RandVal && RandVal <= AccumProbability)
 		{
-			GeneratedTile = ForestTile;
+			GeneratedTile = ETileType::Forest;
 			UpdateProbability(Pos2D, ETileType::Forest, 0.1, Probabilities);
 		}
 
@@ -231,7 +247,7 @@ TSubclassOf<ATile> ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint
 		AccumProbability += Probabilities[Pos1D].MountainsProbability;
 		if (PrevAccumProbability < RandVal && RandVal <= AccumProbability)
 		{
-			GeneratedTile = MountainsTile;
+			GeneratedTile = ETileType::Mountains;
 			UpdateProbability(Pos2D, ETileType::Mountains, 0.1, Probabilities);
 		}
 	}
@@ -246,12 +262,14 @@ void ATileMap::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
 	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 10.0));
 	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumIceRows - %d"), NumIceRows))
 	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumSnowRows - %d"), NumSnowRows))
 	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumColdRows - %d"), NumIceRows+NumSnowRows))
 
+	// Se establece el modificador de probabilidad de aparicion de agua en funcion del tipo de mapa
 	switch (MapSeaLevel)
 	{
 		case EMapSeaLevel::Arid: WaterProbabilityModifier = 0.1; break;
@@ -259,14 +277,17 @@ void ATileMap::BeginPlay()
 		case EMapSeaLevel::Wet: WaterProbabilityModifier = 0.17; break;
 	}
 	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("WaterProbabilityModifier - %f"), WaterProbabilityModifier))
-	
+
+	// Se declaran e inicializan los vectores necesarios para la generacion del mapa
 	const int32 Dimension = Rows*Cols;
 	TArray<FSTileProbability> Probabilities;
+	TArray<TSharedPtr<FJsonValue>> JsonData;
 	
 	Tiles.SetNumZeroed(Dimension);
 	Probabilities.SetNumZeroed(Dimension);
+	JsonData.SetNumZeroed(Dimension);
 
-	// UE_LOG(LogTemp, Log, TEXT("NumSteps %s"), *FString::Printf(TEXT("NumSteps - %d"), NumSteps))
+	// Se inicializa el array de probabilidaddes con los valores calculados o por defecto en funcion del tipo de casilla
 	for (int32 Pos = 0, IceRow = -1; Pos < Dimension; ++Pos)
 	{
 		Probabilities[Pos].IceProbability = ProbabilityOfIce(Pos, IceRow);
@@ -291,7 +312,10 @@ void ATileMap::BeginPlay()
 		}
 	}
 	*/
-	
+
+	// Se genera el mapa
+	// Se recorren primero las filas y, despues, las columnas de forma que se establece su posicion en el mapa,
+	// se calcula la nueva casilla a generar, se genera en el juego y se actualiza el array de casillas interno
 	for (int32 Row = 0; Row < Rows; ++Row)
 	{
 		for (int32 Col = 0; Col < Cols; ++Col)
@@ -300,7 +324,20 @@ void ATileMap::BeginPlay()
 			const float ColPos = Col % 2 == 0 ? Row * VerticalOffset : Row * VerticalOffset + RowOffset;
 
 			const int32 PositionInArray = GetPositionInArray(Row, Col);
-			const TSubclassOf<ATile> TileToSpawn = GenerateTileType(PositionInArray, FIntPoint(Row, Col), Probabilities);
+			const ETileType TileType = GenerateTileType(PositionInArray, FIntPoint(Row, Col), Probabilities);
+
+			TSubclassOf<ATile> TileToSpawn;
+			switch (TileType)
+			{
+				case ETileType::Plains: TileToSpawn = PlainsTile; break;
+				case ETileType::Hills: TileToSpawn = HillsTile; break;
+				case ETileType::Forest: TileToSpawn = ForestTile; break;
+				case ETileType::Snow: TileToSpawn = SnowTile; break;
+				case ETileType::Ice: TileToSpawn = IceTile; break;
+				case ETileType::Mountains: TileToSpawn = MountainsTile; break;
+				case ETileType::Water: TileToSpawn = WaterTile; break;
+				default: TileToSpawn = nullptr; break;
+			}
 
 			ATile *NewTile = GetWorld()->SpawnActor<ATile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator::ZeroRotator);
 			NewTile->SetPosition(FIntPoint(Row, Col));

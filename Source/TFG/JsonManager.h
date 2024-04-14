@@ -19,23 +19,6 @@ public:
 };
 
 /**
- * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
- */
-USTRUCT()
-struct FJsonMapDataEntry
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY()
-	int32 Row;
-	UPROPERTY()
-	int32 Col;
-	UPROPERTY()
-	int32 TileType;
-};
-
-/**
  * Clase para la gestion de archivos Json
  */
 UCLASS()

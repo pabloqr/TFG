@@ -9,6 +9,26 @@
 enum class ETileType : uint8;
 class ATile;
 
+/**
+ * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
+ */
+USTRUCT()
+struct FJsonMapDataEntry
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	int32 Row;
+	UPROPERTY()
+	int32 Col;
+	UPROPERTY()
+	int32 TileType;
+};
+
+/**
+ * Tipo enumerado para la clasificacion de mapas segun su temperatura
+ */
 UENUM(BlueprintType)
 enum class EMapTemperature : uint8
 {
@@ -18,6 +38,9 @@ enum class EMapTemperature : uint8
 	Cold = 3 UMETA(DisplayName="Cold"),
 };
 
+/**
+ * Tipo enumerado para la clasificacion de mapas segun su nivel del mar (cantidad de casillas de agua)
+ */
 UENUM(BlueprintType)
 enum class EMapSeaLevel : uint8
 {
@@ -26,8 +49,14 @@ enum class EMapSeaLevel : uint8
 	Wet = 2 UMETA(DisplayName="Wet"),
 };
 
+/**
+ * Estructura que almacena la probabilidad de aparicion de cada uno de los tipos de casillas
+ */
+USTRUCT()
 struct FSTileProbability
 {
+	GENERATED_BODY()
+	
 	float PlainsProbability = 0.f;
 	float HillsProbability = 0.f;
 	float ForestProbability = 0.f;
@@ -39,6 +68,9 @@ struct FSTileProbability
 	int Error = 0;
 };
 
+/**
+ * Clase para la gestion de un mapa de casillas hexagonales
+ */
 UCLASS()
 class TFG_API ATileMap : public AActor
 {
@@ -86,8 +118,10 @@ protected:
 	int32 NumIceRows;
 	int32 NumSnowRows;
 	
-public:	
-	// Sets default values for this actor's properties
+public:
+	/**
+	 * Constructor de la clase que inicializa los parametros del actor
+	 */
 	ATileMap();
 
 private:
@@ -168,7 +202,7 @@ private:
 	 * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
 	 * @return Tipo de casilla a generar
 	 */
-	TSubclassOf<ATile> GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability> &Probabilities) const;
+	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability> &Probabilities) const;
 
 protected:
 	// Called when the game starts or when spawned
