@@ -376,8 +376,8 @@ void ATileMap::BeginPlay()
 
 void ATileMap::MapToJson()
 {
-	TArray<FJsonMapDataEntry> StructArray;
-	StructArray.SetNumZeroed(Tiles.Num());
+	TArray<FMapDataForJson> JsonData;
+	JsonData.SetNumZeroed(Tiles.Num());
 
 	for (int32 i = 0; i < Tiles.Num(); ++i)
 	{
@@ -387,44 +387,22 @@ void ATileMap::MapToJson()
 		switch (Tile->GetTileType())
 		{
 			case ETileType::Plains: TileType = 0; break;
-			case ETileType::Hills: TileType = 0; break;
-			case ETileType::Forest: TileType = 0; break;
-			case ETileType::SnowPlains: TileType = 0; break;
-			case ETileType::SnowHills: TileType = 0; break;
-			case ETileType::Ice: TileType = 0; break;
-			case ETileType::Mountains: TileType = 0; break;
-			case ETileType::Water: TileType = 0; break;
+			case ETileType::Hills: TileType = 1; break;
+			case ETileType::Forest: TileType = 2; break;
+			case ETileType::SnowPlains: TileType = 3; break;
+			case ETileType::SnowHills: TileType = 4; break;
+			case ETileType::Ice: TileType = 5; break;
+			case ETileType::Mountains: TileType = 6; break;
+			case ETileType::Water: TileType = 7; break;
 			default: TileType = -1; break;
 		}
-		
-		FJsonMapDataEntry JsonEntry = FJsonMapDataEntry(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
-		StructArray.Add(JsonEntry);
-	}
 
-	FJsonMapData JsonData;
-	for (const FJsonMapDataEntry &Entry : StructArray)
-	{
-		const TSharedPtr<FJsonObject> JsonEntry = MakeShareable(new FJsonObject);
-		JsonEntry->SetNumberField("Row", Entry.Row);
-		JsonEntry->SetNumberField("Col", Entry.Col);
-		JsonEntry->SetNumberField("TileType", Entry.TileType);
-
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.Row - %d"), Entry.Row))
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.Col - %d"), Entry.Col))
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.TileType - %d"), Entry.TileType))
-
-		JsonData.Tiles.Add(MakeShareable(new FJsonValueObject(JsonEntry)));
-
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.Row - %f"), JsonEntry->GetNumberField("Row")))
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.Col - %f"), JsonEntry->GetNumberField("Col")))
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.TileType - %f"), JsonEntry->GetNumberField("TileType")))
+		JsonData[i] = FMapDataForJson(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
 	}
 
 	bool Success = true;
 	FString ResultMessage = "";
 	UJsonManager::MapStructToJson("C:/Users/Pablo/AppData/Local/Temp/Test.json", JsonData, Success, ResultMessage);
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Success - %hhd"), Success))
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("ResultMessage - %s"), *ResultMessage))
 }
 
 void ATileMap::JsonToMap()
@@ -435,6 +413,6 @@ void ATileMap::JsonToMap()
 // void ATileMap::Tick(float DeltaTime)
 // {
 //	Super::Tick(DeltaTime);
-
+//
 // }
 

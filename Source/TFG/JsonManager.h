@@ -7,15 +7,33 @@
 #include "JsonManager.generated.h"
 
 /**
- * Estructura que almacena la lista de casillas del mapa
+ * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
  */
 USTRUCT(BlueprintType, Category="FileManager|Json")
-struct FJsonMapData
+struct FMapDataForJson
 {
 	GENERATED_BODY()
 
-public:
-	TArray<TSharedPtr<FJsonValue>> Tiles;
+	UPROPERTY()
+	int32 Row;
+	UPROPERTY()
+	int32 Col;
+	UPROPERTY()
+	int32 TileType;
+
+	FMapDataForJson()
+	{
+		Row = -1;
+		Col = -1;
+		TileType = -1;
+	}
+
+	FMapDataForJson(const int32 Row, const int32 Col, const int32 TileType)
+	{
+		this->Row = Row;
+		this->Col = Col;
+		this->TileType = TileType;
+	}
 };
 
 /**
@@ -58,16 +76,16 @@ public:
 	 * @return Estructura que contiene la informacion del archivo Json
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static FJsonMapData JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
+	static TArray<FMapDataForJson> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo estatico que transforma la estructura con la informacion a almacenar en un JsonObject
 	 * 
 	 * @param JsonPath Ruta del archivo Json
-	 * @param JsonStructure Estructura que contiene la informacion del archivo Json
+	 * @param JsonData Lista que contiene la informacion del archivo Json
 	 * @param Success Resultado de la operacion
 	 * @param ResultMessage Informacion de la operacion
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static void MapStructToJson(FString JsonPath, const FJsonMapData& JsonStructure, bool& Success, FString& ResultMessage);
+	static void MapStructToJson(FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage);
 };

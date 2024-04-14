@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "JsonManager.h"
+
 #include "FileManager.h"
 #include "JsonObjectConverter.h"
 #include "Serialization/JsonSerializer.h"
@@ -73,20 +73,38 @@ void UJsonManager::WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& Js
  * @param ResultMessage Informacion de la operacion
  * @return Estructura que contiene la informacion del archivo Json
  */
-FJsonMapData UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
+TArray<FMapDataForJson> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
 {
+	TArray<FMapDataForJson> JsonData;
+	
 	// Se intenta crear un JsonObject de un archivo
-	TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonPath, Success, ResultMessage);
-	if (!Success) return FJsonMapData();
-
-	FJsonMapData JsonData;
-
+	const TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonPath, Success, ResultMessage);
+	if (!Success) return JsonData;
+	
 	// Se intenta convertir el JsonObject en la estructura creada
-	if (!FJsonObjectConverter::JsonObjectToUStruct<FJsonMapData>(JsonObject.ToSharedRef(), &JsonData))
+	const TArray<TSharedPtr<FJsonValue>>* JsonDataArray;
+	if (!JsonObject->TryGetArrayField(TEXT("TilesInfo"), JsonDataArray))
 	{
 		Success = false;
 		ResultMessage = FString::Printf(TEXT("(%s) ERROR: fallo al convertir el objeto Json a la estructura interna"), *JsonPath);
-		return FJsonMapData();
+		return JsonData;
+	}
+
+	for (int32 i = 0; i < JsonDataArray->Num(); ++i)
+	{
+		TSharedPtr<FJsonObject> JsonDataEntry = JsonDataArray->operator[](i)->AsObject();
+		if (!JsonDataEntry.IsValid())
+		{
+			UE_LOG(LogTemp, Error, TEXT("%s"), *FString::Printf(TEXT("(%s) [%d] ERROR: el elemento del array Json no es un objeto valido"), *JsonPath, i));
+			continue;
+		}
+
+		FMapDataForJson DataEntry;
+		DataEntry.Row = JsonDataEntry->GetIntegerField(TEXT("Row"));
+		DataEntry.Col = JsonDataEntry->GetIntegerField(TEXT("Column"));
+		DataEntry.TileType = JsonDataEntry->GetIntegerField(TEXT("TileType"));
+
+		JsonData[i] = DataEntry;
 	}
 
 	Success = true;
@@ -98,21 +116,28 @@ FJsonMapData UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success
  * Metodo estatico que transforma la estructura con la informacion a almacenar en un JsonObject
  * 
  * @param JsonPath Ruta del archivo Json
- * @param JsonStructure Estructura que contiene la informacion del archivo Json
+ * @param JsonData Lista que contiene la informacion del archivo Json
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::MapStructToJson(const FString JsonPath, const FJsonMapData& JsonStructure, bool& Success, FString& ResultMessage)
+void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage)
 {
-	// Se intenta convertir la estructura en el JsonObject
-	const TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(JsonStructure);
-	if (JsonObject == nullptr)
+	const TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
+
+	TArray<TSharedPtr<FJsonValue>> DataArray;
+	for (const FMapDataForJson Data : JsonData)
 	{
-		Success = false;
-		ResultMessage = FString::Printf(TEXT("(%s) ERROR: fallo al convertir la estructura interna al objeto Json"), *JsonPath);
-		return;
+		TSharedPtr<FJsonObject> DataJsonObject = MakeShareable(new FJsonObject);
+		DataJsonObject->SetNumberField(TEXT("Row"), Data.Row);
+		DataJsonObject->SetNumberField(TEXT("Column"), Data.Col);
+		DataJsonObject->SetNumberField(TEXT("TileType"), Data.TileType);
+
+		// Agregar el objeto JSON del elemento al array JSON
+		DataArray.Add(MakeShareable(new FJsonValueObject(DataJsonObject)));
 	}
 
+	JsonObject->SetArrayField(TEXT("TilesInfo"), DataArray);
+	
 	// Se intenta escribir los datos al archivo
 	WriteJson(JsonPath, JsonObject, Success, ResultMessage);
 }
