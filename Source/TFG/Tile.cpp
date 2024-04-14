@@ -28,6 +28,16 @@ FIntPoint ATile::GetMapPosition() const
 }
 
 /**
+ * Getter del atributo TileType
+ * 
+ * @return Tipo de casilla
+ */
+ETileType ATile::GetTileType() const
+{
+	return TileType;
+}
+
+/**
  * Setter del atributo MapPosition
  * 
  * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D

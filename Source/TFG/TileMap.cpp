@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "TileMap.h"
+
+#include "JsonManager.h"
 #include "Tile.h"
 
 /**
@@ -92,7 +94,7 @@ int32 ATileMap::GetColInMap(const int32 Pos) const
  * @param IceRow Indice dentro del numero de filas que pueden contener Hielo
  * @return Probabilidad de que la casilla en la posicion dada pueda contener Hielo
  */
-float ATileMap::ProbabilityOfIce(const int32 Pos, int32 &IceRow) const
+float ATileMap::ProbabilityOfIce(const int32 Pos, int32& IceRow) const
 {
 	float CurrentProbability = 0.8;
 	const int32 Row = GetRowInMap(Pos);
@@ -124,8 +126,15 @@ float ATileMap::ProbabilityOfIce(const int32 Pos, int32 &IceRow) const
 
 /**
  * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en las casillas
- * circundantes a la actual
- * 
+ * circundantes a la actual. Para ello, llama al metodo UpdateProbabilityAtPos para las casillas correspondientes
+ *
+ * Dado que la generacion de casillas se realiza de forma iterativa, no tiene sentido que se modifique la probabilidad
+ * para las casillas que ya han sido procesadas, por lo que tan solo se modificaran:
+ *		- La casilla en la misma fila y en la siguiente columna
+ *		- La casilla en la siguiente fila y en la columna anterior
+ *		- La casilla en la siguiente fila y en la misma columna
+ *		- La casilla en la siguiente fila y en la siguiente columna
+ *
  * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
  * @param TileType Tipo de casilla a modificar
  * @param Probability Variacion en el valor de la probabilidad
@@ -141,14 +150,14 @@ void ATileMap::UpdateProbability(const FIntPoint& Pos, const ETileType TileType,
 
 /**
  * Metodo privado que actualiza el valore de la probabilidad de aparicion de un tipo de casilla en una posicion
- * concreta del Array2D
+ * concreta del Array2D. Para ello, verifica que la posicion sea valida para el mapa actual
  * 
  * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
  * @param TileType Tipo de casilla a modificar
  * @param Probability Variacion en el valor de la probabilidad
  * @param Probabilities Array de probabilidades
  */
-void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const
+void ATileMap::UpdateProbabilityAtPos(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
 	if (Pos.X-1 >= 0 && Pos.X+1 < Rows && Pos.Y+1 < Cols)
@@ -160,7 +169,7 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType Tile
 			case ETileType::Plains: Probabilities[UpdatePos].PlainsProbability += Probability; break;
 			case ETileType::Hills: Probabilities[UpdatePos].HillsProbability += Probability; break;
 			case ETileType::Forest: Probabilities[UpdatePos].ForestProbability += Probability; break;
-			case ETileType::Snow: Probabilities[UpdatePos].SnowProbability += Probability; break;
+			case ETileType::SnowPlains: Probabilities[UpdatePos].SnowProbability += Probability; break;
 			case ETileType::Ice: Probabilities[UpdatePos].IceProbability += Probability; break;
 			case ETileType::Mountains: Probabilities[UpdatePos].MountainsProbability += Probability; break;
 			case ETileType::Water: Probabilities[UpdatePos].WaterProbability += Probability; break;
@@ -171,6 +180,17 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType Tile
 
 /**
  * Metodo privado que calcula el tipo de casilla a generar en el mapa
+ *
+ * El algoritmo tendrá en cuenta las posiciones de los polos para generar las casillas mas frias (Hielo, Nieve)
+ * En funcion del tipo de casilla que aparezca, se modificara la probabilidad de aparicion de otros tipos para que
+ * el mapa sea mas 'realista':
+ *		- Agua:
+ *			+ probabilidad para Agua (formacion de oceanos)
+ *			- probabilidad para Montana
+ *		- Montana:
+ *			+ probabilidad para Montana (formacion de cordilleras)
+ *		- Bosque:
+ *			+ probabilidad para Bosque (formacion de bosques extensos)
  * 
  * @param Pos1D Posicion en el Array1D
  * @param Pos2D Coordenadas en el Array2D
@@ -180,28 +200,32 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType Tile
 ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
 {
 	ETileType GeneratedTile = ETileType::None;
+
+	// Primero se comprueba si estamos en una fila en la que puede aparecer Hielo (prob > 0)
 	if (Probabilities[Pos1D].IceProbability > 0.0)
 	{
+		// Se genera la casilla, si no es de tipo Hielo sera de tipo Agua o Nieve
 		if (FMath::RandRange(0.f, 1.f) <= Probabilities[Pos1D].IceProbability)
 		{
 			GeneratedTile = ETileType::Ice;
-			// UpdateProbability(Pos2D, ETileType::Snow, 0.05, Probabilities);
 		}
 		else
 		{
 			const float RandVal = FMath::RandRange(0.f, 1.f);
 			if (RandVal > Probabilities[Pos1D].WaterProbability-Probabilities[Pos1D].SnowProbability)
 			{
-				GeneratedTile = ETileType::Snow;
+				GeneratedTile = ETileType::SnowPlains;
 			}
 			else
 			{
 				GeneratedTile = ETileType::Water;
-				UpdateProbability(Pos2D, ETileType::Hills, -0.1, Probabilities);
+				UpdateProbability(Pos2D, ETileType::Mountains, -0.1, Probabilities);
 				UpdateProbability(Pos2D, ETileType::Water, WaterProbabilityModifier, Probabilities);
 			}
 		}
 	}
+	// Si no es una zona en la que puede aparecer Hielo, se generara una casilla de tipo Agua o una terrestre
+	// (Llanura, Colinas, Bosque, Montana)
 	else if (FMath::RandRange(0.f, 1.0f) <= Probabilities[Pos1D].WaterProbability)
 	{
 		GeneratedTile = ETileType::Water;
@@ -211,7 +235,10 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 	else
 	{
 		UpdateProbability(Pos2D, ETileType::Water, -0.1, Probabilities);
-		
+
+		// Se tienen en cuenta todas las probabilidades por lo que se suman todos los valores y se genera un
+		// valor aleatorio hasta ese numero, despues se comprueba por rangos para que se tenga en cuenta la
+		// probabilidad correcta para cada tipo de casilla
 		const float TotalProbability =
 			Probabilities[Pos1D].PlainsProbability + Probabilities[Pos1D].HillsProbability +
 			Probabilities[Pos1D].ForestProbability + Probabilities[Pos1D].MountainsProbability;
@@ -221,9 +248,10 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 		float AccumProbability = Probabilities[Pos1D].PlainsProbability;
 		if (PrevAccumProbability <= RandVal && RandVal <= AccumProbability)
 		{
+			// Se debe comprobar si la casilla en la que aparece es fria o no para que aparezca Nieve o Llanura
 			if (Pos2D.X < NumIceRows+NumSnowRows || (Pos2D.X >= Rows-NumIceRows-NumSnowRows && Pos2D.X <= Rows-NumIceRows))
 			{
-				GeneratedTile = ETileType::Snow;
+				GeneratedTile = ETileType::SnowPlains;
 			}
 			else GeneratedTile = ETileType::Plains;
 		}
@@ -232,7 +260,12 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 		AccumProbability += Probabilities[Pos1D].HillsProbability;
 		if (PrevAccumProbability < RandVal && RandVal <= AccumProbability)
 		{
-			GeneratedTile = ETileType::Hills;
+			// Se debe comprobar si la casilla en la que aparece es fria o no para que aparezca ColinasNevadas o Colinas
+			if (Pos2D.X < NumIceRows+NumSnowRows || (Pos2D.X >= Rows-NumIceRows-NumSnowRows && Pos2D.X <= Rows-NumIceRows))
+			{
+				GeneratedTile = ETileType::SnowHills;
+			}
+			else GeneratedTile = ETileType::Hills;
 		}
 
 		PrevAccumProbability = AccumProbability;
@@ -257,7 +290,13 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-// Called when the game starts or when spawned
+/**
+ * Metodo ejecutado cuando el juego es iniciado o el actor es generado
+ *
+ * Inicializara los valores de los parametros teniendo en cuenta los que ya han sido actualizados por el
+ * Blueprint y generara el mapa, almacenando los datos necesarios para su posterior procesamiento durante
+ * la partida
+ */
 void ATileMap::BeginPlay()
 {
 	Super::BeginPlay();
@@ -265,9 +304,6 @@ void ATileMap::BeginPlay()
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
 	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 10.0));
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumIceRows - %d"), NumIceRows))
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumSnowRows - %d"), NumSnowRows))
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumColdRows - %d"), NumIceRows+NumSnowRows))
 
 	// Se establece el modificador de probabilidad de aparicion de agua en funcion del tipo de mapa
 	switch (MapSeaLevel)
@@ -276,16 +312,13 @@ void ATileMap::BeginPlay()
 		case EMapSeaLevel::Standard: WaterProbabilityModifier = 0.13; break;
 		case EMapSeaLevel::Wet: WaterProbabilityModifier = 0.17; break;
 	}
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("WaterProbabilityModifier - %f"), WaterProbabilityModifier))
 
 	// Se declaran e inicializan los vectores necesarios para la generacion del mapa
 	const int32 Dimension = Rows*Cols;
 	TArray<FSTileProbability> Probabilities;
-	TArray<TSharedPtr<FJsonValue>> JsonData;
 	
 	Tiles.SetNumZeroed(Dimension);
 	Probabilities.SetNumZeroed(Dimension);
-	JsonData.SetNumZeroed(Dimension);
 
 	// Se inicializa el array de probabilidaddes con los valores calculados o por defecto en funcion del tipo de casilla
 	for (int32 Pos = 0, IceRow = -1; Pos < Dimension; ++Pos)
@@ -299,19 +332,6 @@ void ATileMap::BeginPlay()
 		
 		Probabilities[Pos].WaterProbability = WaterTileChance;
 	}
-
-	/*
-	FString Cadena = TEXT("");
-	for (int i = 1; i <= Probabilities.Num(); ++i)
-	{
-		Cadena += FString::Printf(TEXT("%f "), Probabilities[i-1].IceProbability);
-		if (i%Rows == 0)
-		{
-			UE_LOG(LogTemp, Log, TEXT("%s"), *Cadena);
-			Cadena = TEXT("");
-		}
-	}
-	*/
 
 	// Se genera el mapa
 	// Se recorren primero las filas y, despues, las columnas de forma que se establece su posicion en el mapa,
@@ -332,7 +352,8 @@ void ATileMap::BeginPlay()
 				case ETileType::Plains: TileToSpawn = PlainsTile; break;
 				case ETileType::Hills: TileToSpawn = HillsTile; break;
 				case ETileType::Forest: TileToSpawn = ForestTile; break;
-				case ETileType::Snow: TileToSpawn = SnowTile; break;
+				case ETileType::SnowPlains: TileToSpawn = SnowTile; break;
+				case ETileType::SnowHills: TileToSpawn = HillsTile; break;
 				case ETileType::Ice: TileToSpawn = IceTile; break;
 				case ETileType::Mountains: TileToSpawn = MountainsTile; break;
 				case ETileType::Water: TileToSpawn = WaterTile; break;
@@ -346,6 +367,68 @@ void ATileMap::BeginPlay()
 			Tiles[PositionInArray] = NewTile;
 		}
 	}
+
+	// Conversion a Json y guardado
+	MapToJson();
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void ATileMap::MapToJson()
+{
+	TArray<FJsonMapDataEntry> StructArray;
+	StructArray.SetNumZeroed(Tiles.Num());
+
+	for (int32 i = 0; i < Tiles.Num(); ++i)
+	{
+		const ATile *Tile = Tiles[i];
+
+		int32 TileType;
+		switch (Tile->GetTileType())
+		{
+			case ETileType::Plains: TileType = 0; break;
+			case ETileType::Hills: TileType = 0; break;
+			case ETileType::Forest: TileType = 0; break;
+			case ETileType::SnowPlains: TileType = 0; break;
+			case ETileType::SnowHills: TileType = 0; break;
+			case ETileType::Ice: TileType = 0; break;
+			case ETileType::Mountains: TileType = 0; break;
+			case ETileType::Water: TileType = 0; break;
+			default: TileType = -1; break;
+		}
+		
+		FJsonMapDataEntry JsonEntry = FJsonMapDataEntry(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
+		StructArray.Add(JsonEntry);
+	}
+
+	FJsonMapData JsonData;
+	for (const FJsonMapDataEntry &Entry : StructArray)
+	{
+		const TSharedPtr<FJsonObject> JsonEntry = MakeShareable(new FJsonObject);
+		JsonEntry->SetNumberField("Row", Entry.Row);
+		JsonEntry->SetNumberField("Col", Entry.Col);
+		JsonEntry->SetNumberField("TileType", Entry.TileType);
+
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.Row - %d"), Entry.Row))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.Col - %d"), Entry.Col))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Entry.TileType - %d"), Entry.TileType))
+
+		JsonData.Tiles.Add(MakeShareable(new FJsonValueObject(JsonEntry)));
+
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.Row - %f"), JsonEntry->GetNumberField("Row")))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.Col - %f"), JsonEntry->GetNumberField("Col")))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("JsonEntry.TileType - %f"), JsonEntry->GetNumberField("TileType")))
+	}
+
+	bool Success = true;
+	FString ResultMessage = "";
+	UJsonManager::MapStructToJson("C:/Users/Pablo/AppData/Local/Temp/Test.json", JsonData, Success, ResultMessage);
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Success - %hhd"), Success))
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("ResultMessage - %s"), *ResultMessage))
+}
+
+void ATileMap::JsonToMap()
+{
 }
 
 // Called every frame

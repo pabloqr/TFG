@@ -44,7 +44,7 @@ TSharedPtr<FJsonObject> UJsonManager::ReadJson(FString JsonPath, bool& Success, 
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::WriteJson(FString JsonPath, TSharedPtr<FJsonObject> JsonObject, bool& Success, FString& ResultMessage)
+void UJsonManager::WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage)
 {
 	FString JsonString;
 
@@ -73,7 +73,7 @@ void UJsonManager::WriteJson(FString JsonPath, TSharedPtr<FJsonObject> JsonObjec
  * @param ResultMessage Informacion de la operacion
  * @return Estructura que contiene la informacion del archivo Json
  */
-FJsonMapData UJsonManager::JsonToStruct(FString JsonPath, bool& Success, FString& ResultMessage)
+FJsonMapData UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
 {
 	// Se intenta crear un JsonObject de un archivo
 	TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonPath, Success, ResultMessage);
@@ -102,10 +102,10 @@ FJsonMapData UJsonManager::JsonToStruct(FString JsonPath, bool& Success, FString
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::StructToJson(FString JsonPath, FJsonMapData JsonStructure, bool& Success, FString& ResultMessage)
+void UJsonManager::MapStructToJson(const FString JsonPath, const FJsonMapData& JsonStructure, bool& Success, FString& ResultMessage)
 {
 	// Se intenta convertir la estructura en el JsonObject
-	TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(JsonStructure);
+	const TSharedPtr<FJsonObject> JsonObject = FJsonObjectConverter::UStructToJsonObject(JsonStructure);
 	if (JsonObject == nullptr)
 	{
 		Success = false;

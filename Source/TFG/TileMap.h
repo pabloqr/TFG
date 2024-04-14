@@ -17,13 +17,26 @@ struct FJsonMapDataEntry
 {
 	GENERATED_BODY()
 
-public:
 	UPROPERTY()
 	int32 Row;
 	UPROPERTY()
 	int32 Col;
 	UPROPERTY()
 	int32 TileType;
+
+	FJsonMapDataEntry()
+	{
+		Row = -1;
+		Col = -1;
+		TileType = -1;
+	}
+
+	FJsonMapDataEntry(const int32 Row, const int32 Col, const int32 TileType)
+	{
+		this->Row = Row;
+		this->Col = Col;
+		this->TileType = TileType;
+	}
 };
 
 /**
@@ -171,7 +184,7 @@ private:
 	 * @param IceRow Indice dentro del numero de filas que pueden contener Hielo
 	 * @return Probabilidad de que la casilla en la posicion dada pueda contener Hielo
 	 */
-	float ProbabilityOfIce(const int32 Pos, int32 &IceRow) const;
+	float ProbabilityOfIce(const int32 Pos, int32& IceRow) const;
 
 	/**
 	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en las casillas
@@ -182,9 +195,9 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbability(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const;
+	void UpdateProbability(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
 	/**
-	 * Metodo privado que actualiza el valore de la probabilidad de aparicion de un tipo de casilla en una posicion
+	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en una posicion
 	 * concreta del Array2D
 	 * 
 	 * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
@@ -192,7 +205,7 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbabilityAtPos(const FIntPoint &Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability> &Probabilities) const;
+	void UpdateProbabilityAtPos(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
 
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
@@ -202,13 +215,21 @@ private:
 	 * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
 	 * @return Tipo de casilla a generar
 	 */
-	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability> &Probabilities) const;
+	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const;
 
 protected:
-	// Called when the game starts or when spawned
+	/**
+	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
+	 */
 	virtual void BeginPlay() override;
 
-public:	
+public:
+	UFUNCTION(BlueprintCallable, Category="Map|Json")
+	void MapToJson();
+
+	UFUNCTION(BlueprintCallable, Category="Map|Json")
+	void JsonToMap();
+	
 	// Called every frame
 	// virtual void Tick(float DeltaTime) override;
 };

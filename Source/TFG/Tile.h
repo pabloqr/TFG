@@ -13,10 +13,11 @@ enum class ETileType : uint8
 	Plains = 1 UMETA(DisplayName="PLains"),
 	Hills = 2 UMETA(DisplayName="Hills"),
 	Forest = 3 UMETA(DisplayName="Forest"),
-	Snow = 4 UMETA(DisplayName="Snow"),
-	Ice = 5 UMETA(DisplayName="Ice"),
-	Mountains = 6 UMETA(DisplayName="Mountains"),
-	Water = 7 UMETA(DisplayName="Water"),
+	SnowPlains = 4 UMETA(DisplayName="SnowPlains"),
+	SnowHills = 5 UMETA(DisplayName="SnowHills"),
+	Ice = 6 UMETA(DisplayName="Ice"),
+	Mountains = 7 UMETA(DisplayName="Mountains"),
+	Water = 8 UMETA(DisplayName="Water"),
 	Max = 255 UMETA(Hidden)
 };
 
@@ -55,6 +56,13 @@ public:
 	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 */
 	FIntPoint GetMapPosition() const;
+
+	/**
+	 * Getter del atributo TileType
+	 * 
+	 * @return Tipo de casilla
+	 */
+	ETileType GetTileType() const;
 
 	/**
 	 * Setter del atributo MapPosition

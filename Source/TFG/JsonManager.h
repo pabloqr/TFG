@@ -9,7 +9,7 @@
 /**
  * Estructura que almacena la lista de casillas del mapa
  */
-USTRUCT(BlueprintType, Category="FileManager | Json")
+USTRUCT(BlueprintType, Category="FileManager|Json")
 struct FJsonMapData
 {
 	GENERATED_BODY()
@@ -35,7 +35,7 @@ private:
 	 * @param ResultMessage Informacion de la operacion
 	 * @return El JsonObject con el contenido del archivo
 	 */
-	static TSharedPtr<FJsonObject> ReadJson(FString JsonPath, bool &Success, FString &ResultMessage);
+	static TSharedPtr<FJsonObject> ReadJson(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo privado estatico que convierte un JsonObject a una cadena de texto, crea un archivo Json
@@ -46,7 +46,7 @@ private:
 	 * @param Success Resultado de la operacion
 	 * @param ResultMessage Informacion de la operacion
 	 */
-	static void WriteJson(FString JsonPath, TSharedPtr<FJsonObject> JsonObject, bool &Success, FString &ResultMessage);
+	static void WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage);
 
 public:
 	/**
@@ -57,8 +57,8 @@ public:
 	 * @param ResultMessage Informacion de la operacion
 	 * @return Estructura que contiene la informacion del archivo Json
 	 */
-	UFUNCTION(BlueprintCallable, Category="FileManager | Json")
-	static FJsonMapData JsonToStruct(FString JsonPath, bool &Success, FString &ResultMessage);
+	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
+	static FJsonMapData JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo estatico que transforma la estructura con la informacion a almacenar en un JsonObject
@@ -68,6 +68,6 @@ public:
 	 * @param Success Resultado de la operacion
 	 * @param ResultMessage Informacion de la operacion
 	 */
-	UFUNCTION(BlueprintCallable, Category="FileManager | Json")
-	static void StructToJson(FString JsonPath, FJsonMapData JsonStructure, bool &Success, FString &ResultMessage);
+	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
+	static void MapStructToJson(FString JsonPath, const FJsonMapData& JsonStructure, bool& Success, FString& ResultMessage);
 };
