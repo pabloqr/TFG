@@ -3,8 +3,48 @@
 #include "JsonManager.h"
 
 #include "FileManager.h"
-#include "JsonObjectConverter.h"
 #include "Serialization/JsonSerializer.h"
+
+/**
+ * Metodo privado estatico que verifica que la extension para el archivo es correcta (es '.json') y la anade
+ * en caso de que este ausente
+ * 
+ * @param JsonPath Ruta del archivo Json
+ * @return Ruta comprobada del archivo Json
+ */
+FString UJsonManager::CheckJsonExtension(const FString& JsonPath)
+{
+	TArray<FString> PathArray;
+	JsonPath.ParseIntoArray(PathArray, TEXT("."), true);
+
+	if (PathArray.Top().ToLower() != "json") PathArray.Add("json");
+	else PathArray[PathArray.Num()-1] = PathArray.Top().ToLower();
+
+	return FString::Join(PathArray, TEXT("."));
+}
+
+/**
+ * Metodo privado estatico que verifica que la ruta para el archivo es correcta tomando la ultima cadena de la ruta
+ * dada y anadiendo al comienzo la ruta para almacenar archivos de guardado de mapas
+ * 
+ * @param JsonPath Ruta del archivo Json
+ * @return Ruta comprobada del archivo Json
+ */
+FString UJsonManager::CheckMapPath(const FString& JsonPath)
+{
+	TArray<FString> SavePathArray;
+	MapSavePath.ParseIntoArray(SavePathArray, TEXT("/"), true);
+	
+	TArray<FString> PathArray;
+	JsonPath.ParseIntoArray(PathArray, TEXT("/"), true);
+
+	FString ResultPath = MapSavePath;
+	ResultPath += "/" + CheckJsonExtension(PathArray.Top());
+
+	return ResultPath;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 /**
  * Metodo privado estatico que abre un archivo Json, lo lee y lo convierte a un JsonObject para ser procesado
@@ -14,10 +54,10 @@
  * @param ResultMessage Informacion de la operacion
  * @return El JsonObject con el contenido del archivo
  */
-TSharedPtr<FJsonObject> UJsonManager::ReadJson(FString JsonPath, bool& Success, FString& ResultMessage)
+TSharedPtr<FJsonObject> UJsonManager::ReadJson(const FString& JsonPath, bool& Success, FString& ResultMessage)
 {
 	// Se intenta leer el archivo dado
-	FString JsonString = UFileManager::ReadStringFromFile(JsonPath, Success, ResultMessage);
+	const FString JsonString = UFileManager::ReadStringFromFile(JsonPath, Success, ResultMessage);
 	if (!Success) return nullptr;
 
 	TSharedPtr<FJsonObject> JsonObject;
@@ -44,7 +84,7 @@ TSharedPtr<FJsonObject> UJsonManager::ReadJson(FString JsonPath, bool& Success, 
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage)
+void UJsonManager::WriteJson(const FString& JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage)
 {
 	FString JsonString;
 
@@ -71,11 +111,11 @@ void UJsonManager::WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& Js
  * @param JsonPath Ruta del archivo Json
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
- * @return Estructura que contiene la informacion del archivo Json
+ * @return Lista que contiene la informacion del archivo Json
  */
-TArray<FMapDataForJson> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
+TArray<FMapData> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
 {
-	TArray<FMapDataForJson> JsonData;
+	TArray<FMapData> JsonData;
 	
 	// Se intenta crear un JsonObject de un archivo
 	const TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonPath, Success, ResultMessage);
@@ -99,7 +139,7 @@ TArray<FMapDataForJson> UJsonManager::JsonToMapStruct(const FString JsonPath, bo
 			continue;
 		}
 
-		FMapDataForJson DataEntry;
+		FMapData DataEntry;
 		DataEntry.Row = JsonDataEntry->GetIntegerField(TEXT("Row"));
 		DataEntry.Col = JsonDataEntry->GetIntegerField(TEXT("Column"));
 		DataEntry.TileType = JsonDataEntry->GetIntegerField(TEXT("TileType"));
@@ -120,12 +160,12 @@ TArray<FMapDataForJson> UJsonManager::JsonToMapStruct(const FString JsonPath, bo
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage)
+void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapData>& JsonData, bool& Success, FString& ResultMessage)
 {
 	const TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 
 	TArray<TSharedPtr<FJsonValue>> DataArray;
-	for (const FMapDataForJson Data : JsonData)
+	for (const FMapData Data : JsonData)
 	{
 		TSharedPtr<FJsonObject> DataJsonObject = MakeShareable(new FJsonObject);
 		DataJsonObject->SetNumberField(TEXT("Row"), Data.Row);
@@ -139,5 +179,5 @@ void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapData
 	JsonObject->SetArrayField(TEXT("TilesInfo"), DataArray);
 	
 	// Se intenta escribir los datos al archivo
-	WriteJson(JsonPath, JsonObject, Success, ResultMessage);
+	WriteJson(CheckMapPath(JsonPath), JsonObject, Success, ResultMessage);
 }

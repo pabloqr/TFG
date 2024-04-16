@@ -10,7 +10,7 @@
  * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
  */
 USTRUCT(BlueprintType, Category="FileManager|Json")
-struct FMapDataForJson
+struct FMapData
 {
 	GENERATED_BODY()
 
@@ -21,20 +21,23 @@ struct FMapDataForJson
 	UPROPERTY()
 	int32 TileType;
 
-	FMapDataForJson()
+	FMapData()
 	{
 		Row = -1;
 		Col = -1;
 		TileType = -1;
 	}
 
-	FMapDataForJson(const int32 Row, const int32 Col, const int32 TileType)
+	FMapData(const int32 Row, const int32 Col, const int32 TileType)
 	{
 		this->Row = Row;
 		this->Col = Col;
 		this->TileType = TileType;
 	}
 };
+
+const FString MapSavePath = "C:/Users/Pablo/Documents/Unreal Savefiles/TFG/Maps";
+const FString SavesSavePath = "C:/Users/Pablo/Documents/Unreal Savefiles/TFG/Saves";
 
 /**
  * Clase para la gestion de archivos Json
@@ -44,7 +47,21 @@ class TFG_API UJsonManager : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-private:
+	/**
+	 * Metodo privado estatico que verifica que la extension para el archivo es correcta
+	 * 
+	 * @param JsonPath Ruta del archivo Json
+	 * @return Ruta comprobada del archivo Json
+	 */
+	static FString CheckJsonExtension(const FString& JsonPath);
+	/**
+	 * Metodo privado estatico que verifica que la ruta para el archivo es correcta
+	 * 
+	 * @param JsonPath Ruta del archivo Json
+	 * @return Ruta comprobada del archivo Json
+	 */
+	static FString CheckMapPath(const FString& JsonPath);
+	
 	/**
 	 * Metodo privado estatico que abre un archivo Json, lo lee y lo convierte a un JsonObject para ser procesado
 	 * 
@@ -53,7 +70,7 @@ private:
 	 * @param ResultMessage Informacion de la operacion
 	 * @return El JsonObject con el contenido del archivo
 	 */
-	static TSharedPtr<FJsonObject> ReadJson(FString JsonPath, bool& Success, FString& ResultMessage);
+	static TSharedPtr<FJsonObject> ReadJson(const FString& JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo privado estatico que convierte un JsonObject a una cadena de texto, crea un archivo Json
@@ -64,7 +81,7 @@ private:
 	 * @param Success Resultado de la operacion
 	 * @param ResultMessage Informacion de la operacion
 	 */
-	static void WriteJson(FString JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage);
+	static void WriteJson(const FString& JsonPath, const TSharedPtr<FJsonObject>& JsonObject, bool& Success, FString& ResultMessage);
 
 public:
 	/**
@@ -73,10 +90,10 @@ public:
 	 * @param JsonPath Ruta del archivo Json
 	 * @param Success Resultado de la operacion
 	 * @param ResultMessage Informacion de la operacion
-	 * @return Estructura que contiene la informacion del archivo Json
+	 * @return Lista que contiene la informacion del archivo Json
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static TArray<FMapDataForJson> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
+	static TArray<FMapData> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo estatico que transforma la estructura con la informacion a almacenar en un JsonObject
@@ -87,5 +104,5 @@ public:
 	 * @param ResultMessage Informacion de la operacion
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static void MapStructToJson(FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage);
+	static void MapStructToJson(FString JsonPath, const TArray<FMapData>& JsonData, bool& Success, FString& ResultMessage);
 };

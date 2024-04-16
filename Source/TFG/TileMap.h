@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "TileMap.generated.h"
 
+struct FMapData;
 enum class ETileType : uint8;
 class ATile;
 
@@ -119,63 +120,63 @@ private:
 	/**
 	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
 	 * 
-	 * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 * @return Posicion en el Array1D
 	 */
-	int32 GetPositionInArray(const FIntPoint& Pos) const;
+	int32 GetPositionInArray(const FIntPoint& Pos2D) const;
 
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
-	 * @param Pos Posicion en el Array1D
+	 * @param Pos1D Posicion en el Array1D
 	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 */
-	FIntPoint GetCoordsInMap(const int32 Pos) const;
+	FIntPoint GetCoordsInMap(const int32 Pos1D) const;
 	/**
 	 * Metodo privado que obtiene la coordenada de la fila en el Array2D
 	 * 
-	 * @param Pos Posicion en el Array1D
+	 * @param Pos1D Posicion en el Array1D
 	 * @return Valor de la fila en el Array2D
 	 */
-	int32 GetRowInMap(const int32 Pos) const;
+	int32 GetRowInMap(const int32 Pos1D) const;
 	/**
 	 * Metodo privado que obtiene la coordenada de la columna en el Array2D
 	 * 
-	 * @param Pos Posicion en el Array1D
+	 * @param Pos1D Posicion en el Array1D
 	 * @return Valor de la columna en el Array2D
 	 */
-	int32 GetColInMap(const int32 Pos) const;
+	int32 GetColInMap(const int32 Pos1D) const;
 
 	/**
 	 * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
 	 * en los polos
 	 * 
-	 * @param Pos Posicion en el Array1D
+	 * @param Pos1D Posicion en el Array1D
 	 * @param IceRow Indice dentro del numero de filas que pueden contener Hielo
 	 * @return Probabilidad de que la casilla en la posicion dada pueda contener Hielo
 	 */
-	float ProbabilityOfIce(const int32 Pos, int32& IceRow) const;
+	float ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const;
 
 	/**
 	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en las casillas
 	 * circundantes a la actual
 	 * 
-	 * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 * @param TileType Tipo de casilla a modificar
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbability(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
+	void UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
 	/**
 	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en una posicion
 	 * concreta del Array2D
 	 * 
-	 * @param Pos Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 * @param TileType Tipo de casilla a modificar
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbabilityAtPos(const FIntPoint& Pos, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
+	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
 
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
@@ -187,6 +188,30 @@ private:
 	 */
 	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const;
 
+	/**
+	 * Metodo privado que selecciona la instancia a generar en el mapa dado el tipo de casilla deseado
+	 * 
+	 * @param TileType Tipo de casilla
+	 * @return Instancia del tipo de casilla a generar en el mapa
+	 */
+	TSubclassOf<ATile> SelectTileType(ETileType TileType) const;
+
+	/**
+	 * Metodo privado que actualiza la casilla deseada al tipo especificado
+	 * 
+	 * @param Pos1D Posicion en el Array1D
+	 * @param Pos2D Coordenadas en el Array2D
+	 * @param TileType Tipo de casilla
+	 */
+	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, ETileType TileType);
+
+	/**
+	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
+	 * 
+	 * @param TilesInfo Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
+	 */
+	void SetMapFromSave(const TArray<FMapData>& TilesInfo);
+
 protected:
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
@@ -194,12 +219,27 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	/**
+	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Save")
+	void SaveMap() const;
+
+	/**
+	 * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Save")
+	void LoadMap();
+
+	/**
+	 * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json
+	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Json")
 	void MapToJson();
 
+	/**
+	 * Metodo que transforma la informacion sobre las casillas de un archivo Json para actualizar el mapa
+	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Json")
 	void JsonToMap();
-	
-	// Called every frame
-	// virtual void Tick(float DeltaTime) override;
 };

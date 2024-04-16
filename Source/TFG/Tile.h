@@ -42,13 +42,21 @@ public:
 	 */
 	ATile();
 
-protected:
-	// Called when the game starts or when spawned
-	// virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	// virtual void Tick(float DeltaTime) override;
+	/**
+	 * Metodo que transforma el tipo de casilla en un valor numerico
+	 * 
+	 * @param TileType Tipo de casilla
+	 * @return Valor entero dado el tipo de casilla
+	 */
+	static int32 TileTypeToInt(const ETileType TileType);
+	
+	/**
+	 * Metodo que transforma un valor numerico en el tipo de casilla
+	 * 
+	 * @param TileTypeVal Valor numerico del tipo de casilla
+	 * @return Tipo de casilla
+	 */
+	static ETileType IntToTileType(const int32 TileTypeVal);
 
 	/**
 	 * Getter del atributo MapPosition
