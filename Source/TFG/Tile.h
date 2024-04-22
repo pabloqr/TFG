@@ -10,7 +10,7 @@ UENUM(BlueprintType)
 enum class ETileType : uint8
 {
 	None = 0 UMETA(DisplayName="None"),
-	Plains = 1 UMETA(DisplayName="PLains"),
+	Plains = 1 UMETA(DisplayName="Plains"),
 	Hills = 2 UMETA(DisplayName="Hills"),
 	Forest = 3 UMETA(DisplayName="Forest"),
 	SnowPlains = 4 UMETA(DisplayName="SnowPlains"),

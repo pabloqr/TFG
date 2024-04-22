@@ -317,7 +317,7 @@ void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, ETileType
 	const TSubclassOf<ATile> TileToSpawn = SelectTileType(TileType);
 	
 	ATile* NewTile = GetWorld()->SpawnActor<ATile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator::ZeroRotator);
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("[%d][%d] valid: %d"), Pos2D.X, Pos2D.Y, NewTile == nullptr))
+	// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("[%d][%d] valid: %d"), Pos2D.X, Pos2D.Y, NewTile == nullptr))
 	if (NewTile != nullptr)
 	{
 		NewTile->SetPosition(FIntPoint(Pos2D.X, Pos2D.Y));
@@ -332,7 +332,7 @@ void ATileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
 	Tiles.SetNumZeroed(TilesInfo.Num());
 	for (int32 i = 0; i < TilesInfo.Num(); ++i)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d, %d, %d)"), TilesInfo[i].Row, TilesInfo[i].Col, TilesInfo[i].TileType))
+		// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d, %d, %d)"), TilesInfo[i].Row, TilesInfo[i].Col, TilesInfo[i].TileType))
 
 		ATile* Tile = Tiles[i];
 		const ETileType TileType = ATile::IntToTileType(TilesInfo[i].TileType);
