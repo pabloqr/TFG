@@ -44,12 +44,11 @@ struct FSTileProbability
 	float PlainsProbability = 0.f;
 	float HillsProbability = 0.f;
 	float ForestProbability = 0.f;
-	float SnowProbability = 0.f;
 	float IceProbability = 0.f;
 	float MountainsProbability = 0.f;
 	float WaterProbability = 0.f;
 	
-	int Error = 0;
+	int32 Error = 0;
 };
 
 /**
@@ -116,14 +115,15 @@ private:
 	 * @param Col Indice de la columna
 	 * @return Posicion en el Array1D
 	 */
-	int32 GetPositionInArray(const int32 Row, const int32 Col) const;
+	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
+	
 	/**
 	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
 	 * 
 	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 * @return Posicion en el Array1D
 	 */
-	int32 GetPositionInArray(const FIntPoint& Pos2D) const;
+	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
 
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
@@ -131,21 +131,23 @@ private:
 	 * @param Pos1D Posicion en el Array1D
 	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 */
-	FIntPoint GetCoordsInMap(const int32 Pos1D) const;
+	FIntPoint GetCoordsInMap(const int32 Pos1D) const { return FIntPoint(GetRowInMap(Pos1D), GetColInMap(Pos1D)); }
+	
 	/**
 	 * Metodo privado que obtiene la coordenada de la fila en el Array2D
 	 * 
 	 * @param Pos1D Posicion en el Array1D
 	 * @return Valor de la fila en el Array2D
 	 */
-	int32 GetRowInMap(const int32 Pos1D) const;
+	int32 GetRowInMap(const int32 Pos1D) const { return Pos1D / Cols; }
+	
 	/**
 	 * Metodo privado que obtiene la coordenada de la columna en el Array2D
 	 * 
 	 * @param Pos1D Posicion en el Array1D
 	 * @return Valor de la columna en el Array2D
 	 */
-	int32 GetColInMap(const int32 Pos1D) const;
+	int32 GetColInMap(const int32 Pos1D) const { return Pos1D % Cols; }
 
 	/**
 	 * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
@@ -179,6 +181,18 @@ private:
 	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
 
 	/**
+	 * Metodo privado que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
+	 * 
+	 * @param CurrentProbability Valor actual de la proabilidad de aparicion de un tipo de casilla
+	 * @param NewProbability Cantidad que se quiere aplicar a la probabilidad
+	 * @return Cantidad a aplicar a la probabilidad actual
+	 */
+	float CheckProbability(const float CurrentProbability, const float NewProbability) const
+	{
+		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
+	}
+	
+	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
 	 * 
 	 * @param Pos1D Posicion en el Array1D
@@ -203,7 +217,7 @@ private:
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param TileType Tipo de casilla
 	 */
-	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, ETileType TileType);
+	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
 
 	/**
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado

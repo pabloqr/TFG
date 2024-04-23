@@ -22,7 +22,7 @@ ATileMap::ATileMap()
 	HorizontalOffset = 0.0;
 	VerticalOffset = 0.0;
 
-	WaterProbabilityModifier = 0.0;
+	WaterProbabilityModifier = 0.13;
 	MapTemperature = EMapTemperature::Temperate;
 	MapSeaLevel = EMapSeaLevel::Standard;
 
@@ -31,62 +31,6 @@ ATileMap::ATileMap()
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
-
-/**
- * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
- * 
- * @param Row Indice de la fila
- * @param Col Indice de la columna
- * @return Posicion en el Array1D
- */
-int32 ATileMap::GetPositionInArray(const int32 Row, const int32 Col) const
-{
-	return Row * Cols + Col;
-}
-
-/**
- * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
- * 
- * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- * @return Posicion en el Array1D
- */
-int32 ATileMap::GetPositionInArray(const FIntPoint& Pos2D) const
-{
-	return Pos2D.X * Cols + Pos2D.Y;
-}
-
-/**
- * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
- * 
- * @param Pos1D Posicion en el Array1D
- * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- */
-FIntPoint ATileMap::GetCoordsInMap(const int32 Pos1D) const
-{
-	return FIntPoint(GetRowInMap(Pos1D), GetColInMap(Pos1D));
-}
-
-/**
- * Metodo privado que obtiene la coordenada de la fila en el Array2D
- * 
- * @param Pos1D Posicion en el Array1D
- * @return Valor de la fila en el Array2D
- */
-int32 ATileMap::GetRowInMap(const int32 Pos1D) const
-{
-	return Pos1D / Cols;
-}
-
-/**
- * Metodo privado que obtiene la coordenada de la columna en el Array2D
- * 
- * @param Pos1D Posicion en el Array1D
- * @return Valor de la columna en el Array2D
- */
-int32 ATileMap::GetColInMap(const int32 Pos1D) const
-{
-	return Pos1D % Cols;
-}
 
 /**
  * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
@@ -168,13 +112,12 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType Ti
 		const int32 UpdatePos = GetPositionInArray(Pos2D);
 		switch (TileType)
 		{
-			case ETileType::Plains: Probabilities[UpdatePos].PlainsProbability += Probability; break;
-			case ETileType::Hills: Probabilities[UpdatePos].HillsProbability += Probability; break;
-			case ETileType::Forest: Probabilities[UpdatePos].ForestProbability += Probability; break;
-			case ETileType::SnowPlains: Probabilities[UpdatePos].SnowProbability += Probability; break;
-			case ETileType::Ice: Probabilities[UpdatePos].IceProbability += Probability; break;
-			case ETileType::Mountains: Probabilities[UpdatePos].MountainsProbability += Probability; break;
-			case ETileType::Water: Probabilities[UpdatePos].WaterProbability += Probability; break;
+			case ETileType::Plains: Probabilities[UpdatePos].PlainsProbability += CheckProbability(Probabilities[UpdatePos].PlainsProbability, Probability); break;
+			case ETileType::Hills: Probabilities[UpdatePos].HillsProbability += CheckProbability(Probabilities[UpdatePos].HillsProbability, Probability); break;
+			case ETileType::Forest: Probabilities[UpdatePos].ForestProbability += CheckProbability(Probabilities[UpdatePos].ForestProbability, Probability); break;
+			case ETileType::Ice: Probabilities[UpdatePos].IceProbability += CheckProbability(Probabilities[UpdatePos].IceProbability, Probability); break;
+			case ETileType::Mountains: Probabilities[UpdatePos].MountainsProbability += CheckProbability(Probabilities[UpdatePos].MountainsProbability, Probability); break;
+			case ETileType::Water: Probabilities[UpdatePos].WaterProbability += CheckProbability(Probabilities[UpdatePos].WaterProbability, Probability); break;
 			default: Probabilities[UpdatePos].Error++; break;
 		}
 	}
@@ -214,7 +157,7 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 		else
 		{
 			const float RandVal = FMath::RandRange(0.f, 1.f);
-			if (RandVal > Probabilities[Pos1D].WaterProbability-Probabilities[Pos1D].SnowProbability)
+			if (RandVal > Probabilities[Pos1D].WaterProbability)
 			{
 				GeneratedTile = ETileType::SnowPlains;
 			}
@@ -309,7 +252,7 @@ TSubclassOf<ATile> ATileMap::SelectTileType(const ETileType TileType) const
 	return SelectedTile;
 }
 
-void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, ETileType TileType)
+void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
 {
 	const float RowPos = Pos2D.Y * HorizontalOffset;
 	const float ColPos = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
@@ -321,6 +264,7 @@ void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, ETileType
 	if (NewTile != nullptr)
 	{
 		NewTile->SetPosition(FIntPoint(Pos2D.X, Pos2D.Y));
+		// TODO quitar para lanzamiento
 		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), Pos2D.X, Pos2D.Y));
 	}
 
@@ -387,7 +331,7 @@ void ATileMap::BeginPlay()
 		Probabilities[Pos].PlainsProbability = 0.15;
 		Probabilities[Pos].HillsProbability = 0.15;
 		Probabilities[Pos].ForestProbability = 0.15;
-		Probabilities[Pos].MountainsProbability = 0.15;
+		Probabilities[Pos].MountainsProbability = 0.1;
 		
 		Probabilities[Pos].WaterProbability = WaterTileChance;
 	}

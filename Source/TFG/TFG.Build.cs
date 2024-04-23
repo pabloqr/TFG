@@ -14,6 +14,7 @@ public class TFG : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
+			"UMG",
 			"Json",
 			"JsonUtilities"
 		});
@@ -21,7 +22,7 @@ public class TFG : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
 		// Uncomment if you are using Slate UI
-		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
