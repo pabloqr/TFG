@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
-#include "MenuMode.generated.h"
+#include "MMenu.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TFG_API AMenuMode : public AGameModeBase
+class TFG_API AMMenu : public AGameModeBase
 {
 	GENERATED_BODY()
 };

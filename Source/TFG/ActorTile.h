@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Tile.generated.h"
+#include "ActorTile.generated.h"
 
 UENUM(BlueprintType)
 enum class ETileType : uint8
@@ -22,7 +22,7 @@ enum class ETileType : uint8
 };
 
 UCLASS()
-class TFG_API ATile : public AActor
+class TFG_API AActorTile : public AActor
 {
 	GENERATED_BODY()
 
@@ -40,7 +40,7 @@ public:
 	/**
 	 * Constructor de la clase que inicializa los parametros del actor
 	 */
-	ATile();
+	AActorTile();
 
 	/**
 	 * Metodo que transforma el tipo de casilla en un valor numerico

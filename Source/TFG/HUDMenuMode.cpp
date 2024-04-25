@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MenuModeHUD.h"
+#include "HUDMenuMode.h"
 
 #include "Blueprint/UserWidget.h"
 
-void AMenuModeHUD::ShowMenu()
+void AHUDMenuMode::ShowMenu()
 {
 	APlayerController* PlayerController = Cast<APlayerController>(GetOwner());
 	MainMenu = CreateWidget<UUserWidget>(PlayerController, MenuClass);
@@ -13,7 +13,7 @@ void AMenuModeHUD::ShowMenu()
 	MainMenu->AddToViewport();
 }
 
-void AMenuModeHUD::HideMenu()
+void AHUDMenuMode::HideMenu()
 {
 	if (MainMenu)
 	{

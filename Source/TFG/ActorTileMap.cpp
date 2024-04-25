@@ -1,16 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "TileMap.h"
+#include "ActorTileMap.h"
 
 #include "JsonManager.h"
-#include "MapSave.h"
-#include "Tile.h"
+#include "SaveMap.h"
+#include "ActorTile.h"
 #include "Kismet/GameplayStatics.h"
 
 /**
  * Constructor de la clase que inicializa los parametros del actor
  */
-ATileMap::ATileMap()
+AActorTileMap::AActorTileMap()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	// PrimaryActorTick.bCanEverTick = true;
@@ -40,7 +40,7 @@ ATileMap::ATileMap()
  * @param IceRow Indice dentro del numero de filas que pueden contener Hielo
  * @return Probabilidad de que la casilla en la posicion dada pueda contener Hielo
  */
-float ATileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
+float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 {
 	float CurrentProbability = 0.8;
 	const int32 Row = GetRowInMap(Pos1D);
@@ -86,7 +86,7 @@ float ATileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
  * @param Probability Variacion en el valor de la probabilidad
  * @param Probabilities Array de probabilidades
  */
-void ATileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y), TileType, Probability, Probabilities);
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X-1, Pos2D.Y+1), TileType, Probability, Probabilities);
@@ -103,7 +103,7 @@ void ATileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileTyp
  * @param Probability Variacion en el valor de la probabilidad
  * @param Probabilities Array de probabilidades
  */
-void ATileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
 	if (Pos2D.X-1 >= 0 && Pos2D.X+1 < Rows && Pos2D.Y+1 < Cols)
@@ -142,7 +142,7 @@ void ATileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType Ti
  * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
  * @return Tipo de casilla a generar
  */
-ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
+ETileType AActorTileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
 {
 	ETileType GeneratedTile = ETileType::None;
 
@@ -233,9 +233,9 @@ ETileType ATileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, 
 	return GeneratedTile;
 }
 
-TSubclassOf<ATile> ATileMap::SelectTileType(const ETileType TileType) const
+TSubclassOf<AActorTile> AActorTileMap::SelectTileType(const ETileType TileType) const
 {
-	TSubclassOf<ATile> SelectedTile;
+	TSubclassOf<AActorTile> SelectedTile;
 	switch (TileType)
 	{
 		case ETileType::Plains: SelectedTile = PlainsTile; break;
@@ -252,14 +252,14 @@ TSubclassOf<ATile> ATileMap::SelectTileType(const ETileType TileType) const
 	return SelectedTile;
 }
 
-void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
+void AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
 {
 	const float RowPos = Pos2D.Y * HorizontalOffset;
 	const float ColPos = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
-	const TSubclassOf<ATile> TileToSpawn = SelectTileType(TileType);
+	const TSubclassOf<AActorTile> TileToSpawn = SelectTileType(TileType);
 	
-	ATile* NewTile = GetWorld()->SpawnActor<ATile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator::ZeroRotator);
+	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator::ZeroRotator);
 	// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("[%d][%d] valid: %d"), Pos2D.X, Pos2D.Y, NewTile == nullptr))
 	if (NewTile != nullptr)
 	{
@@ -271,15 +271,15 @@ void ATileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETi
 	Tiles[Pos1D] = NewTile;
 }
 
-void ATileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
+void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
 {
 	Tiles.SetNumZeroed(TilesInfo.Num());
 	for (int32 i = 0; i < TilesInfo.Num(); ++i)
 	{
 		// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d, %d, %d)"), TilesInfo[i].Row, TilesInfo[i].Col, TilesInfo[i].TileType))
 
-		ATile* Tile = Tiles[i];
-		const ETileType TileType = ATile::IntToTileType(TilesInfo[i].TileType);
+		AActorTile* Tile = Tiles[i];
+		const ETileType TileType = AActorTile::IntToTileType(TilesInfo[i].TileType);
 		
 		if (Tile->GetTileType() != TileType)
 		{
@@ -300,7 +300,7 @@ void ATileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
  * Blueprint y generara el mapa, almacenando los datos necesarios para su posterior procesamiento durante
  * la partida
  */
-void ATileMap::BeginPlay()
+void AActorTileMap::BeginPlay()
 {
 	Super::BeginPlay();
 
@@ -357,12 +357,12 @@ void ATileMap::BeginPlay()
 /**
  * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
  */
-void ATileMap::SaveMap() const
+void AActorTileMap::SaveMap() const
 {
 	TArray<FMapData> MapData;
 	MapData.SetNumZeroed(Tiles.Num());
 	
-	if (UMapSave* SaveGameInstance = Cast<UMapSave>(UGameplayStatics::CreateSaveGameObject(UMapSave::StaticClass())))
+	if (USaveMap* SaveGameInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
 		SaveGameInstance->TilesInfo = MapData;
 		if (!UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("MapTest"), 0))
@@ -378,9 +378,9 @@ void ATileMap::SaveMap() const
 /**
  * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
  */
-void ATileMap::LoadMap()
+void AActorTileMap::LoadMap()
 {
-	if (const UMapSave* LoadedGame = Cast<UMapSave>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
+	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
 	{
 		SetMapFromSave(LoadedGame->TilesInfo);
 	}
@@ -389,15 +389,15 @@ void ATileMap::LoadMap()
 /**
  * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json
  */
-void ATileMap::MapToJson()
+void AActorTileMap::MapToJson()
 {
 	TArray<FMapData> JsonData;
 	JsonData.SetNumZeroed(Tiles.Num());
 
 	for (int32 i = 0; i < Tiles.Num(); ++i)
 	{
-		const ATile *Tile = Tiles[i];
-		const int32 TileType = ATile::TileTypeToInt(Tile->GetTileType());
+		const AActorTile *Tile = Tiles[i];
+		const int32 TileType = AActorTile::TileTypeToInt(Tile->GetTileType());
 		
 		JsonData[i] = FMapData(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
 	}
@@ -410,7 +410,7 @@ void ATileMap::MapToJson()
 /**
  * Metodo que transforma la informacion sobre las casillas de un archivo Json para actualizar el mapa
  */
-void ATileMap::JsonToMap()
+void AActorTileMap::JsonToMap()
 {
 	bool Success = true;
 	FString ResultMessage = "";

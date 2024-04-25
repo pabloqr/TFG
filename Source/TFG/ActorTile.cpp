@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Tile.h"
+#include "ActorTile.h"
 
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
@@ -8,7 +8,7 @@
 /**
  * Constructor de la clase que inicializa los parametros del actor
  */
-ATile::ATile()
+AActorTile::AActorTile()
 {
  	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
@@ -25,7 +25,7 @@ ATile::ATile()
  * @param TileType Tipo de casilla
  * @return Valor entero dado el tipo de casilla
  */
-int32 ATile::TileTypeToInt(const ETileType TileType)
+int32 AActorTile::TileTypeToInt(const ETileType TileType)
 {
 	int32 TileTypeVal;
 	switch (TileType)
@@ -50,7 +50,7 @@ int32 ATile::TileTypeToInt(const ETileType TileType)
  * @param TileTypeVal Valor numerico del tipo de casilla
  * @return Tipo de casilla
  */
-ETileType ATile::IntToTileType(const int32 TileTypeVal)
+ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
 {
 	ETileType TileType;
 	switch (TileTypeVal)
@@ -74,7 +74,7 @@ ETileType ATile::IntToTileType(const int32 TileTypeVal)
  * 
  * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
  */
-FIntPoint ATile::GetMapPosition() const
+FIntPoint AActorTile::GetMapPosition() const
 {
 	return MapPosition;
 }
@@ -84,7 +84,7 @@ FIntPoint ATile::GetMapPosition() const
  * 
  * @return Tipo de casilla
  */
-ETileType ATile::GetTileType() const
+ETileType AActorTile::GetTileType() const
 {
 	return TileType;
 }
@@ -94,7 +94,7 @@ ETileType ATile::GetTileType() const
  * 
  * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D
  */
-void ATile::SetPosition(const FIntPoint& Position)
+void AActorTile::SetPosition(const FIntPoint& Position)
 {
 	MapPosition.X = Position.X;
 	MapPosition.Y = Position.Y;

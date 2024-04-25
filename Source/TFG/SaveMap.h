@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "JsonManager.h"
 #include "GameFramework/SaveGame.h"
-#include "MapSave.generated.h"
+#include "SaveMap.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TFG_API UMapSave : public USaveGame
+class TFG_API USaveMap : public USaveGame
 {
 	GENERATED_BODY()
 

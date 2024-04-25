@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "TileMap.generated.h"
+#include "ATileMap.generated.h"
 
 struct FMapData;
 enum class ETileType : uint8;
-class ATile;
+class AActorTile;
 
 /**
  * Tipo enumerado para la clasificacion de mapas segun su temperatura
@@ -55,12 +55,12 @@ struct FSTileProbability
  * Clase para la gestion de un mapa de casillas hexagonales
  */
 UCLASS()
-class TFG_API ATileMap : public AActor
+class TFG_API AActorTileMap : public AActor
 {
 	GENERATED_BODY()
 
 protected:
-	TArray<ATile*> Tiles;
+	TArray<AActorTile*> Tiles;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Rows;
@@ -75,19 +75,19 @@ protected:
 	float VerticalOffset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> PlainsTile;
+	TSubclassOf<AActorTile> PlainsTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> HillsTile;
+	TSubclassOf<AActorTile> HillsTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> ForestTile;
+	TSubclassOf<AActorTile> ForestTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> SnowTile;
+	TSubclassOf<AActorTile> SnowTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> IceTile;
+	TSubclassOf<AActorTile> IceTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> MountainsTile;
+	TSubclassOf<AActorTile> MountainsTile;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<ATile> WaterTile;
+	TSubclassOf<AActorTile> WaterTile;
 
 	UPROPERTY(VisibleAnywhere, Category="Map|Parameters")
 	float WaterTileChance = 0.4f;
@@ -105,7 +105,7 @@ public:
 	/**
 	 * Constructor de la clase que inicializa los parametros del actor
 	 */
-	ATileMap();
+	AActorTileMap();
 
 private:
 	/**
@@ -208,7 +208,7 @@ private:
 	 * @param TileType Tipo de casilla
 	 * @return Instancia del tipo de casilla a generar en el mapa
 	 */
-	TSubclassOf<ATile> SelectTileType(ETileType TileType) const;
+	TSubclassOf<AActorTile> SelectTileType(ETileType TileType) const;
 
 	/**
 	 * Metodo privado que actualiza la casilla deseada al tipo especificado

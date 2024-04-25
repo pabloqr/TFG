@@ -1,26 +1,26 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MenuModeWidget.h"
+#include "WMainMenu.h"
 
 #include "Components/Button.h"
 #include "Kismet/GameplayStatics.h"
 
-void UMenuModeWidget::NativeConstruct()
+void UWMainMenu::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	NewGameButton->OnClicked.AddUniqueDynamic(this, &UMenuModeWidget::StartNewGame);
-	QuitButton->OnClicked.AddUniqueDynamic(this, &UMenuModeWidget::QuitGame);
+	NewGameButton->OnClicked.AddUniqueDynamic(this, &UWMainMenu::StartNewGame);
+	QuitButton->OnClicked.AddUniqueDynamic(this, &UWMainMenu::QuitGame);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void UMenuModeWidget::StartNewGame()
+void UWMainMenu::StartNewGame()
 {
 	UGameplayStatics::OpenLevel(this, TEXT("HexWorld"));
 }
 
-void UMenuModeWidget::QuitGame()
+void UWMainMenu::QuitGame()
 {
 }

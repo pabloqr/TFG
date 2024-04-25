@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "GameFramework/HUD.h"
 
-#include "MenuModeHUD.generated.h"
+#include "HUDMenuMode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TFG_API AMenuModeHUD : public AHUD
+class TFG_API AHUDMenuMode : public AHUD
 {
 	GENERATED_BODY()
 

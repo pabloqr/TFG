@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "MenuModeWidget.generated.h"
+#include "WMainMenu.generated.h"
 
 class UButton;
 
@@ -12,7 +12,7 @@ class UButton;
  * 
  */
 UCLASS()
-class TFG_API UMenuModeWidget : public UUserWidget
+class TFG_API UWMainMenu : public UUserWidget
 {
 	GENERATED_BODY()
 
@@ -29,7 +29,7 @@ protected:
 	UPROPERTY(meta=(BindWidget))
 	UButton* QuitButton;
 
-	void NativeConstruct() override;
+	virtual void NativeConstruct() override;
 
 	UFUNCTION()
 	void StartNewGame();
