@@ -18,9 +18,10 @@ void UWMainMenu::NativeConstruct()
 
 void UWMainMenu::StartNewGame()
 {
-	UGameplayStatics::OpenLevel(this, TEXT("HexWorld"));
+	UGameplayStatics::OpenLevel(this, TEXT("GameLevel"));
 }
 
 void UWMainMenu::QuitGame()
 {
+	UKismetSystemLibrary::QuitGame(GetWorld(), nullptr, EQuitPreference::Quit, false);
 }

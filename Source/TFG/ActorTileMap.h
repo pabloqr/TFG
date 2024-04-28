@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "ATileMap.generated.h"
+#include "ActorTileMap.generated.h"
 
 struct FMapData;
 enum class ETileType : uint8;
