@@ -1,19 +1,18 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "ActorTileMap.h"
 
 #include "JsonManager.h"
 #include "SaveMap.h"
 #include "ActorTile.h"
+#include "GInstance.h"
 #include "Kismet/GameplayStatics.h"
 
-/**
- * Constructor de la clase que inicializa los parametros del actor
- */
 AActorTileMap::AActorTileMap()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	// PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
+	InstancedStaticMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("TileGrid"));
 
 	Rows = 4;
 	Cols = 12;
@@ -32,14 +31,6 @@ AActorTileMap::AActorTileMap()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-/**
- * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
- * en los polos
- * 
- * @param Pos1D Posicion en el Array1D
- * @param IceRow Indice dentro del numero de filas que pueden contener Hielo
- * @return Probabilidad de que la casilla en la posicion dada pueda contener Hielo
- */
 float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 {
 	float CurrentProbability = 0.8;
@@ -70,22 +61,6 @@ float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 	return CurrentProbability;
 }
 
-/**
- * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en las casillas
- * circundantes a la actual. Para ello, llama al metodo UpdateProbabilityAtPos para las casillas correspondientes
- *
- * Dado que la generacion de casillas se realiza de forma iterativa, no tiene sentido que se modifique la probabilidad
- * para las casillas que ya han sido procesadas, por lo que tan solo se modificaran:
- *		- La casilla en la misma fila y en la siguiente columna
- *		- La casilla en la siguiente fila y en la columna anterior
- *		- La casilla en la siguiente fila y en la misma columna
- *		- La casilla en la siguiente fila y en la siguiente columna
- *
- * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- * @param TileType Tipo de casilla a modificar
- * @param Probability Variacion en el valor de la probabilidad
- * @param Probabilities Array de probabilidades
- */
 void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y), TileType, Probability, Probabilities);
@@ -94,15 +69,6 @@ void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType Ti
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y+1), TileType, Probability, Probabilities);
 }
 
-/**
- * Metodo privado que actualiza el valore de la probabilidad de aparicion de un tipo de casilla en una posicion
- * concreta del Array2D. Para ello, verifica que la posicion sea valida para el mapa actual
- * 
- * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- * @param TileType Tipo de casilla a modificar
- * @param Probability Variacion en el valor de la probabilidad
- * @param Probabilities Array de probabilidades
- */
 void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
 {
 	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
@@ -123,25 +89,6 @@ void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileTy
 	}
 }
 
-/**
- * Metodo privado que calcula el tipo de casilla a generar en el mapa
- *
- * El algoritmo tendrá en cuenta las posiciones de los polos para generar las casillas mas frias (Hielo, Nieve)
- * En funcion del tipo de casilla que aparezca, se modificara la probabilidad de aparicion de otros tipos para que
- * el mapa sea mas 'realista':
- *		- Agua:
- *			+ probabilidad para Agua (formacion de oceanos)
- *			- probabilidad para Montana
- *		- Montana:
- *			+ probabilidad para Montana (formacion de cordilleras)
- *		- Bosque:
- *			+ probabilidad para Bosque (formacion de bosques extensos)
- * 
- * @param Pos1D Posicion en el Array1D
- * @param Pos2D Coordenadas en el Array2D
- * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
- * @return Tipo de casilla a generar
- */
 ETileType AActorTileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
 {
 	ETileType GeneratedTile = ETileType::None;
@@ -252,15 +199,18 @@ TSubclassOf<AActorTile> AActorTileMap::SelectTileType(const ETileType TileType) 
 	return SelectedTile;
 }
 
-void AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
+FVector2D AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
 {
 	const float RowPos = Pos2D.Y * HorizontalOffset;
 	const float ColPos = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
+	GridSize = FVector2D(RowPos, ColPos);
 
 	const TSubclassOf<AActorTile> TileToSpawn = SelectTileType(TileType);
+
+	const int32 RotationSelector = FMath::RandRange(0, 5);
+	const float Rotation = TileType == ETileType::Mountains ? 180.0 / 3.0 * RotationSelector : 0.0;
 	
-	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator::ZeroRotator);
-	// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("[%d][%d] valid: %d"), Pos2D.X, Pos2D.Y, NewTile == nullptr))
+	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator(0, Rotation, 0));
 	if (NewTile != nullptr)
 	{
 		NewTile->SetPosition(FIntPoint(Pos2D.X, Pos2D.Y));
@@ -269,6 +219,8 @@ void AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, cons
 	}
 
 	Tiles[Pos1D] = NewTile;
+
+	return FVector2D(RowPos, ColPos);
 }
 
 void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
@@ -276,8 +228,6 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
 	Tiles.SetNumZeroed(TilesInfo.Num());
 	for (int32 i = 0; i < TilesInfo.Num(); ++i)
 	{
-		// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d, %d, %d)"), TilesInfo[i].Row, TilesInfo[i].Col, TilesInfo[i].TileType))
-
 		AActorTile* Tile = Tiles[i];
 		const ETileType TileType = AActorTile::IntToTileType(TilesInfo[i].TileType);
 		
@@ -293,13 +243,6 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-/**
- * Metodo ejecutado cuando el juego es iniciado o el actor es generado
- *
- * Inicializara los valores de los parametros teniendo en cuenta los que ya han sido actualizados por el
- * Blueprint y generara el mapa, almacenando los datos necesarios para su posterior procesamiento durante
- * la partida
- */
 void AActorTileMap::BeginPlay()
 {
 	Super::BeginPlay();
@@ -336,6 +279,8 @@ void AActorTileMap::BeginPlay()
 		Probabilities[Pos].WaterProbability = WaterTileChance;
 	}
 
+	InstancedStaticMeshComponent->ClearInstances();
+
 	// Se genera el mapa
 	// Se recorren primero las filas y, despues, las columnas de forma que se establece su posicion en el mapa,
 	// se calcula la nueva casilla a generar, se genera en el juego y se actualiza el array de casillas interno
@@ -347,16 +292,20 @@ void AActorTileMap::BeginPlay()
 			const FIntPoint Pos2D = FIntPoint(Row, Col);
 			const ETileType TileType = GenerateTileType(Pos1D, Pos2D, Probabilities);
 
-			SetTileAtPos(Pos1D, Pos2D, TileType);
+			const FVector2D TilePos = SetTileAtPos(Pos1D, Pos2D, TileType);
+			InstancedStaticMeshComponent->AddInstance(FTransform(FVector(TilePos.X, TilePos.Y, 0.01)));
 		}
+	}
+
+	UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (GameInstance)
+	{
+		GameInstance->GridSize = FVector2D(GridSize.X, GridSize.Y - RowOffset);
 	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-/**
- * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
- */
 void AActorTileMap::SaveMap() const
 {
 	TArray<FMapData> MapData;
@@ -375,9 +324,6 @@ void AActorTileMap::SaveMap() const
 	}
 }
 
-/**
- * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
- */
 void AActorTileMap::LoadMap()
 {
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
@@ -386,9 +332,6 @@ void AActorTileMap::LoadMap()
 	}
 }
 
-/**
- * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json
- */
 void AActorTileMap::MapToJson()
 {
 	TArray<FMapData> JsonData;
@@ -407,9 +350,6 @@ void AActorTileMap::MapToJson()
 	UJsonManager::MapStructToJson("C:/Users/Pablo/AppData/Local/Temp/Test.json", JsonData, Success, ResultMessage);
 }
 
-/**
- * Metodo que transforma la informacion sobre las casillas de un archivo Json para actualizar el mapa
- */
 void AActorTileMap::JsonToMap()
 {
 	bool Success = true;

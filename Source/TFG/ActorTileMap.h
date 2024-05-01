@@ -60,7 +60,13 @@ class TFG_API AActorTileMap : public AActor
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
+	UInstancedStaticMeshComponent *InstancedStaticMeshComponent;
+	
+	UPROPERTY(BlueprintReadWrite, BlueprintGetter="GetTiles", Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
+
+	FVector2D GridSize;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Rows;
@@ -217,7 +223,7 @@ private:
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param TileType Tipo de casilla
 	 */
-	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
+	FVector2D SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
 
 	/**
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
@@ -232,7 +238,9 @@ protected:
 	 */
 	virtual void BeginPlay() override;
 
-public:
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Map|Grid")
+	TArray<AActorTile*> GetTiles() { return Tiles; }
+
 	/**
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
 	 */

@@ -18,7 +18,7 @@ void UWMainMenu::NativeConstruct()
 
 void UWMainMenu::StartNewGame()
 {
-	UGameplayStatics::OpenLevel(this, TEXT("GameLevel"));
+	UGameplayStatics::OpenLevel(this, TEXT("MainLevel"));
 }
 
 void UWMainMenu::QuitGame()

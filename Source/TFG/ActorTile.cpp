@@ -10,10 +10,13 @@
  */
 AActorTile::AActorTile()
 {
- 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = false;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
-
+	
 	MapPosition = FIntPoint(-1, -1);
 }
 
