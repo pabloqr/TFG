@@ -2,20 +2,26 @@
 
 #include "JsonManager.h"
 #include "SaveMap.h"
-#include "ActorTile.h"
 #include "GInstance.h"
 #include "Kismet/GameplayStatics.h"
 
 AActorTileMap::AActorTileMap()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
+	/*
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	InstancedStaticMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("TileGrid"));
+	InstancedStaticMeshComponent->SetupAttachment(RootComponent);
+	InstancedStaticMeshComponent->SetVectorParameterValueOnMaterials(TEXT("Color"), FVector(Color.R, Color.G, Color.B));
+	InstancedStaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	*/
 
-	Rows = 4;
-	Cols = 12;
+	GridSize = FVector2D(0.0, 0.0);
+
+	Rows = 32;
+	Cols = 64;
 
 	RowOffset = 0.0;
 	HorizontalOffset = 0.0;
@@ -61,7 +67,7 @@ float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 	return CurrentProbability;
 }
 
-void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const
 {
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y), TileType, Probability, Probabilities);
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X-1, Pos2D.Y+1), TileType, Probability, Probabilities);
@@ -69,7 +75,7 @@ void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType Ti
 	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y+1), TileType, Probability, Probabilities);
 }
 
-void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const
 {
 	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
 	if (Pos2D.X-1 >= 0 && Pos2D.X+1 < Rows && Pos2D.Y+1 < Cols)
@@ -89,7 +95,7 @@ void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileTy
 	}
 }
 
-ETileType AActorTileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const
+ETileType AActorTileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const
 {
 	ETileType GeneratedTile = ETileType::None;
 
@@ -180,58 +186,23 @@ ETileType AActorTileMap::GenerateTileType(const int32 Pos1D, const FIntPoint& Po
 	return GeneratedTile;
 }
 
-TSubclassOf<AActorTile> AActorTileMap::SelectTileType(const ETileType TileType) const
+void AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
 {
-	TSubclassOf<AActorTile> SelectedTile;
-	switch (TileType)
-	{
-		case ETileType::Plains: SelectedTile = PlainsTile; break;
-		case ETileType::Hills: SelectedTile = HillsTile; break;
-		case ETileType::Forest: SelectedTile = ForestTile; break;
-		case ETileType::SnowPlains: SelectedTile = SnowTile; break;
-		case ETileType::SnowHills: SelectedTile = HillsTile; break;
-		case ETileType::Ice: SelectedTile = IceTile; break;
-		case ETileType::Mountains: SelectedTile = MountainsTile; break;
-		case ETileType::Water: SelectedTile = WaterTile; break;
-		default: SelectedTile = nullptr; break;
-	}
+	GridSize.X = Pos2D.Y * HorizontalOffset;
+	GridSize.Y = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
-	return SelectedTile;
+	TilesInfo[Pos1D] = FTileInfo(Pos2D, GridSize, TileType);
 }
 
-FVector2D AActorTileMap::SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType)
+void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 {
-	const float RowPos = Pos2D.Y * HorizontalOffset;
-	const float ColPos = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
-	GridSize = FVector2D(RowPos, ColPos);
-
-	const TSubclassOf<AActorTile> TileToSpawn = SelectTileType(TileType);
-
-	const int32 RotationSelector = FMath::RandRange(0, 5);
-	const float Rotation = TileType == ETileType::Mountains ? 180.0 / 3.0 * RotationSelector : 0.0;
-	
-	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(TileToSpawn, FVector(FIntPoint(RowPos, ColPos)), FRotator(0, Rotation, 0));
-	if (NewTile != nullptr)
-	{
-		NewTile->SetPosition(FIntPoint(Pos2D.X, Pos2D.Y));
-		// TODO quitar para lanzamiento
-		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), Pos2D.X, Pos2D.Y));
-	}
-
-	Tiles[Pos1D] = NewTile;
-
-	return FVector2D(RowPos, ColPos);
-}
-
-void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
-{
-	Tiles.SetNumZeroed(TilesInfo.Num());
-	for (int32 i = 0; i < TilesInfo.Num(); ++i)
+	Tiles.SetNumZeroed(TilesData.Num());
+	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
 		AActorTile* Tile = Tiles[i];
-		const ETileType TileType = AActorTile::IntToTileType(TilesInfo[i].TileType);
+		const ETileType TileType = AActorTile::IntToTileType(TilesData[i].TileType);
 		
-		if (Tile->GetTileType() != TileType)
+		if (Tile->GetType() != TileType)
 		{
 			const FIntPoint TilePos = Tile->GetMapPosition();
 			Tile->Destroy();
@@ -246,7 +217,10 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesInfo)
 void AActorTileMap::BeginPlay()
 {
 	Super::BeginPlay();
+}
 
+void AActorTileMap::GenerateMap()
+{
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
 	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 10.0));
@@ -261,8 +235,9 @@ void AActorTileMap::BeginPlay()
 
 	// Se declaran e inicializan los vectores necesarios para la generacion del mapa
 	const int32 Dimension = Rows*Cols;
-	TArray<FSTileProbability> Probabilities;
-	
+	TArray<FTileProbability> Probabilities;
+
+	TilesInfo.SetNumZeroed(Dimension);
 	Tiles.SetNumZeroed(Dimension);
 	Probabilities.SetNumZeroed(Dimension);
 
@@ -278,9 +253,7 @@ void AActorTileMap::BeginPlay()
 		
 		Probabilities[Pos].WaterProbability = WaterTileChance;
 	}
-
-	InstancedStaticMeshComponent->ClearInstances();
-
+	
 	// Se genera el mapa
 	// Se recorren primero las filas y, despues, las columnas de forma que se establece su posicion en el mapa,
 	// se calcula la nueva casilla a generar, se genera en el juego y se actualiza el array de casillas interno
@@ -292,8 +265,7 @@ void AActorTileMap::BeginPlay()
 			const FIntPoint Pos2D = FIntPoint(Row, Col);
 			const ETileType TileType = GenerateTileType(Pos1D, Pos2D, Probabilities);
 
-			const FVector2D TilePos = SetTileAtPos(Pos1D, Pos2D, TileType);
-			InstancedStaticMeshComponent->AddInstance(FTransform(FVector(TilePos.X, TilePos.Y, 0.01)));
+			SetTileAtPos(Pos1D, Pos2D, TileType);
 		}
 	}
 
@@ -302,6 +274,33 @@ void AActorTileMap::BeginPlay()
 	{
 		GameInstance->GridSize = FVector2D(GridSize.X, GridSize.Y - RowOffset);
 	}
+}
+
+void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo)
+{
+	// Se calcula la rotacion de la casilla que se va a anadir a la escena
+	const int32 RotationSelector = FMath::RandRange(0, 5);
+	const float Rotation = TileInfo.TileType == ETileType::Mountains ? 180.0 / 3.0 * RotationSelector : 0.0;
+
+	// Se anade la casilla a la escena
+	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(
+		Tile,
+		FVector(TileInfo.MapPos2D.X, TileInfo.MapPos2D.Y, 0.0),
+		FRotator(0, Rotation, 0));
+
+	// Se actualizan los atributos de la casilla
+	if (NewTile != nullptr)
+	{
+		NewTile->SetInfo(TileInfo);
+		// TODO quitar para lanzamiento
+		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
+	}
+
+	// Se actualiza el array de casillas con la que se ha anadido
+	Tiles[GetPositionInArray(TileInfo.Pos2D)] = NewTile;
+
+	// Se actualiza el grid que nos permite interactuar con el mapa
+	// InstancedStaticMeshComponent->AddInstance(FTransform(FVector(TileInfo.MapPos2D.X, TileInfo.MapPos2D.Y, GridOffset)));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -332,6 +331,7 @@ void AActorTileMap::LoadMap()
 	}
 }
 
+/*
 void AActorTileMap::MapToJson()
 {
 	TArray<FMapData> JsonData;
@@ -340,7 +340,7 @@ void AActorTileMap::MapToJson()
 	for (int32 i = 0; i < Tiles.Num(); ++i)
 	{
 		const AActorTile *Tile = Tiles[i];
-		const int32 TileType = AActorTile::TileTypeToInt(Tile->GetTileType());
+		const int32 TileType = AActorTile::TileTypeToInt(Tile->GetType());
 		
 		JsonData[i] = FMapData(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
 	}
@@ -358,4 +358,12 @@ void AActorTileMap::JsonToMap()
 
 	if (Success) SetMapFromSave(JsonData);
 	else UE_LOG(LogTemp, Error, TEXT("%s"), *ResultMessage)
+}
+*/
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorTileMap::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
 }

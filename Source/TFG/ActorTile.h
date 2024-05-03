@@ -21,6 +21,43 @@ enum class ETileType : uint8
 	Max = 255 UMETA(Hidden)
 };
 
+UENUM(BlueprintType)
+enum class ETileState : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	Hovered = 1 UMETA(DisplayName="Hovered"),
+	Selected = 2 UMETA(DisplayName="Selected")
+};
+
+USTRUCT(BlueprintType)
+struct FTileInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	FIntPoint Pos2D;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	FVector2D MapPos2D;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	ETileType TileType;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	ETileState TileState;
+
+	FTileInfo(): FTileInfo(
+		FIntPoint(0, 0),
+		FVector2D(0.0, 0.0),
+		ETileType::None,
+		ETileState::None) {}
+
+	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType, const ETileState TileState = ETileState::None)
+	{
+		this->Pos2D = FIntPoint(Pos2D);
+		this->MapPos2D = FVector2D(MapPos2D);
+		this->TileType = TileType;
+		this->TileState = TileState;
+	}
+};
+
 UCLASS()
 class TFG_API AActorTile : public AActor
 {
@@ -28,13 +65,10 @@ class TFG_API AActorTile : public AActor
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile")
-	FIntPoint MapPosition;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tile")
-	ETileType TileType;
+	FTileInfo TileInfo;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
-	UStaticMeshComponent *TileMesh;
+	UStaticMeshComponent* TileMesh;
 	
 public:
 	/**
@@ -59,6 +93,13 @@ public:
 	static ETileType IntToTileType(const int32 TileTypeVal);
 
 	/**
+	 * Getter del atributo Info
+	 * 
+	 * @return Estructura que contiene toda la informacion sobre la casilla
+	 */
+	FTileInfo GetInfo() const;
+
+	/**
 	 * Getter del atributo MapPosition
 	 * 
 	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
@@ -66,16 +107,64 @@ public:
 	FIntPoint GetMapPosition() const;
 
 	/**
+	 * Getter del atributo MapPosition
+	 * 
+	 * @return Pareja de valores con las coordenadas de la fila y la columna en la esncena
+	 */
+	FVector2D GetScenePosition() const;
+
+	/**
 	 * Getter del atributo TileType
 	 * 
 	 * @return Tipo de casilla
 	 */
-	ETileType GetTileType() const;
+	ETileType GetType() const;
+
+	/**
+	 * Getter del atributo TileState
+	 * 
+	 * @return Estado de la casilla
+	 */
+	ETileState GetState() const;
+
+	/**
+	 * Setter de la informacion de la casilla
+	 * 
+	 * @param Info Informacion sobre la casilla
+	 */
+	void SetInfo(const FTileInfo& Info);
 
 	/**
 	 * Setter del atributo MapPosition
 	 * 
-	 * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 */
-	void SetPosition(const FIntPoint& Position);
+	void SetPosition(const FIntPoint& Pos2D);
+	/**
+	 * Setter del atributo MapPosition
+	 * 
+	 * @param MapPos2D Pareja de valores con las coordenadas de la fila y la columna en la escena
+	 */
+	void SetPosition(const FVector2D& MapPos2D);
+	/**
+	 * Setter del atributo MapPosition
+	 * 
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param MapPos2D Pareja de valores con las coordenadas de la fila y la columna en la escena
+	 */
+	void SetPosition(const FIntPoint& Pos2D, const FVector2D& MapPos2D);
+
+	/**
+	 * Setter del atributo TileType
+	 * 
+	 * @param TileType Tipo de casilla
+	 */
+	void SetType(const ETileType TileType);
+
+	/**
+	 * Setter del atributo TileState
+	 * 
+	 * @param TileState Estado de la casilla
+	 */
+	void SetState(const ETileState TileState);
 };

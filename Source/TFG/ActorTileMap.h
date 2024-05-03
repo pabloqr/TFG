@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorTile.h"
 #include "GameFramework/Actor.h"
 #include "ActorTileMap.generated.h"
 
@@ -37,7 +38,7 @@ enum class EMapSeaLevel : uint8
  * Estructura que almacena la probabilidad de aparicion de cada uno de los tipos de casillas
  */
 USTRUCT()
-struct FSTileProbability
+struct FTileProbability
 {
 	GENERATED_BODY()
 	
@@ -60,10 +61,19 @@ class TFG_API AActorTileMap : public AActor
 	GENERATED_BODY()
 
 protected:
+	/*
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
-	UInstancedStaticMeshComponent *InstancedStaticMeshComponent;
+	UInstancedStaticMeshComponent* InstancedStaticMeshComponent;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
+	FLinearColor Color = FLinearColor(0.0, 0.0, 0.0);
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
+	float GridOffset = 0.01;
+	*/
 	
-	UPROPERTY(BlueprintReadWrite, BlueprintGetter="GetTiles", Category="Map|Grid")
+	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	TArray<FTileInfo> TilesInfo;
+	UPROPERTY()
 	TArray<AActorTile*> Tiles;
 
 	FVector2D GridSize;
@@ -79,21 +89,6 @@ protected:
 	float HorizontalOffset;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float VerticalOffset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> PlainsTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> HillsTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> ForestTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> SnowTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> IceTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> MountainsTile;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Tile")
-	TSubclassOf<AActorTile> WaterTile;
 
 	UPROPERTY(VisibleAnywhere, Category="Map|Parameters")
 	float WaterTileChance = 0.4f;
@@ -174,7 +169,7 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
+	void UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const;
 	/**
 	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en una posicion
 	 * concreta del Array2D
@@ -184,7 +179,7 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FSTileProbability>& Probabilities) const;
+	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const;
 
 	/**
 	 * Metodo privado que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
@@ -206,15 +201,7 @@ private:
 	 * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
 	 * @return Tipo de casilla a generar
 	 */
-	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FSTileProbability>& Probabilities) const;
-
-	/**
-	 * Metodo privado que selecciona la instancia a generar en el mapa dado el tipo de casilla deseado
-	 * 
-	 * @param TileType Tipo de casilla
-	 * @return Instancia del tipo de casilla a generar en el mapa
-	 */
-	TSubclassOf<AActorTile> SelectTileType(ETileType TileType) const;
+	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const;
 
 	/**
 	 * Metodo privado que actualiza la casilla deseada al tipo especificado
@@ -223,14 +210,14 @@ private:
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param TileType Tipo de casilla
 	 */
-	FVector2D SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
+	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
 
 	/**
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
 	 * 
-	 * @param TilesInfo Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
+	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
 	 */
-	void SetMapFromSave(const TArray<FMapData>& TilesInfo);
+	void SetMapFromSave(const TArray<FMapData>& TilesData);
 
 protected:
 	/**
@@ -240,6 +227,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Map|Grid")
 	TArray<AActorTile*> GetTiles() { return Tiles; }
+
+	UFUNCTION(BlueprintCallable, Category="Map|Grid")
+	void GenerateMap();
+
+	UFUNCTION(BlueprintCallable, Category="Map|Grid")
+	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
 
 	/**
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
@@ -256,12 +249,15 @@ protected:
 	/**
 	 * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json
 	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Json")
-	void MapToJson();
+	// UFUNCTION(BlueprintCallable, Category="Map|Json")
+	// void MapToJson();
 
 	/**
 	 * Metodo que transforma la informacion sobre las casillas de un archivo Json para actualizar el mapa
 	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Json")
-	void JsonToMap();
+	// UFUNCTION(BlueprintCallable, Category="Map|Json")
+	// void JsonToMap();
+	
+public:
+	virtual void Tick(float DeltaSeconds) override;
 };

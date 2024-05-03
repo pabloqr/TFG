@@ -5,9 +5,6 @@
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 
-/**
- * Constructor de la clase que inicializa los parametros del actor
- */
 AActorTile::AActorTile()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -17,17 +14,11 @@ AActorTile::AActorTile()
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
 	
-	MapPosition = FIntPoint(-1, -1);
+	TileInfo = FTileInfo();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-/**
- * Metodo que transforma el tipo de casilla en un valor numerico
- * 
- * @param TileType Tipo de casilla
- * @return Valor entero dado el tipo de casilla
- */
 int32 AActorTile::TileTypeToInt(const ETileType TileType)
 {
 	int32 TileTypeVal;
@@ -47,12 +38,6 @@ int32 AActorTile::TileTypeToInt(const ETileType TileType)
 	return TileTypeVal;
 }
 
-/**
- * Metodo que transforma un valor numerico en el tipo de casilla
- * 
- * @param TileTypeVal Valor numerico del tipo de casilla
- * @return Tipo de casilla
- */
 ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
 {
 	ETileType TileType;
@@ -72,33 +57,60 @@ ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
 	return TileType;
 }
 
-/**
- * Getter del atributo MapPosition
- * 
- * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- */
+FTileInfo AActorTile::GetInfo() const
+{
+	return TileInfo;
+}
+
 FIntPoint AActorTile::GetMapPosition() const
 {
-	return MapPosition;
+	return TileInfo.Pos2D;
 }
 
-/**
- * Getter del atributo TileType
- * 
- * @return Tipo de casilla
- */
-ETileType AActorTile::GetTileType() const
+FVector2D AActorTile::GetScenePosition() const
 {
-	return TileType;
+	return TileInfo.MapPos2D;
 }
 
-/**
- * Setter del atributo MapPosition
- * 
- * @param Position Pareja de valores con las coordenadas de la fila y la columna en el Array2D
- */
-void AActorTile::SetPosition(const FIntPoint& Position)
+ETileType AActorTile::GetType() const
 {
-	MapPosition.X = Position.X;
-	MapPosition.Y = Position.Y;
+	return TileInfo.TileType;
+}
+
+ETileState AActorTile::GetState() const
+{
+	return TileInfo.TileState;
+}
+
+void AActorTile::SetInfo(const FTileInfo& Info)
+{
+	SetPosition(Info.Pos2D, Info.MapPos2D);
+	SetType(Info.TileType);
+	SetState(Info.TileState);
+}
+
+void AActorTile::SetPosition(const FIntPoint& Pos2D)
+{
+	TileInfo.Pos2D = FIntPoint(Pos2D);
+}
+
+void AActorTile::SetPosition(const FVector2D& MapPos2D)
+{
+	TileInfo.MapPos2D = FVector2D(MapPos2D);
+}
+
+void AActorTile::SetPosition(const FIntPoint& Pos2D, const FVector2D& MapPos2D)
+{
+	SetPosition(Pos2D);
+	SetPosition(MapPos2D);
+}
+
+void AActorTile::SetType(const ETileType TileType)
+{
+	TileInfo.TileType = TileType;
+}
+
+void AActorTile::SetState(const ETileState TileState)
+{
+	TileInfo.TileState = TileState;
 }
