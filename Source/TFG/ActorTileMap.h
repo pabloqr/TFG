@@ -78,9 +78,9 @@ protected:
 
 	FVector2D GridSize;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Rows;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Cols;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
@@ -90,13 +90,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float VerticalOffset;
 
-	UPROPERTY(VisibleAnywhere, Category="Map|Parameters")
 	float WaterTileChance = 0.4f;
 	float WaterProbabilityModifier;
 	
-	UPROPERTY(EditAnywhere, Category="Map|Parameters")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Parameters")
 	EMapTemperature MapTemperature;
-	UPROPERTY(EditAnywhere, Category="Map|Parameters")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Parameters")
 	EMapSeaLevel MapSeaLevel;
 
 	int32 NumIceRows;
@@ -229,7 +228,7 @@ protected:
 	TArray<AActorTile*> GetTiles() { return Tiles; }
 
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
-	void GenerateMap();
+	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
 
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
 	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);

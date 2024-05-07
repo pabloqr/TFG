@@ -113,9 +113,9 @@ void UJsonManager::WriteJson(const FString& JsonPath, const TSharedPtr<FJsonObje
  * @param ResultMessage Informacion de la operacion
  * @return Lista que contiene la informacion del archivo Json
  */
-TArray<FMapData> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
+TArray<FMapDataForJson> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Success, FString& ResultMessage)
 {
-	TArray<FMapData> JsonData;
+	TArray<FMapDataForJson> JsonData;
 	
 	// Se intenta crear un JsonObject de un archivo
 	const TSharedPtr<FJsonObject> JsonObject = ReadJson(JsonPath, Success, ResultMessage);
@@ -139,7 +139,7 @@ TArray<FMapData> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Suc
 			continue;
 		}
 
-		FMapData DataEntry;
+		FMapDataForJson DataEntry;
 		DataEntry.Row = JsonDataEntry->GetIntegerField(TEXT("Row"));
 		DataEntry.Col = JsonDataEntry->GetIntegerField(TEXT("Column"));
 		DataEntry.TileType = JsonDataEntry->GetIntegerField(TEXT("TileType"));
@@ -160,12 +160,12 @@ TArray<FMapData> UJsonManager::JsonToMapStruct(const FString JsonPath, bool& Suc
  * @param Success Resultado de la operacion
  * @param ResultMessage Informacion de la operacion
  */
-void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapData>& JsonData, bool& Success, FString& ResultMessage)
+void UJsonManager::MapStructToJson(const FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage)
 {
 	const TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject);
 
 	TArray<TSharedPtr<FJsonValue>> DataArray;
-	for (const FMapData Data : JsonData)
+	for (const FMapDataForJson Data : JsonData)
 	{
 		TSharedPtr<FJsonObject> DataJsonObject = MakeShareable(new FJsonObject);
 		DataJsonObject->SetNumberField(TEXT("Row"), Data.Row);

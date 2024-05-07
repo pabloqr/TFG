@@ -41,7 +41,7 @@ struct FTileInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	ETileType TileType;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	ETileState TileState;
+	TArray<ETileState> TileStates;
 
 	FTileInfo(): FTileInfo(
 		FIntPoint(0, 0),
@@ -54,7 +54,7 @@ struct FTileInfo
 		this->Pos2D = FIntPoint(Pos2D);
 		this->MapPos2D = FVector2D(MapPos2D);
 		this->TileType = TileType;
-		this->TileState = TileState;
+		this->TileStates.Add(TileState);
 	}
 };
 
@@ -121,11 +121,11 @@ public:
 	ETileType GetType() const;
 
 	/**
-	 * Getter del atributo TileState
+	 * Getter del atributo TileStatess
 	 * 
 	 * @return Estado de la casilla
 	 */
-	ETileState GetState() const;
+	TArray<ETileState> GetState() const;
 
 	/**
 	 * Setter de la informacion de la casilla
@@ -162,9 +162,41 @@ public:
 	void SetType(const ETileType TileType);
 
 	/**
-	 * Setter del atributo TileState
+	 * Setter del atributo TileStatess
+	 * 
+	 * @param TileStates Estados de la casilla
+	 */
+	void SetState(const TArray<ETileState>& TileStates);
+	/**
+	 * Setter del atributo TileStatess
 	 * 
 	 * @param TileState Estado de la casilla
 	 */
 	void SetState(const ETileState TileState);
+
+	/**
+	 * Anade los estados dados a los actuales
+	 * 
+	 * @param TileStates Estados de la casilla
+	 */
+	void AddState(const TArray<ETileState>& TileStates);
+	/**
+	 * Anade el estado dado a los actuales
+	 * 
+	 * @param TileState Estado de la casilla
+	 */
+	void AddState(const ETileState TileState);
+
+	/**
+	 * Elimina los estados dados de los actuales
+	 * 
+	 * @param TileStates Estados de la casilla
+	 */
+	void RemoveState(const TArray<ETileState>& TileStates);
+	/**
+	 * Elimina el estado dado de los actuales
+	 * 
+	 * @param TileState Estado de la casilla
+	 */
+	void RemoveState(const ETileState TileState);
 };

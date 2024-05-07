@@ -1,6 +1,5 @@
 #include "ActorTileMap.h"
 
-#include "JsonManager.h"
 #include "SaveMap.h"
 #include "GInstance.h"
 #include "Kismet/GameplayStatics.h"
@@ -219,8 +218,12 @@ void AActorTileMap::BeginPlay()
 	Super::BeginPlay();
 }
 
-void AActorTileMap::GenerateMap()
+void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
 {
+	// Se actualizan los valores para los modificadores del mapa
+	MapTemperature = MapTemp;
+	MapSeaLevel = MapSeaLvl;
+	
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
 	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 10.0));
@@ -334,7 +337,7 @@ void AActorTileMap::LoadMap()
 /*
 void AActorTileMap::MapToJson()
 {
-	TArray<FMapData> JsonData;
+	TArray<FMapDataForJson> JsonData;
 	JsonData.SetNumZeroed(Tiles.Num());
 
 	for (int32 i = 0; i < Tiles.Num(); ++i)
@@ -342,7 +345,7 @@ void AActorTileMap::MapToJson()
 		const AActorTile *Tile = Tiles[i];
 		const int32 TileType = AActorTile::TileTypeToInt(Tile->GetType());
 		
-		JsonData[i] = FMapData(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
+		JsonData[i] = FMapDataForJson(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
 	}
 
 	bool Success = true;
@@ -354,7 +357,7 @@ void AActorTileMap::JsonToMap()
 {
 	bool Success = true;
 	FString ResultMessage = "";
-	const TArray<FMapData> JsonData = UJsonManager::JsonToMapStruct("C:/Users/Pablo/AppData/Local/Temp/Test.json", Success, ResultMessage);
+	const TArray<FMapDataForJson> JsonData = UJsonManager::JsonToMapStruct("C:/Users/Pablo/AppData/Local/Temp/Test.json", Success, ResultMessage);
 
 	if (Success) SetMapFromSave(JsonData);
 	else UE_LOG(LogTemp, Error, TEXT("%s"), *ResultMessage)

@@ -9,8 +9,8 @@
 /**
  * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
  */
-USTRUCT(BlueprintType, Category="FileManager|Json")
-struct FMapData
+USTRUCT(BlueprintType, Category="Saves|Json")
+struct FMapDataForJson
 {
 	GENERATED_BODY()
 
@@ -21,14 +21,14 @@ struct FMapData
 	UPROPERTY()
 	int32 TileType;
 
-	FMapData()
+	FMapDataForJson()
 	{
 		Row = -1;
 		Col = -1;
 		TileType = -1;
 	}
 
-	FMapData(const int32 Row, const int32 Col, const int32 TileType)
+	FMapDataForJson(const int32 Row, const int32 Col, const int32 TileType)
 	{
 		this->Row = Row;
 		this->Col = Col;
@@ -93,7 +93,7 @@ public:
 	 * @return Lista que contiene la informacion del archivo Json
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static TArray<FMapData> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
+	static TArray<FMapDataForJson> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
 	 * Metodo estatico que transforma la estructura con la informacion a almacenar en un JsonObject
@@ -104,5 +104,5 @@ public:
 	 * @param ResultMessage Informacion de la operacion
 	 */
 	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
-	static void MapStructToJson(FString JsonPath, const TArray<FMapData>& JsonData, bool& Success, FString& ResultMessage);
+	static void MapStructToJson(FString JsonPath, const TArray<FMapDataForJson>& JsonData, bool& Success, FString& ResultMessage);
 };

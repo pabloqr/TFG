@@ -22,4 +22,8 @@ void UGInstance::Init()
 			UserSettings->ApplySettings(false);
 		}
 	}
+
+	// Se inicializan los parametros de la instancia
+	MapTemperature = EMapTemperature::Temperate;
+	MapSeaLevel = EMapSeaLevel::Standard;
 }

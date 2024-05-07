@@ -77,16 +77,16 @@ ETileType AActorTile::GetType() const
 	return TileInfo.TileType;
 }
 
-ETileState AActorTile::GetState() const
+TArray<ETileState> AActorTile::GetState() const
 {
-	return TileInfo.TileState;
+	return TileInfo.TileStates;
 }
 
 void AActorTile::SetInfo(const FTileInfo& Info)
 {
 	SetPosition(Info.Pos2D, Info.MapPos2D);
 	SetType(Info.TileType);
-	SetState(Info.TileState);
+	SetState(Info.TileStates);
 }
 
 void AActorTile::SetPosition(const FIntPoint& Pos2D)
@@ -110,7 +110,34 @@ void AActorTile::SetType(const ETileType TileType)
 	TileInfo.TileType = TileType;
 }
 
+void AActorTile::SetState(const TArray<ETileState>& TileStates)
+{
+	TileInfo.TileStates.Empty();
+	AddState(TileStates);
+}
+
 void AActorTile::SetState(const ETileState TileState)
 {
-	TileInfo.TileState = TileState;
+	TileInfo.TileStates.Empty();
+	AddState(TileState);
+}
+
+void AActorTile::AddState(const TArray<ETileState>& TileStates)
+{
+	for (const ETileState State : TileStates) AddState(State);
+}
+
+void AActorTile::AddState(const ETileState TileState)
+{
+	TileInfo.TileStates.AddUnique(TileState);
+}
+
+void AActorTile::RemoveState(const TArray<ETileState>& TileStates)
+{
+	for (const ETileState State : TileStates) RemoveState(State);
+}
+
+void AActorTile::RemoveState(const ETileState TileState)
+{
+	if (TileInfo.TileStates.Contains(TileState)) TileInfo.TileStates.Remove(TileState);
 }
