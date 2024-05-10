@@ -14,7 +14,7 @@ AActorTile::AActorTile()
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
 	
-	TileInfo = FTileInfo();
+	TileStates.Add(ETileState::None);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -59,85 +59,57 @@ ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
 
 FTileInfo AActorTile::GetInfo() const
 {
-	return TileInfo;
+	return FTileInfo(Pos2D, MapPos2D, TileType);
 }
 
-FIntPoint AActorTile::GetMapPosition() const
+const ETileType& AActorTile::GetType() const
 {
-	return TileInfo.Pos2D;
+	return TileType;
 }
 
-FVector2D AActorTile::GetScenePosition() const
+const TArray<ETileState>& AActorTile::GetState() const
 {
-	return TileInfo.MapPos2D;
+	return TileStates;
 }
 
-ETileType AActorTile::GetType() const
+void AActorTile::SetPos(const FTileInfo& Pos)
 {
-	return TileInfo.TileType;
+	AActorPlaceableElement::SetPos(Pos.Pos2D, Pos.MapPos2D);
 }
 
-TArray<ETileState> AActorTile::GetState() const
+void AActorTile::SetType(const ETileType Type)
 {
-	return TileInfo.TileStates;
+	TileType = Type;
 }
 
-void AActorTile::SetInfo(const FTileInfo& Info)
+void AActorTile::SetState(const TArray<ETileState>& States)
 {
-	SetPosition(Info.Pos2D, Info.MapPos2D);
-	SetType(Info.TileType);
-	SetState(Info.TileStates);
+	TileStates.Empty();
+	AddState(States);
 }
 
-void AActorTile::SetPosition(const FIntPoint& Pos2D)
+void AActorTile::SetState(const ETileState State)
 {
-	TileInfo.Pos2D = FIntPoint(Pos2D);
+	TileStates.Empty();
+	AddState(State);
 }
 
-void AActorTile::SetPosition(const FVector2D& MapPos2D)
+void AActorTile::AddState(const TArray<ETileState>& States)
 {
-	TileInfo.MapPos2D = FVector2D(MapPos2D);
+	for (const ETileState State : States) AddState(State);
 }
 
-void AActorTile::SetPosition(const FIntPoint& Pos2D, const FVector2D& MapPos2D)
+void AActorTile::AddState(const ETileState State)
 {
-	SetPosition(Pos2D);
-	SetPosition(MapPos2D);
+	TileStates.AddUnique(State);
 }
 
-void AActorTile::SetType(const ETileType TileType)
+void AActorTile::RemoveState(const TArray<ETileState>& States)
 {
-	TileInfo.TileType = TileType;
+	for (const ETileState State : States) RemoveState(State);
 }
 
-void AActorTile::SetState(const TArray<ETileState>& TileStates)
+void AActorTile::RemoveState(const ETileState State)
 {
-	TileInfo.TileStates.Empty();
-	AddState(TileStates);
-}
-
-void AActorTile::SetState(const ETileState TileState)
-{
-	TileInfo.TileStates.Empty();
-	AddState(TileState);
-}
-
-void AActorTile::AddState(const TArray<ETileState>& TileStates)
-{
-	for (const ETileState State : TileStates) AddState(State);
-}
-
-void AActorTile::AddState(const ETileState TileState)
-{
-	TileInfo.TileStates.AddUnique(TileState);
-}
-
-void AActorTile::RemoveState(const TArray<ETileState>& TileStates)
-{
-	for (const ETileState State : TileStates) RemoveState(State);
-}
-
-void AActorTile::RemoveState(const ETileState TileState)
-{
-	if (TileInfo.TileStates.Contains(TileState)) TileInfo.TileStates.Remove(TileState);
+	if (TileStates.Contains(State)) TileStates.Remove(State);
 }

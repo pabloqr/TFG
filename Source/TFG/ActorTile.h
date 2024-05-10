@@ -41,21 +41,17 @@ struct FTileInfo
 	FVector2D MapPos2D;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	ETileType TileType;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	TArray<ETileState> TileStates;
 
 	FTileInfo(): FTileInfo(
 		FIntPoint(0, 0),
 		FVector2D(0.0, 0.0),
-		ETileType::None,
-		ETileState::None) {}
+		ETileType::None) {}
 
-	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType, const ETileState TileState = ETileState::None)
+	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType)
 	{
 		this->Pos2D = FIntPoint(Pos2D);
 		this->MapPos2D = FVector2D(MapPos2D);
 		this->TileType = TileType;
-		this->TileStates.Add(TileState);
 	}
 };
 
@@ -65,11 +61,13 @@ class TFG_API AActorTile : public AActorPlaceableElement
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile")
-	FTileInfo TileInfo;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
 	UStaticMeshComponent* TileMesh;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	ETileType TileType;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	TArray<ETileState> TileStates;
 	
 public:
 	/**
@@ -94,110 +92,76 @@ public:
 	static ETileType IntToTileType(const int32 TileTypeVal);
 
 	/**
-	 * Getter del atributo Info
+	 * Metodo que devuelve la informacion serializada de la casilla
 	 * 
-	 * @return Estructura que contiene toda la informacion sobre la casilla
+	 * @return Informacion sobre la casilla
 	 */
 	FTileInfo GetInfo() const;
-
-	/**
-	 * Getter del atributo MapPosition
-	 * 
-	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 */
-	FIntPoint GetMapPosition() const;
-
-	/**
-	 * Getter del atributo MapPosition
-	 * 
-	 * @return Pareja de valores con las coordenadas de la fila y la columna en la esncena
-	 */
-	FVector2D GetScenePosition() const;
-
+	
 	/**
 	 * Getter del atributo TileType
 	 * 
 	 * @return Tipo de casilla
 	 */
-	ETileType GetType() const;
+	const ETileType& GetType() const;
 
 	/**
 	 * Getter del atributo TileStatess
 	 * 
 	 * @return Estado de la casilla
 	 */
-	TArray<ETileState> GetState() const;
+	const TArray<ETileState>& GetState() const;
 
 	/**
-	 * Setter de la informacion de la casilla
+	 * Setter del atributo Pos2D y MapPos2D
 	 * 
-	 * @param Info Informacion sobre la casilla
+	 * @param Pos Estructura que contiene la posicion en el tablero y en la escena
 	 */
-	void SetInfo(const FTileInfo& Info);
-
-	/**
-	 * Setter del atributo MapPosition
-	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 */
-	void SetPosition(const FIntPoint& Pos2D);
-	/**
-	 * Setter del atributo MapPosition
-	 * 
-	 * @param MapPos2D Pareja de valores con las coordenadas de la fila y la columna en la escena
-	 */
-	void SetPosition(const FVector2D& MapPos2D);
-	/**
-	 * Setter del atributo MapPosition
-	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 * @param MapPos2D Pareja de valores con las coordenadas de la fila y la columna en la escena
-	 */
-	void SetPosition(const FIntPoint& Pos2D, const FVector2D& MapPos2D);
+	void SetPos(const FTileInfo& Pos);
 
 	/**
 	 * Setter del atributo TileType
 	 * 
-	 * @param TileType Tipo de casilla
+	 * @param Type Tipo de casilla
 	 */
-	void SetType(const ETileType TileType);
+	void SetType(const ETileType Type);
 
 	/**
 	 * Setter del atributo TileStatess
 	 * 
-	 * @param TileStates Estados de la casilla
+	 * @param States Estados de la casilla
 	 */
-	void SetState(const TArray<ETileState>& TileStates);
+	void SetState(const TArray<ETileState>& States);
 	/**
 	 * Setter del atributo TileStatess
 	 * 
-	 * @param TileState Estado de la casilla
+	 * @param State Estado de la casilla
 	 */
-	void SetState(const ETileState TileState);
+	void SetState(const ETileState State);
 
 	/**
 	 * Anade los estados dados a los actuales
 	 * 
-	 * @param TileStates Estados de la casilla
+	 * @param States Estados de la casilla
 	 */
-	void AddState(const TArray<ETileState>& TileStates);
+	void AddState(const TArray<ETileState>& States);
 	/**
 	 * Anade el estado dado a los actuales
 	 * 
-	 * @param TileState Estado de la casilla
+	 * @param State Estado de la casilla
 	 */
-	void AddState(const ETileState TileState);
+	void AddState(const ETileState State);
 
 	/**
 	 * Elimina los estados dados de los actuales
 	 * 
-	 * @param TileStates Estados de la casilla
+	 * @param States Estados de la casilla
 	 */
-	void RemoveState(const TArray<ETileState>& TileStates);
+	void RemoveState(const TArray<ETileState>& States);
 	/**
 	 * Elimina el estado dado de los actuales
 	 * 
-	 * @param TileState Estado de la casilla
+	 * @param State Estado de la casilla
 	 */
-	void RemoveState(const ETileState TileState);
+	void RemoveState(const ETileState State);
 };

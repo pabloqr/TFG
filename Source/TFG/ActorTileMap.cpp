@@ -203,7 +203,7 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 		
 		if (Tile->GetType() != TileType)
 		{
-			const FIntPoint TilePos = Tile->GetMapPosition();
+			const FIntPoint TilePos = Tile->GetPos();
 			Tile->Destroy();
 
 			SetTileAtPos(i, TilePos, TileType);
@@ -294,7 +294,9 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	// Se actualizan los atributos de la casilla
 	if (NewTile != nullptr)
 	{
-		NewTile->SetInfo(TileInfo);
+		NewTile->SetPos(TileInfo);
+		NewTile->SetType(TileInfo.TileType);
+		
 		// TODO quitar para lanzamiento
 		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
 	}
