@@ -3,18 +3,18 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PawnFaction.h"
-#include "GameFramework/Pawn.h"
-#include "PMain.generated.h"
+#include "ActorUnit.h"
+#include "GameFramework/Actor.h"
+#include "ActorCivilUnit.generated.h"
 
 UCLASS()
-class TFG_API APMain : public APawnFaction
+class TFG_API AActorCivilUnit : public AActorUnit
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
-	APMain();
+	// Sets default values for this actor's properties
+	AActorCivilUnit();
 
 protected:
 	// Called when the game starts or when spawned
@@ -23,7 +23,4 @@ protected:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };

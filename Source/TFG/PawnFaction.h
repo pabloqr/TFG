@@ -3,18 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "PawnFaction.h"
 #include "GameFramework/Pawn.h"
-#include "PMain.generated.h"
+#include "PawnFaction.generated.h"
 
 UCLASS()
-class TFG_API APMain : public APawnFaction
+class TFG_API APawnFaction : public APawn
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this pawn's properties
-	APMain();
+	APawnFaction();
 
 protected:
 	// Called when the game starts or when spawned

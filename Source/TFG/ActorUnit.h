@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "InterfaceDamageable.h"
+#include "ActorDamageableElement.h"
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
@@ -29,17 +29,18 @@ struct FUnitInfo
 	int32 VisibilityPoints;
 };
 
-UCLASS()
-class TFG_API AActorUnit : public AActor, public IInterfaceDamageable
+UCLASS(Abstract)
+class TFG_API AActorUnit : public AActorDamageableElement
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
+	FUnitInfo UnitInfo;
 
 public:
 	// Sets default values for this actor's properties
 	AActorUnit();
-
-	virtual float GetCurrentHealthPoints() const override;
-	virtual void ApplyDamage(const float Damage) override;
 
 protected:
 	// Called when the game starts or when spawned

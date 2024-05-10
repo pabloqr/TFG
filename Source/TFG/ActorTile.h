@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorPlaceableElement.h"
 #include "GameFramework/Actor.h"
 #include "ActorTile.generated.h"
 
@@ -59,7 +60,7 @@ struct FTileInfo
 };
 
 UCLASS()
-class TFG_API AActorTile : public AActor
+class TFG_API AActorTile : public AActorPlaceableElement
 {
 	GENERATED_BODY()
 
