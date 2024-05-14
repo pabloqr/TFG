@@ -11,6 +11,10 @@ class TFG_API AActorResource : public AActorPlaceableElement
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
+	int32 Quantity;
+
 public:
 	// Sets default values for this actor's properties
 	AActorResource();

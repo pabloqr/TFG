@@ -17,7 +17,7 @@ struct FElementIdentifier
 	FString Name;
 };
 
-UCLASS()
+UCLASS(Abstract)
 class TFG_API AActorPlaceableElement : public AActor
 {
 	GENERATED_BODY()

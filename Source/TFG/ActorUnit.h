@@ -7,36 +7,23 @@
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
-USTRUCT(BlueprintType)
-struct FUnitInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	FString Name;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	float ProductionCost;
-	
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	float HealthPoints;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	float DefensePoints;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	int32 MovementPoints;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Info")
-	int32 VisibilityPoints;
-};
-
 UCLASS(Abstract)
 class TFG_API AActorUnit : public AActorDamageableElement
 {
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Unit")
+	int32 BaseMovementPoints;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	FUnitInfo UnitInfo;
+	int32 MovementPoints;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
+	int32 VisibilityPoints;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
+	float ProductionCost;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
+	float MaintenanceCost;
 
 public:
 	// Sets default values for this actor's properties
