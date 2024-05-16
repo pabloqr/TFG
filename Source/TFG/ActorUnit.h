@@ -7,6 +7,18 @@
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
+UENUM(BlueprintType)
+enum class EMovement : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	NorthWest = 1 UMETA(DisplayName="NW"),
+	North = 2 UMETA(DisplayName="N"),
+	NorthEast = 3 UMETA(DisplayName="NE"),
+	SouthEast = 4 UMETA(DisplayName="SE"),
+	South = 5 UMETA(DisplayName="S"),
+	SouthWest = 6 UMETA(DisplayName="SW"),
+};
+
 UCLASS(Abstract)
 class TFG_API AActorUnit : public AActorDamageableElement
 {
@@ -17,6 +29,9 @@ protected:
 	int32 BaseMovementPoints;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 MovementPoints;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
+	TArray<FIntPoint> CurrentPath;
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 VisibilityPoints;
 

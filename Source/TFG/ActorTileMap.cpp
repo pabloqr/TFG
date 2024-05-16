@@ -213,9 +213,61 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::BeginPlay()
+TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
-	Super::BeginPlay();
+	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
+	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
+	//
+	// Inicialmente, se inserta el nodo inicial
+	FPriorityQueue Frontier;
+	Frontier.Push(FPathData(PosIni, 0));
+
+	// Se crea un diccionario que almacena, para cada nodo, desde cual se ha llegado a el
+	TMap<FIntPoint, FIntPoint> CameFrom;
+	CameFrom.Add(PosIni, FIntPoint(-1, -1));
+	// Se crea un diccionario que almacena, para cada nodo, el coste de llegar a el
+	TMap<FIntPoint, int32> TotalCost;
+	TotalCost.Add(PosIni, 0);
+
+	// Se procesan nodos mientras sigan quedando
+	while (!Frontier.Empty())
+	{
+		// Se obtiene el nodo con la mayor prioridad
+		FPathData CurrentData = Frontier.Pop();
+		if (CurrentData.Pos2D == PosEnd) break;
+
+		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
+		TArray<FIntPoint> Neighbors = CurrentTile->GetNeighbors();
+		for (const FIntPoint NeighborPos : Neighbors)
+		{
+			if (0 <= NeighborPos.X && NeighborPos.X < Rows && 0 <= NeighborPos.Y && NeighborPos.Y < Cols)
+			{
+				const AActorTile* NeighborTile = Tiles[GetPositionInArray(NeighborPos.X, NeighborPos.Y)];
+				
+				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
+				if (!TotalCost.Contains(NeighborPos))
+				{
+					TotalCost.Add(NeighborPos, NewCost);
+
+					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+					Frontier.Push(FPathData(NeighborPos, Priority));
+
+					CameFrom.Add(NeighborPos, CurrentData.Pos2D);
+				}
+			}
+		}
+	}
+
+	TArray<FIntPoint> Path;
+	
+	FIntPoint Current = PosEnd;
+	while (Current != PosIni)
+	{
+		Path.Insert(Current, 0);
+		Current = CameFrom[Current];
+	}
+
+	return Path;
 }
 
 void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
@@ -306,6 +358,11 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 
 	// Se actualiza el grid que nos permite interactuar con el mapa
 	// InstancedStaticMeshComponent->AddInstance(FTransform(FVector(TileInfo.MapPos2D.X, TileInfo.MapPos2D.Y, GridOffset)));
+}
+
+void AActorTileMap::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

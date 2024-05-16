@@ -52,6 +52,148 @@ struct FTileProbability
 	int32 Error = 0;
 };
 
+//--------------------------------------------------------------------------------------------------------------------//
+
+USTRUCT()
+struct FPathData
+{
+	GENERATED_BODY()
+
+	FIntPoint Pos2D;
+	int32 Priority;
+
+	FPathData() :FPathData(FIntPoint(-1, -1), -1) {}
+
+	/**
+	 * Constructor con parametros
+	 * 
+	 * @param Pos Pos2D del nodo
+	 * @param P Prioridad
+	 */
+	FPathData(const FIntPoint& Pos, const int32 P)
+	{
+		Pos2D = FIntPoint(Pos);
+		Priority = P;
+	}
+
+	/**
+	 * Operador <
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es menor que el que se compara
+	 */
+	bool operator<(const FPathData& Other) const
+	{
+		return Priority < Other.Priority;
+	}
+
+	/**
+	 * Operador >
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es mayor que el que se compara
+	 */
+	bool operator>(const FPathData& Other) const
+	{
+		return !(*this < Other || *this == Other);
+	}
+
+	/**
+	 * Operador ==
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es igual que el que se compara
+	 */
+	bool operator==(const FPathData& Other) const
+	{
+		return Priority == Other.Priority;
+	}
+
+	/**
+	 * Operador !=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es diferente que el que se compara
+	 */
+	bool operator!=(const FPathData& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	/**
+	 * Operador <=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es menor o igual que el que se compara
+	 */
+	bool operator<=(const FPathData& Other) const
+	{
+		return *this < Other || *this == Other;
+	}
+
+	/**
+	 * Operador >=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es mayor o igual que el que se compara
+	 */
+	bool operator>=(const FPathData& Other) const
+	{
+		return *this > Other || *this == Other;
+	}
+};
+
+class FPriorityQueue
+{
+	/**
+	 * Lista de elementos parametrizada, el tipo de dato debe proporcionar los operadores implementados
+	 */
+	TArray<FPathData> Elements;
+
+public:
+	/**
+	 * Metodo que devuelve si la cadena esta vacia o no
+	 * 
+	 * @return La cadena esta vacia
+	 */
+	bool Empty() const
+	{
+		return Elements.Num() == 0;
+	}
+
+	/**
+	 * Metodo que inserta de forma ordenada el elemento dado segun su prioridad
+	 * 
+	 * @param Element Elemento a insertar
+	 */
+	void Push(const FPathData& Element)
+	{
+		// Se comprueba si el elemento tiene menos prioridad que el ultimo para evitar recorrer todo el array
+		if (Element >= Elements.Last()) Elements.Add(Element);
+		else for (int32 i = 0; i < Elements.Num(); ++i)
+		{
+			// Si el elemento tiene menos prioridad se inserta y se finaliza
+			if (Element >= Elements[i])
+			{
+				Elements.Insert(Element, i);
+				break;
+			}
+		}
+	}
+
+	/**
+	 * Devuelve el elemento con mayor prioridad del array
+	 * 
+	 * @return El primer elemento del array
+	 */
+	const FPathData& Pop()
+	{
+		return Elements[0];
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 /**
  * Clase para la gestion de un mapa de casillas hexagonales
  */
@@ -149,6 +291,8 @@ private:
 	 */
 	int32 GetColInMap(const int32 Pos1D) const { return Pos1D % Cols; }
 
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Metodo que calcula la probabilidad de que una casilla sea Hielo (IceTile), se hara para que se acumule
 	 * en los polos
@@ -179,18 +323,6 @@ private:
 	 * @param Probabilities Array de probabilidades
 	 */
 	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const;
-
-	/**
-	 * Metodo privado que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
-	 * 
-	 * @param CurrentProbability Valor actual de la proabilidad de aparicion de un tipo de casilla
-	 * @param NewProbability Cantidad que se quiere aplicar a la probabilidad
-	 * @return Cantidad a aplicar a la probabilidad actual
-	 */
-	float CheckProbability(const float CurrentProbability, const float NewProbability) const
-	{
-		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
-	}
 	
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
@@ -201,6 +333,8 @@ private:
 	 * @return Tipo de casilla a generar
 	 */
 	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo privado que actualiza la casilla deseada al tipo especificado
@@ -217,21 +351,34 @@ private:
 	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
 	 */
 	void SetMapFromSave(const TArray<FMapData>& TilesData);
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo privado que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
+	 * 
+	 * @param CurrentProbability Valor actual de la proabilidad de aparicion de un tipo de casilla
+	 * @param NewProbability Cantidad que se quiere aplicar a la probabilidad
+	 * @return Cantidad a aplicar a la probabilidad actual
+	 */
+	static float CheckProbability(const float CurrentProbability, const float NewProbability)
+	{
+		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
+	}
 
 protected:
-	/**
-	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
-	 */
-	virtual void BeginPlay() override;
+	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
+	TArray<FIntPoint> FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category="Map|Grid")
-	TArray<AActorTile*> GetTiles() { return Tiles; }
-
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
 	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
 
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
 	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
@@ -256,7 +403,19 @@ protected:
 	 */
 	// UFUNCTION(BlueprintCallable, Category="Map|Json")
 	// void JsonToMap();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
+	 */
+	virtual void BeginPlay() override;
 	
 public:
+	/**
+	 * Metodo ejecutado en cada frame
+	 * 
+	 * @param DeltaSeconds Tiempo transcurrido desde el ultimo frame
+	 */
 	virtual void Tick(float DeltaSeconds) override;
 };

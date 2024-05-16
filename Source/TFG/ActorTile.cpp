@@ -13,6 +13,8 @@ AActorTile::AActorTile()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
+
+	MovementCost = 1;
 	
 	TileStates.Add(ETileState::None);
 }
@@ -67,6 +69,11 @@ const ETileType& AActorTile::GetType() const
 	return TileType;
 }
 
+int32 AActorTile::GetMovementCost() const
+{
+	return MovementCost;
+}
+
 const TArray<ETileState>& AActorTile::GetState() const
 {
 	return TileStates;
@@ -80,6 +87,11 @@ void AActorTile::SetPos(const FTileInfo& Pos)
 void AActorTile::SetType(const ETileType Type)
 {
 	TileType = Type;
+}
+
+void AActorTile::SetMovementCost(const int32 Cost)
+{
+	MovementCost = Cost;
 }
 
 void AActorTile::SetState(const TArray<ETileState>& States)

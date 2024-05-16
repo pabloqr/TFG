@@ -67,6 +67,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	ETileType TileType;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	int32 MovementCost;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	TArray<ETileState> TileStates;
 	
 public:
@@ -106,6 +109,13 @@ public:
 	const ETileType& GetType() const;
 
 	/**
+	 * Getter del atributo MovementCost
+	 * 
+	 * @return Coste de paso por la casilla
+	 */
+	int32 GetMovementCost() const;
+
+	/**
 	 * Getter del atributo TileStatess
 	 * 
 	 * @return Estado de la casilla
@@ -125,6 +135,13 @@ public:
 	 * @param Type Tipo de casilla
 	 */
 	void SetType(const ETileType Type);
+
+	/**
+	 * Setter del atributo MovementCost
+	 * 
+	 * @param Cost Coste de paso por la casilla
+	 */
+	void SetMovementCost(const int32 Cost);
 
 	/**
 	 * Setter del atributo TileStatess
