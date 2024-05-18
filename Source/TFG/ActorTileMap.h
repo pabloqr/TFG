@@ -169,11 +169,13 @@ public:
 	void Push(const FPathData& Element)
 	{
 		// Se comprueba si el elemento tiene menos prioridad que el ultimo para evitar recorrer todo el array
-		if (Element >= Elements.Last()) Elements.Add(Element);
+		if (Empty() || Element >= Elements.Last()) Elements.Add(Element);
 		else for (int32 i = 0; i < Elements.Num(); ++i)
 		{
+			// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) P(%d) - PQ(%d)"), i, Element.Priority, Elements[i].Priority))
+
 			// Si el elemento tiene menos prioridad se inserta y se finaliza
-			if (Element >= Elements[i])
+			if (Elements[i] >= Element)
 			{
 				Elements.Insert(Element, i);
 				break;
@@ -186,9 +188,26 @@ public:
 	 * 
 	 * @return El primer elemento del array
 	 */
-	const FPathData& Pop()
+	FPathData Pop()
 	{
-		return Elements[0];
+		FPathData Element = Elements[0];
+		Elements.RemoveAt(0);
+		
+		return Element;
+	}
+
+	FString ToString()
+	{
+		FString Str;
+
+		Str.Append(FString::Printf(TEXT("FrontierStart\n")));
+		for (const FPathData Element : Elements)
+		{
+			Str.Append(FString::Printf(TEXT("(%d, %d) - P(%d)\n"), Element.Pos2D.X, Element.Pos2D.Y, Element.Priority));
+		}
+		Str.Append(FString::Printf(TEXT("FrontierEnd\n")));
+
+		return Str;
 	}
 };
 
@@ -355,7 +374,7 @@ private:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
-	 * Metodo privado que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
+	 * Metodo estatico que devuelve la cantidad a aplicar a la probabilidad para no llegar a un valor negativo
 	 * 
 	 * @param CurrentProbability Valor actual de la proabilidad de aparicion de un tipo de casilla
 	 * @param NewProbability Cantidad que se quiere aplicar a la probabilidad
@@ -364,6 +383,18 @@ private:
 	static float CheckProbability(const float CurrentProbability, const float NewProbability)
 	{
 		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
+	}
+
+	/**
+	 * Metodo estatico que verifica si una posicion se encuentra dentro de ciertos limites
+	 * 
+	 * @param Pos Posicion que se quiere comprobar
+	 * @param Limit Limite maximo de posicion
+	 * @return Si la posicion es valida
+	 */
+	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit)
+	{
+		return 0 <= Pos.X && Pos.X < Limit.X && 0 <= Pos.Y && Pos.Y < Limit.Y;
 	}
 
 protected:

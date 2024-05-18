@@ -78,21 +78,7 @@ public:
 	 */
 	AActorTile();
 
-	/**
-	 * Metodo que transforma el tipo de casilla en un valor numerico
-	 * 
-	 * @param TileType Tipo de casilla
-	 * @return Valor entero dado el tipo de casilla
-	 */
-	static int32 TileTypeToInt(const ETileType TileType);
-	
-	/**
-	 * Metodo que transforma un valor numerico en el tipo de casilla
-	 * 
-	 * @param TileTypeVal Valor numerico del tipo de casilla
-	 * @return Tipo de casilla
-	 */
-	static ETileType IntToTileType(const int32 TileTypeVal);
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que devuelve la informacion serializada de la casilla
@@ -121,6 +107,8 @@ public:
 	 * @return Estado de la casilla
 	 */
 	const TArray<ETileState>& GetState() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Setter del atributo Pos2D y MapPos2D
@@ -181,4 +169,26 @@ public:
 	 * @param State Estado de la casilla
 	 */
 	void RemoveState(const ETileState State);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	bool IsAccesible() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que transforma el tipo de casilla en un valor numerico
+	 * 
+	 * @param TileType Tipo de casilla
+	 * @return Valor entero dado el tipo de casilla
+	 */
+	static int32 TileTypeToInt(const ETileType TileType);
+	
+	/**
+	 * Metodo que transforma un valor numerico en el tipo de casilla
+	 * 
+	 * @param TileTypeVal Valor numerico del tipo de casilla
+	 * @return Tipo de casilla
+	 */
+	static ETileType IntToTileType(const int32 TileTypeVal);
 };

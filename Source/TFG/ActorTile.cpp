@@ -21,44 +21,6 @@ AActorTile::AActorTile()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-int32 AActorTile::TileTypeToInt(const ETileType TileType)
-{
-	int32 TileTypeVal;
-	switch (TileType)
-	{
-		case ETileType::Plains: TileTypeVal = 1; break;
-		case ETileType::Hills: TileTypeVal = 2; break;
-		case ETileType::Forest: TileTypeVal = 3; break;
-		case ETileType::SnowPlains: TileTypeVal = 4; break;
-		case ETileType::SnowHills: TileTypeVal = 5; break;
-		case ETileType::Ice: TileTypeVal = 6; break;
-		case ETileType::Mountains: TileTypeVal = 7; break;
-		case ETileType::Water: TileTypeVal = 8; break;
-		default: TileTypeVal = 0; break;
-	}
-
-	return TileTypeVal;
-}
-
-ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
-{
-	ETileType TileType;
-	switch (TileTypeVal)
-	{
-		case 1: TileType = ETileType::Plains; break;
-		case 2: TileType = ETileType::Hills; break;
-		case 3: TileType = ETileType::Forest; break;
-		case 4: TileType = ETileType::SnowPlains; break;
-		case 5: TileType = ETileType::SnowHills; break;
-		case 6: TileType = ETileType::Ice; break;
-		case 7: TileType = ETileType::Mountains; break;
-		case 8: TileType = ETileType::Water; break;
-		default: TileType = ETileType::None; break;
-	}
-
-	return TileType;
-}
-
 FTileInfo AActorTile::GetInfo() const
 {
 	return FTileInfo(Pos2D, MapPos2D, TileType);
@@ -79,6 +41,8 @@ const TArray<ETileState>& AActorTile::GetState() const
 	return TileStates;
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+
 void AActorTile::SetPos(const FTileInfo& Pos)
 {
 	AActorPlaceableElement::SetPos(Pos.Pos2D, Pos.MapPos2D);
@@ -87,6 +51,19 @@ void AActorTile::SetPos(const FTileInfo& Pos)
 void AActorTile::SetType(const ETileType Type)
 {
 	TileType = Type;
+	
+	switch (TileType)
+	{
+		case ETileType::Plains: MovementCost = 1; break;
+		case ETileType::Hills: MovementCost = 2; break;
+		case ETileType::Forest: MovementCost = 2; break;
+		case ETileType::SnowPlains: MovementCost = 1; break;
+		case ETileType::SnowHills: MovementCost = 2; break;
+		case ETileType::Ice: MovementCost = -1; break;
+		case ETileType::Mountains: MovementCost = -1; break;
+		case ETileType::Water: MovementCost = -1; break;
+		default: MovementCost = 1; break;
+	}
 }
 
 void AActorTile::SetMovementCost(const int32 Cost)
@@ -124,4 +101,51 @@ void AActorTile::RemoveState(const TArray<ETileState>& States)
 void AActorTile::RemoveState(const ETileState State)
 {
 	if (TileStates.Contains(State)) TileStates.Remove(State);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool AActorTile::IsAccesible() const
+{
+	return MovementCost != -1;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+int32 AActorTile::TileTypeToInt(const ETileType TileType)
+{
+	int32 TileTypeVal;
+	switch (TileType)
+	{
+	case ETileType::Plains: TileTypeVal = 1; break;
+	case ETileType::Hills: TileTypeVal = 2; break;
+	case ETileType::Forest: TileTypeVal = 3; break;
+	case ETileType::SnowPlains: TileTypeVal = 4; break;
+	case ETileType::SnowHills: TileTypeVal = 5; break;
+	case ETileType::Ice: TileTypeVal = 6; break;
+	case ETileType::Mountains: TileTypeVal = 7; break;
+	case ETileType::Water: TileTypeVal = 8; break;
+	default: TileTypeVal = 0; break;
+	}
+
+	return TileTypeVal;
+}
+
+ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
+{
+	ETileType TileType;
+	switch (TileTypeVal)
+	{
+	case 1: TileType = ETileType::Plains; break;
+	case 2: TileType = ETileType::Hills; break;
+	case 3: TileType = ETileType::Forest; break;
+	case 4: TileType = ETileType::SnowPlains; break;
+	case 5: TileType = ETileType::SnowHills; break;
+	case 6: TileType = ETileType::Ice; break;
+	case 7: TileType = ETileType::Mountains; break;
+	case 8: TileType = ETileType::Water; break;
+	default: TileType = ETileType::None; break;
+	}
+
+	return TileType;
 }

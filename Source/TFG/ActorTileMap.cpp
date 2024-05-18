@@ -215,6 +215,16 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
+	// Limite del mapa
+	const FIntPoint Limit = FIntPoint(Rows, Cols);
+
+	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
+	if (!(CheckValidPosition(PosIni, Limit) && CheckValidPosition(PosIni, Limit)) ||
+		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
+	{
+		return TArray<FIntPoint>();
+	}
+	
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
 	//
@@ -229,21 +239,32 @@ TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 	TMap<FIntPoint, int32> TotalCost;
 	TotalCost.Add(PosIni, 0);
 
+	// Se crea el almacen del camino a seguir
+	TArray<FIntPoint> Path;
+
 	// Se procesan nodos mientras sigan quedando
 	while (!Frontier.Empty())
 	{
 		// Se obtiene el nodo con la mayor prioridad
-		FPathData CurrentData = Frontier.Pop();
-		if (CurrentData.Pos2D == PosEnd) break;
+		const FPathData CurrentData = Frontier.Pop();
+		if (CurrentData.Pos2D == PosEnd)
+		{
+			FIntPoint Current = CurrentData.Pos2D;
+			while (Current != PosIni)
+			{
+				Path.Insert(Current, 0);
+				Current = CameFrom[Current];
+			}
+			
+			break;
+		}
 
 		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
-		TArray<FIntPoint> Neighbors = CurrentTile->GetNeighbors();
-		for (const FIntPoint NeighborPos : Neighbors)
+		for (const FIntPoint NeighborPos : CurrentTile->GetNeighbors())
 		{
-			if (0 <= NeighborPos.X && NeighborPos.X < Rows && 0 <= NeighborPos.Y && NeighborPos.Y < Cols)
+			const AActorTile* NeighborTile;
+			if (CheckValidPosition(NeighborPos, Limit) && (NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
 			{
-				const AActorTile* NeighborTile = Tiles[GetPositionInArray(NeighborPos.X, NeighborPos.Y)];
-				
 				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
 				if (!TotalCost.Contains(NeighborPos))
 				{
@@ -251,20 +272,24 @@ TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 
 					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
 					Frontier.Push(FPathData(NeighborPos, Priority));
-
+					
 					CameFrom.Add(NeighborPos, CurrentData.Pos2D);
+				}
+				else
+				{
+					int32& CurrentCost = TotalCost[NeighborPos];
+					if (NewCost < CurrentCost)
+					{
+						CurrentCost = NewCost;
+						
+						const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+						Frontier.Push(FPathData(NeighborPos, Priority));
+
+						CameFrom[NeighborPos] = CurrentData.Pos2D;
+					}
 				}
 			}
 		}
-	}
-
-	TArray<FIntPoint> Path;
-	
-	FIntPoint Current = PosEnd;
-	while (Current != PosIni)
-	{
-		Path.Insert(Current, 0);
-		Current = CameFrom[Current];
 	}
 
 	return Path;
