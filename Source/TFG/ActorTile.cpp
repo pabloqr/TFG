@@ -21,11 +21,6 @@ AActorTile::AActorTile()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-FTileInfo AActorTile::GetInfo() const
-{
-	return FTileInfo(Pos2D, MapPos2D, TileType);
-}
-
 const ETileType& AActorTile::GetType() const
 {
 	return TileType;
@@ -42,11 +37,6 @@ const TArray<ETileState>& AActorTile::GetState() const
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
-
-void AActorTile::SetPos(const FTileInfo& Pos)
-{
-	AActorPlaceableElement::SetPos(Pos.Pos2D, Pos.MapPos2D);
-}
 
 void AActorTile::SetType(const ETileType Type)
 {

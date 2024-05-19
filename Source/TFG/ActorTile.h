@@ -30,31 +30,6 @@ enum class ETileState : uint8
 	Selected = 2 UMETA(DisplayName="Selected")
 };
 
-USTRUCT(BlueprintType)
-struct FTileInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	FIntPoint Pos2D;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	FVector2D MapPos2D;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	ETileType TileType;
-
-	FTileInfo(): FTileInfo(
-		FIntPoint(0, 0),
-		FVector2D(0.0, 0.0),
-		ETileType::None) {}
-
-	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType)
-	{
-		this->Pos2D = FIntPoint(Pos2D);
-		this->MapPos2D = FVector2D(MapPos2D);
-		this->TileType = TileType;
-	}
-};
-
 UCLASS()
 class TFG_API AActorTile : public AActorPlaceableElement
 {
@@ -79,13 +54,6 @@ public:
 	AActorTile();
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo que devuelve la informacion serializada de la casilla
-	 * 
-	 * @return Informacion sobre la casilla
-	 */
-	FTileInfo GetInfo() const;
 	
 	/**
 	 * Getter del atributo TileType
@@ -109,13 +77,6 @@ public:
 	const TArray<ETileState>& GetState() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Setter del atributo Pos2D y MapPos2D
-	 * 
-	 * @param Pos Estructura que contiene la posicion en el tablero y en la escena
-	 */
-	void SetPos(const FTileInfo& Pos);
 
 	/**
 	 * Setter del atributo TileType

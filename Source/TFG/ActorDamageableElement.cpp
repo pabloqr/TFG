@@ -15,7 +15,16 @@ AActorDamageableElement::AActorDamageableElement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-// Called when the game starts or when spawned
+void AActorDamageableElement::UpdateAttackAndDefenseParameters()
+{
+	const float HealthPercentage = 1.0 - HealthPoints / BaseHealthPoints;
+
+	AttackPoints -= AttackPoints * HealthPercentage;
+	DefensePoints -= DefensePoints * HealthPercentage;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void AActorDamageableElement::BeginPlay()
 {
 	Super::BeginPlay();
@@ -24,15 +33,29 @@ void AActorDamageableElement::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorDamageableElement::PerformAttack(AActorDamageableElement DamageableElement) const
+FVector2D AActorDamageableElement::CalculateAttack(AActorDamageableElement* DamageableElement) const
 {
+	const float SelfDamage = DamageableElement->AttackPoints - DefensePoints * 0.5;
+	const float EnemyDamage = AttackPoints - DamageableElement->DefensePoints * 0.5;
+
+	return FVector2D(SelfDamage, EnemyDamage);
+}
+
+void AActorDamageableElement::PerformAttack(AActorDamageableElement* DamageableElement)
+{
+	const FVector2D Damage = CalculateAttack(DamageableElement);
+
+	ApplyDamage(Damage.X);
+	DamageableElement->ApplyDamage(Damage.Y);
 }
 
 void AActorDamageableElement::ApplyDamage(const float Damage)
 {
+	HealthPoints -= Damage;
+
+	UpdateAttackAndDefenseParameters();
 }
 
-// Called every frame
 void AActorDamageableElement::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);

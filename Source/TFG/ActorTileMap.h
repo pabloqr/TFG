@@ -9,7 +9,6 @@
 
 struct FMapData;
 enum class ETileType : uint8;
-class AActorTile;
 
 /**
  * Tipo enumerado para la clasificacion de mapas segun su temperatura
@@ -228,6 +227,55 @@ public:
 		Str.Append(FString::Printf(TEXT("FrontierEnd\n")));
 
 		return Str;
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+/**
+ * Estructura que almacena informacion sobre las casillas para los archivos de guardado
+ */
+USTRUCT(BlueprintType)
+struct FTileInfo
+{
+	GENERATED_BODY()
+
+	/**
+	 * Posicion en el Array2D que representa el mapa
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	FIntPoint Pos2D;
+	/**
+	 * Posicion en coordenadas de la escena
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	FVector2D MapPos2D;
+	/**
+	 * Tipo de casilla
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	ETileType TileType;
+
+	/**
+	 * Constructor por defecto
+	 */
+	FTileInfo(): FTileInfo(
+		FIntPoint(0, 0),
+		FVector2D(0.0, 0.0),
+		ETileType::None) {}
+
+	/**
+	 * Constructor con parametros
+	 * 
+	 * @param Pos2D Posicion en el Array2D que representa el mapa
+	 * @param MapPos2D Posicion en coordenadas de la escena
+	 * @param TileType Tipo de casilla
+	 */
+	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType)
+	{
+		this->Pos2D = FIntPoint(Pos2D);
+		this->MapPos2D = FVector2D(MapPos2D);
+		this->TileType = TileType;
 	}
 };
 
@@ -460,14 +508,34 @@ private:
 	}
 
 protected:
+	/**
+	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
+	 * 
+	 * @param PosIni Posicion inicial del elemento
+	 * @param PosEnd Posicion de destino del elemento
+	 * @return El mejor camino a seguir
+	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
 	TArray<FIntPoint> FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
+	/**
+	 * Metodo que genera un mapa de forma aleatoria teniendo en cuenta los modificadores de temperatura y nivel del
+	 * mar del mapa. El resultado sera un tablero de casillas que trata de asemejarse a la Tierra
+	 * 
+	 * @param MapTemp Temperatura del mapa
+	 * @param MapSeaLvl Nivel del mar del mapa
+	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
 	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
 
+	/**
+	 * Metodo que crea y almacena una nueva casilla en el mapa
+	 * 
+	 * @param Tile Clase de la casilla
+	 * @param TileInfo Informacion sobre la casilla
+	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Grid")
 	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
 

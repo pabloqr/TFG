@@ -303,7 +303,7 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 	
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
-	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 10.0));
+	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 12.0));
 
 	// Se establece el modificador de probabilidad de aparicion de agua en funcion del tipo de mapa
 	switch (MapSeaLevel)
@@ -371,7 +371,7 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	// Se actualizan los atributos de la casilla
 	if (NewTile != nullptr)
 	{
-		NewTile->SetPos(TileInfo);
+		NewTile->SetPos(TileInfo.Pos2D, TileInfo.MapPos2D);
 		NewTile->SetType(TileInfo.TileType);
 		
 		// TODO quitar para lanzamiento
