@@ -54,14 +54,26 @@ struct FTileProbability
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+/**
+ * Estructura que almacena informacion para el calculo de una ruta entre dos posiciones del mapa
+ */
 USTRUCT()
 struct FPathData
 {
 	GENERATED_BODY()
 
+	/**
+	 * Posicion de la casilla
+	 */
 	FIntPoint Pos2D;
+	/**
+	 * Prioridad de la casilla para ser analizada por el algoritmo
+	 */
 	int32 Priority;
 
+	/**
+	 * Constructor por defecto. Establece los atributos a valores invalidos
+	 */
 	FPathData() :FPathData(FIntPoint(-1, -1), -1) {}
 
 	/**
@@ -143,6 +155,9 @@ struct FPathData
 	}
 };
 
+/**
+ * Clase para definir colas con prioridad
+ */
 class FPriorityQueue
 {
 	/**
@@ -184,7 +199,7 @@ public:
 	}
 
 	/**
-	 * Devuelve el elemento con mayor prioridad del array
+	 * Metodo que devuelve el elemento con mayor prioridad del array
 	 * 
 	 * @return El primer elemento del array
 	 */
@@ -196,6 +211,11 @@ public:
 		return Element;
 	}
 
+	/**
+	 * Metodo que devuelve la representacion legible de la instancia de esta clase
+	 * 
+	 * @return Cadena a mostrar
+	 */
 	FString ToString()
 	{
 		FString Str;
@@ -231,35 +251,77 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
 	float GridOffset = 0.01;
 	*/
-	
+
+	/**
+	 * Array con informacion sobre el posicionamiento de las casillas y su tipo. Se emplea en los archivos de guardado
+	 */
 	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TArray<FTileInfo> TilesInfo;
+	/**
+	 * Array con referencias a las casillas del mapa
+	 */
 	UPROPERTY()
 	TArray<AActorTile*> Tiles;
 
+	/**
+	 * Posicion de la ultima casilla en coordenadas de la escena
+	 */
 	FVector2D GridSize;
 
+	/**
+	 * Numero de filas del mapa
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Rows;
+	/**
+	 * Numero de columnas del mapa
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	int32 Cols;
 
+	/**
+	 * Desplazamiento adicional para las filas impares
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float RowOffset;
+	/**
+	 * Desplazamiento horizontal entre casillas
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float HorizontalOffset;
+	/**
+	 * Desplazamiento vertical entre casillas
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float VerticalOffset;
 
+	/**
+	 * Probabilidad de aparicion de casillas de agua en el mapa
+	 */
 	float WaterTileChance = 0.4f;
+	/**
+	 * Modificador de la probabilidad de aparicion de casillas de agua dependiente del atributo MapSeaLevel
+	 */
 	float WaterProbabilityModifier;
-	
+
+	/**
+	 * Temperatura del mapa: determina el porcentaje de filas donde puede aparecer hielo y nieve en los polos del mapa
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Parameters")
 	EMapTemperature MapTemperature;
+	/**
+	 * Nivel del mar del mapa: determina la cantidad de casillas de agua que apareceran en el mapa
+	 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Parameters")
 	EMapSeaLevel MapSeaLevel;
 
+	/**
+	 * Numero de filas donde puede aparecer hielo en los polos del mapa
+	 */
 	int32 NumIceRows;
+	/**
+	 * Numero de filas donde puede aparecer nieve en los polos del mapa
+	 */
 	int32 NumSnowRows;
 	
 public:
