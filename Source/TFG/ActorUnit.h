@@ -19,18 +19,50 @@ enum class EMovement : uint8
 	SouthWest = 6 UMETA(DisplayName="SW"),
 };
 
+UENUM()
+enum class EUnitState : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	WaitingForOrders = 1 UMETA(DisplayName="WaitingForOrders"),
+	Sleeping = 2 UMETA(DisplayName="Sleeping"),
+	FollowingPath = 3 UMETA(DisplayName="FollowingPath"),
+	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints")
+};
+
+USTRUCT(BlueprintType)
+struct FMovement
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
+	FIntPoint Pos2D;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
+	int32 MovementCost;
+
+	FMovement() : FMovement(FIntPoint(-1, -1), -1) {}
+	
+	FMovement(const FIntPoint& Pos, const int32 Cost)
+	{
+		Pos2D = Pos;
+		MovementCost = Cost;
+	}
+};
+
 UCLASS(Abstract)
 class TFG_API AActorUnit : public AActorDamageableElement
 {
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
+	EUnitState State;
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Unit")
 	int32 BaseMovementPoints;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 MovementPoints;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
-	TArray<FIntPoint> CurrentPath;
+	TArray<FMovement> Path;
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 VisibilityPoints;
@@ -49,6 +81,32 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	EUnitState GetState() const { return State; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AssignPath(const TArray<FIntPoint>& Tiles, const TArray<int32>& Costs);
+	
+	UFUNCTION(BlueprintCallable)
+	void ContinuePath();
+	
+	UFUNCTION(BlueprintCallable)
+	bool MoveUnit(const FMovement& Move, const bool ManualMove);
+	
+	UFUNCTION(BlueprintCallable)
+	void RestoreMovement();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void TurnStarted();
+
+	UFUNCTION(BlueprintCallable)
+	void TurnEnded();
+
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };

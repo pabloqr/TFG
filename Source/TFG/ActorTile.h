@@ -7,6 +7,10 @@
 #include "GameFramework/Actor.h"
 #include "ActorTile.generated.h"
 
+class AActorSettlement;
+class AActorUnit;
+class AActorResource;
+
 UENUM(BlueprintType)
 enum class ETileType : uint8
 {
@@ -36,14 +40,42 @@ class TFG_API AActorTile : public AActorPlaceableElement
 	GENERATED_BODY()
 
 protected:
+	/**
+	 * Representacion visual de la casilla
+	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
 	UStaticMeshComponent* TileMesh;
 
+	/**
+	 * Tipo de casilla
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	ETileType TileType;
+	/**
+	 * Coste de movimiento de la casilla
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	int32 MovementCost;
 
+	/**
+	 * Recurso sobre la casilla. Si no posee, se establece como null
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
+	AActorResource* Resource;
+	/**
+	 * Unidad sobre la casilla. Si no posee, se establece como null
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
+	AActorUnit* Unit;
+	/**
+	 * Asentamiento sobre la casilla. Si no posee, se establece como null
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
+	AActorSettlement* Settlement;
+
+	/**
+	 * Estados de la casilla
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	TArray<ETileState> TileStates;
 	

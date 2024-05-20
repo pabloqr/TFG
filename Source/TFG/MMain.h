@@ -15,13 +15,9 @@ class TFG_API AMMain : public AGameModeBase
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode|Parameters")
-	int32 NumFactions;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode|Parameters")
-	int32 CurrentFaction;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode|Parameters")
-	int64 Turn;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode|Parameters")
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
+	int32 MaxNumFactions;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
 	int32 MaxTurns;
 };

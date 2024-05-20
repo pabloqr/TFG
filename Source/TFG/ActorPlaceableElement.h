@@ -3,19 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FElementIdentifier.h"
 #include "GameFramework/Actor.h"
 #include "ActorPlaceableElement.generated.h"
-
-USTRUCT(BlueprintType)
-struct FElementIdentifier
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Identifier")
-	int32 Id;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Identifier")
-	FString Name;
-};
 
 UCLASS(Abstract)
 class TFG_API AActorPlaceableElement : public AActor
@@ -23,7 +13,7 @@ class TFG_API AActorPlaceableElement : public AActor
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Identifier")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement")
 	FElementIdentifier ElementIdentifier;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Position")
@@ -48,18 +38,24 @@ public:
 	const FIntPoint& GetPos() const { return Pos2D; }
 	const FVector2D& GetMapPos() const { return MapPos2D; }
 
+	//----------------------------------------------------------------------------------------------------------------//
+
 	void SetIdentifier(const FElementIdentifier& Identifier) { this->ElementIdentifier = Identifier; }
 	void SetPos(const FIntPoint& Pos, const FVector2D& MapPos);
 	void SetPos(const FIntPoint& Pos) { this->Pos2D = Pos; }
 	void SetMapPos(const FVector2D& Pos) { this->MapPos2D = Pos; }
 
+	//----------------------------------------------------------------------------------------------------------------//
+
 	TArray<FIntPoint> GetNeighbors() const;
 	int32 GetDistanceToElement(const FIntPoint& Pos) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo ejecutado en cada frame
 	 * 
-	 * @param DeltaSeconds Tiempo transcurrido desde el ultimo frame
+	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
 	 */
 	virtual void Tick(float DeltaTime) override;
 

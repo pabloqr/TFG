@@ -3,26 +3,67 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FElementIdentifier.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
+
+class AActorUnit;
+class AActorSettlement;
 
 UCLASS()
 class TFG_API APawnFaction : public APawn
 {
 	GENERATED_BODY()
 
+protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction")
+	FElementIdentifier ElementIdentifier;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
+	float Money;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<AActorSettlement*> Settlements;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<AActorUnit*> Units;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<int32> ManualUnits;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<int32> AutomaticUnits;
+
 public:
-	// Sets default values for this pawn's properties
+	/**
+	 * Constructor por defecto
+	 */
 	APawnFaction();
 
 protected:
-	// Called when the game starts or when spawned
+	/**
+	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
+	 */
 	virtual void BeginPlay() override;
 
 public:
-	// Called every frame
+	UFUNCTION(BlueprintCallable)
+	void TurnStarted();
+
+	UFUNCTION(BlueprintCallable)
+	void TurnEnded();
+	
+	//----------------------------------------------------------------------------------------------------------------//
+	
+	/**
+	 * Metodo ejecutado en cada frame
+	 * 
+	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
+	 */
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
+	/**
+	 * Metodo que asocia un metodo de entrada para la interaccion entre el jugador y el juego
+	 * 
+	 * @param PlayerInputComponent Entrada del jugador
+	 */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 };
