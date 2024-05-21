@@ -27,7 +27,7 @@ void AActorPlaceableElement::BeginPlay()
 void AActorPlaceableElement::SetPos(const FIntPoint& Pos, const FVector2D& MapPos)
 {
 	SetPos(Pos);
-	SetMapPos(MapPos2D);
+	SetMapPos(MapPos);
 }
 
 TArray<FIntPoint> AActorPlaceableElement::GetNeighbors() const

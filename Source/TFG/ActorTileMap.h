@@ -308,7 +308,7 @@ protected:
 	/**
 	 * Array con referencias a las casillas del mapa
 	 */
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
 
 	/**
@@ -379,23 +379,6 @@ public:
 	AActorTileMap();
 
 private:
-	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
-	 * 
-	 * @param Row Indice de la fila
-	 * @param Col Indice de la columna
-	 * @return Posicion en el Array1D
-	 */
-	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
-	
-	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
-	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 * @return Posicion en el Array1D
-	 */
-	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
-
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
@@ -508,6 +491,26 @@ private:
 	}
 
 protected:
+	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Row Indice de la fila
+	 * @param Col Indice de la columna
+	 * @return Posicion en el Array1D
+	 */
+	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
+	
+	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @return Posicion en el Array1D
+	 */
+	UFUNCTION(BlueprintCallable)
+	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	/**
 	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
 	 * 

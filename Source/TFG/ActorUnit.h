@@ -109,4 +109,11 @@ public:
 	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUnitMoved, FIntPoint, PrevPos, FIntPoint, CurrPos, AActorUnit*, Unit);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitMoved OnUnitMoved;
 };
