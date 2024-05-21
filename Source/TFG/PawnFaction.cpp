@@ -9,6 +9,8 @@ APawnFaction::APawnFaction()
 {
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
+	Money = 0.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -24,10 +26,55 @@ void APawnFaction::BeginPlay()
 
 void APawnFaction::TurnStarted()
 {
-	for (AActorUnit* Unit : Units)
+	// Se inicia el turno de las unidades de la faccion y se realiza su clasificacion para que puedan ser
+	// manejadas de forma correcta
+	//
+	// Las unidades "automaticas" son aquellas con un camino asociado que, en principio, deben seguir avanzando por su
+	// cuenta hasta que lo completen. El resto de unidades son aquellas que requieren una orden
+	//
+	// Ademas, se actualiza el dinero y balance de la faccion teniendo en cuenta el coste de manteimiento de
+	// las unidades
+
+	// Se reinicia el balance de dinero
+	MoneyBalance = 0.0;
+
+	// Se vacian los arrays para actualizarlos
+	AutomaticUnits.Empty();
+	ManualUnits.Empty();
+
+	// Se procesan todas las unidades
+	for (int32 i = 0; i < Units.Num(); ++i)
 	{
+		AActorUnit* Unit = Units[i];
+
+		// Se inicia el turno de la unidad
 		Unit->TurnStarted();
+
+		// Se clasifica la unidad
+		if (Unit->GetState() == EUnitState::FollowingPath) AutomaticUnits.Add(i);
+		else if (Unit->GetState() == EUnitState::WaitingForOrders) ManualUnits.Add(i);
+
+		MoneyBalance -= Unit->GetMaintenanceCost();
 	}
+
+	// Se inicia el turno de los asentamientos de la faccion y se verifica si requieren seleccionar un nuevo
+	// elemento a producir
+	for (int32 i = 0; i < Settlements.Num(); ++i)
+	{
+		
+	}
+
+	// Se actualiza el balance de dinero teniendo en cuenta el rendimiento de los recursos
+	for (const AActorResource* Resource : Resources)
+	{
+		if (Resource->GetType() == EResourceType::Monetary) MoneyBalance += Resource->GetQuantity();
+	}
+
+	// Se actualiza el dinero de la faccion teniendo en cuenta:
+	//		* El coste de mantenimiento de todas las unidades
+	//		* El rendimiento de los asentamientos
+	//		* El rendimiento de los recursos
+	Money += MoneyBalance;
 }
 
 void APawnFaction::TurnEnded()

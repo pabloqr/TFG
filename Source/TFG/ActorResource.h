@@ -6,12 +6,22 @@
 #include "ActorPlaceableElement.h"
 #include "ActorResource.generated.h"
 
+UENUM()
+enum class EResourceType : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	Strategic = 1 UMETA(DisplayName="Strategic"),
+	Monetary = 2 UMETA(DisplayName="Monetary")
+};
+
 UCLASS()
 class TFG_API AActorResource : public AActorPlaceableElement
 {
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
+	EResourceType Type;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
 	int32 Quantity;
 
@@ -24,6 +34,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	EResourceType GetType() const { return Type; }
+	int32 GetQuantity() const { return Quantity; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 };

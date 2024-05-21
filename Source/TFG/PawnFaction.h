@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorResource.h"
 #include "FElementIdentifier.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
@@ -21,12 +22,18 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
 	float Money;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
+	float MoneyBalance;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
 	TArray<AActorSettlement*> Settlements;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
 	TArray<AActorUnit*> Units;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<AActorResource*> Resources;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	TArray<int32> IdleSettlements;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
 	TArray<int32> ManualUnits;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")

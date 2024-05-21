@@ -82,6 +82,7 @@ protected:
 
 public:
 	EUnitState GetState() const { return State; }
+	float GetMaintenanceCost() const { return MaintenanceCost; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
