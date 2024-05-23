@@ -4,20 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "ActorDamageableElement.h"
+#include "ActorTileMap.h"
+#include "FMovement.h"
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
-
-UENUM(BlueprintType)
-enum class EMovement : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	NorthWest = 1 UMETA(DisplayName="NW"),
-	North = 2 UMETA(DisplayName="N"),
-	NorthEast = 3 UMETA(DisplayName="NE"),
-	SouthEast = 4 UMETA(DisplayName="SE"),
-	South = 5 UMETA(DisplayName="S"),
-	SouthWest = 6 UMETA(DisplayName="SW"),
-};
 
 UENUM()
 enum class EUnitState : uint8
@@ -27,25 +17,6 @@ enum class EUnitState : uint8
 	Sleeping = 2 UMETA(DisplayName="Sleeping"),
 	FollowingPath = 3 UMETA(DisplayName="FollowingPath"),
 	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints")
-};
-
-USTRUCT(BlueprintType)
-struct FMovement
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
-	FIntPoint Pos2D;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
-	int32 MovementCost;
-
-	FMovement() : FMovement(FIntPoint(-1, -1), -1) {}
-	
-	FMovement(const FIntPoint& Pos, const int32 Cost)
-	{
-		Pos2D = Pos;
-		MovementCost = Cost;
-	}
 };
 
 UCLASS(Abstract)
@@ -72,6 +43,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	float MaintenanceCost;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|AditionalData")
+	AActorTileMap* TileMap;
+
 public:
 	// Sets default values for this actor's properties
 	AActorUnit();
@@ -93,7 +67,7 @@ public:
 	void ContinuePath();
 	
 	UFUNCTION(BlueprintCallable)
-	bool MoveUnit(const FMovement& Move, const bool ManualMove);
+	bool MoveUnit();
 	
 	UFUNCTION(BlueprintCallable)
 	void RestoreMovement();
@@ -113,7 +87,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnUnitMoved, FIntPoint, PrevPos, FIntPoint, CurrPos, AActorUnit*, Unit);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, FIntPoint, PrevPos, FIntPoint, CurrPos);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;

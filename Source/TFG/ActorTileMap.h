@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorTile.h"
+#include "FMovement.h"
 #include "GameFramework/Actor.h"
 #include "ActorTileMap.generated.h"
 
@@ -519,7 +520,7 @@ protected:
 	 * @return El mejor camino a seguir
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
-	TArray<FIntPoint> FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd);
+	TArray<FMovement> FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

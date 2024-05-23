@@ -213,7 +213,7 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
+TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
 	// Limite del mapa
 	const FIntPoint Limit = FIntPoint(Rows, Cols);
@@ -222,7 +222,7 @@ TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 	if (!(CheckValidPosition(PosIni, Limit) && CheckValidPosition(PosIni, Limit)) ||
 		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
 	{
-		return TArray<FIntPoint>();
+		return TArray<FMovement>();
 	}
 	
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
@@ -240,7 +240,7 @@ TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 	TotalCost.Add(PosIni, 0);
 
 	// Se crea el almacen del camino a seguir
-	TArray<FIntPoint> Path;
+	TArray<FMovement> Path;
 
 	// Se procesan nodos mientras sigan quedando
 	while (!Frontier.Empty())
@@ -252,7 +252,7 @@ TArray<FIntPoint> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 			FIntPoint Current = CurrentData.Pos2D;
 			while (Current != PosIni)
 			{
-				Path.Insert(Current, 0);
+				Path.Insert(FMovement(Current, Tiles[GetPositionInArray(Current)]->GetMovementCost()), 0);
 				Current = CameFrom[Current];
 			}
 			

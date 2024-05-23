@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorUnit.h"
 #include "GameFramework/PlayerController.h"
 #include "CMain.generated.h"
 
@@ -13,4 +14,8 @@ UCLASS()
 class TFG_API ACMain : public APlayerController
 {
 	GENERATED_BODY()
+
+protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
+	AActorUnit* Unit;
 };
