@@ -17,5 +17,11 @@ class TFG_API ACMain : public APlayerController
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
+	AActorTile* Tile;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
 	AActorUnit* Unit;
+
+	//----------------------------------------------------------------------------------------------------------------//
+	
+	virtual void BeginPlay() override;
 };

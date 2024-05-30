@@ -165,7 +165,14 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
 	bool IsAccesible() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool HasUnit() const;
+
+	UFUNCTION(BlueprintCallable)
+	void EmptyTile();
 
 	//----------------------------------------------------------------------------------------------------------------//
 

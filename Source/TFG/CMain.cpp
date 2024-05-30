@@ -2,3 +2,10 @@
 
 
 #include "CMain.h"
+
+#include "Kismet/GameplayStatics.h"
+
+void ACMain::BeginPlay()
+{
+	Super::BeginPlay();
+}

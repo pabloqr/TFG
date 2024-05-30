@@ -381,6 +381,24 @@ public:
 
 private:
 	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Row Indice de la fila
+	 * @param Col Indice de la columna
+	 * @return Posicion en el Array1D
+	 */
+	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
+	
+	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @return Posicion en el Array1D
+	 */
+	UFUNCTION(BlueprintCallable)
+	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
+	
+	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
 	 * @param Pos1D Posicion en el Array1D
@@ -479,36 +497,15 @@ private:
 		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
 	}
 
-	/**
-	 * Metodo estatico que verifica si una posicion se encuentra dentro de ciertos limites
-	 * 
-	 * @param Pos Posicion que se quiere comprobar
-	 * @param Limit Limite maximo de posicion
-	 * @return Si la posicion es valida
-	 */
-	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit)
-	{
-		return 0 <= Pos.X && Pos.X < Limit.X && 0 <= Pos.Y && Pos.Y < Limit.Y;
-	}
-
 protected:
 	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * Metodo que devuelve una casilla del mapa dada su posicion en el mismo
 	 * 
-	 * @param Row Indice de la fila
-	 * @param Col Indice de la columna
-	 * @return Posicion en el Array1D
-	 */
-	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
-	
-	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
-	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 * @return Posicion en el Array1D
+	 * @param Pos2D Coordenadas en el Array2D
+	 * @return Casilla del mapa
 	 */
 	UFUNCTION(BlueprintCallable)
-	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
+	AActorTile* GetTileAtPos(const FIntPoint& Pos2D);
 
 	//----------------------------------------------------------------------------------------------------------------//
 	
@@ -568,6 +565,21 @@ protected:
 	 */
 	// UFUNCTION(BlueprintCallable, Category="Map|Json")
 	// void JsonToMap();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo estatico que verifica si una posicion se encuentra dentro de ciertos limites
+	 * 
+	 * @param Pos Posicion que se quiere comprobar
+	 * @param Limit Limite maximo de posicion
+	 * @return Si la posicion es valida
+	 */
+	UFUNCTION(BlueprintCallable)
+	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit)
+	{
+		return 0 <= Pos.X && Pos.X < Limit.X && 0 <= Pos.Y && Pos.Y < Limit.Y;
+	}
 
 	//----------------------------------------------------------------------------------------------------------------//
 

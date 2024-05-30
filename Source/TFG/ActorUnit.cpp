@@ -3,6 +3,8 @@
 
 #include "ActorUnit.h"
 
+#include "Components/TimelineComponent.h"
+
 
 // Sets default values
 AActorUnit::AActorUnit()
@@ -31,24 +33,15 @@ void AActorUnit::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorUnit::AssignPath(const TArray<FIntPoint>& Tiles, const TArray<int32>& Costs)
+void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
-	if (Tiles.Num() == Costs.Num())
-	{
-		Path.Empty();
-		for (int32 i = 0; i < Tiles.Num(); ++i)
-		{
-			Path.Add(FMovement(Tiles[i], Costs[i]));
-		}
-	}
+	Path = NewPath;
+	State = EUnitState::FollowingPath;
 }
 
 void AActorUnit::ContinuePath()
 {
-	if (State == EUnitState::FollowingPath && MoveUnit())
-	{
-		Path.RemoveAt(0);
-	}
+	while (State == EUnitState::FollowingPath && MoveUnit()) {}
 }
 
 bool AActorUnit::MoveUnit()
@@ -92,13 +85,19 @@ void AActorUnit::RestoreMovement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorUnit::TurnStarted()
+EUnitState AActorUnit::TurnStarted()
 {
+	// Se restablecen los puntos de movimiento al comienzo del turno
+	RestoreMovement();
+
+	// Se actualiza el estado de la unidad
 	if (State != EUnitState::Sleeping)
 	{
 		if (Path.Num() > 0) State = EUnitState::FollowingPath;
 		else State = EUnitState::WaitingForOrders;
 	}
+
+	return State;
 }
 
 void AActorUnit::TurnEnded()
@@ -112,4 +111,3 @@ void AActorUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

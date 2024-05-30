@@ -48,12 +48,13 @@ void APawnFaction::TurnStarted()
 		AActorUnit* Unit = Units[i];
 
 		// Se inicia el turno de la unidad
-		Unit->TurnStarted();
+		const EUnitState UnitState = Unit->TurnStarted();
 
 		// Se clasifica la unidad
-		if (Unit->GetState() == EUnitState::FollowingPath) AutomaticUnits.Add(i);
-		else if (Unit->GetState() == EUnitState::WaitingForOrders) ManualUnits.Add(i);
+		if (UnitState == EUnitState::FollowingPath) AutomaticUnits.AddUnique(i);
+		else if (UnitState == EUnitState::WaitingForOrders) ManualUnits.AddUnique(i);
 
+		// Se actualiza el balance de dinero con el coste de matenimiento de la unidad actual
 		MoneyBalance -= Unit->GetMaintenanceCost();
 	}
 
@@ -92,8 +93,8 @@ void APawnFaction::TurnEnded()
 		const EUnitState UnitState = Unit->GetState();
 		if (UnitState != EUnitState::FollowingPath)
 		{
-			AutomaticUnits.RemoveAt(UnitIndex);
-			if (UnitState == EUnitState::WaitingForOrders) ManualUnits.Add(UnitIndex);
+			AutomaticUnits.RemoveAt(i);
+			if (UnitState == EUnitState::WaitingForOrders) ManualUnits.AddUnique(UnitIndex);
 		}
 	}
 }

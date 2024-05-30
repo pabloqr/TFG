@@ -213,6 +213,11 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D)
+{
+	return CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) ? Tiles[GetPositionInArray(Pos2D)] : nullptr;
+}
+
 TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
 	// Limite del mapa
@@ -245,13 +250,16 @@ TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 	// Se procesan nodos mientras sigan quedando
 	while (!Frontier.Empty())
 	{
-		// Se obtiene el nodo con la mayor prioridad
+		// Se obtiene el nodo con la mayor prioridad y se comprueba si se ha llegado al destino
 		const FPathData CurrentData = Frontier.Pop();
 		if (CurrentData.Pos2D == PosEnd)
 		{
+			// Se procesan todos los nodos del diccionario CameFrom que nos permite conocer el camino de vuelta
+			// a la posicion inicial desde el objetivo
 			FIntPoint Current = CurrentData.Pos2D;
 			while (Current != PosIni)
 			{
+				// Se anade el nodo actual al camino a devolver y se actualiza al siguiente nodo
 				Path.Insert(FMovement(Current, Tiles[GetPositionInArray(Current)]->GetMovementCost()), 0);
 				Current = CameFrom[Current];
 			}
@@ -259,15 +267,21 @@ TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 			break;
 		}
 
+		// Se obtiene la casilla actual dada su posicion en el Array2D, se calculan los vecinos de la casilla actual
+		// y se procesan
 		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
 		for (const FIntPoint NeighborPos : CurrentTile->GetNeighbors())
 		{
+			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
 			const AActorTile* NeighborTile;
 			if (CheckValidPosition(NeighborPos, Limit) && (NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
 			{
+				// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
 				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
 				if (!TotalCost.Contains(NeighborPos))
 				{
+					// Si el nodo no se habia procesado previamente, se anade a las diferentes estructuras
+					// con los valores de prioridad y coste correctos
 					TotalCost.Add(NeighborPos, NewCost);
 
 					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
@@ -277,6 +291,9 @@ TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 				}
 				else
 				{
+					// Si el nodo se habia procesado previamente, se obtiene una referencia a su coste y, en caso
+					// de ser mayor al nuevo coste calculado, se actualizan todos los valores de las diferentes
+					// estructuras
 					int32& CurrentCost = TotalCost[NeighborPos];
 					if (NewCost < CurrentCost)
 					{

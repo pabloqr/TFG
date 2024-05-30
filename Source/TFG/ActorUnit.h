@@ -61,7 +61,7 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	void AssignPath(const TArray<FIntPoint>& Tiles, const TArray<int32>& Costs);
+	void AssignPath(const TArray<FMovement>& NewPath);
 	
 	UFUNCTION(BlueprintCallable)
 	void ContinuePath();
@@ -75,7 +75,7 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	void TurnStarted();
+	EUnitState TurnStarted();
 
 	UFUNCTION(BlueprintCallable)
 	void TurnEnded();
