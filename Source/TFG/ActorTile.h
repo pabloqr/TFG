@@ -129,6 +129,7 @@ public:
 	 * 
 	 * @param States Estados de la casilla
 	 */
+	UFUNCTION(BlueprintCallable)
 	void SetState(const TArray<ETileState>& States);
 	/**
 	 * Setter del atributo TileStatess
@@ -142,6 +143,7 @@ public:
 	 * 
 	 * @param States Estados de la casilla
 	 */
+	UFUNCTION(BlueprintCallable)
 	void AddState(const TArray<ETileState>& States);
 	/**
 	 * Anade el estado dado a los actuales
@@ -155,6 +157,7 @@ public:
 	 * 
 	 * @param States Estados de la casilla
 	 */
+	UFUNCTION(BlueprintCallable)
 	void RemoveState(const TArray<ETileState>& States);
 	/**
 	 * Elimina el estado dado de los actuales
@@ -165,12 +168,25 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Metodo que verifica si una casilla es accesible
+	 * 
+	 * @return Si la casilla es de un tipo accesible
+	 */
 	UFUNCTION(BlueprintCallable)
 	bool IsAccesible() const;
 
+	/**
+	 * Metodo que verifica si la casilla ya contiene una unidad
+	 * 
+	 * @return Si la casilla esta ocupada por una unidad
+	 */
 	UFUNCTION(BlueprintCallable)
 	bool HasUnit() const;
 
+	/**
+	 * Metodo que libera la casilla
+	 */
 	UFUNCTION(BlueprintCallable)
 	void EmptyTile();
 

@@ -291,16 +291,6 @@ class TFG_API AActorTileMap : public AActor
 	GENERATED_BODY()
 
 protected:
-	/*
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
-	UInstancedStaticMeshComponent* InstancedStaticMeshComponent;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
-	FLinearColor Color = FLinearColor(0.0, 0.0, 0.0);
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Map|Interaction")
-	float GridOffset = 0.01;
-	*/
-
 	/**
 	 * Array con informacion sobre el posicionamiento de las casillas y su tipo. Se emplea en los archivos de guardado
 	 */
@@ -380,24 +370,6 @@ public:
 	AActorTileMap();
 
 private:
-	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
-	 * 
-	 * @param Row Indice de la fila
-	 * @param Col Indice de la columna
-	 * @return Posicion en el Array1D
-	 */
-	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
-	
-	/**
-	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
-	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
-	 * @return Posicion en el Array1D
-	 */
-	UFUNCTION(BlueprintCallable)
-	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
-	
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
@@ -499,13 +471,42 @@ private:
 
 protected:
 	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Row Indice de la fila
+	 * @param Col Indice de la columna
+	 * @return Posicion en el Array1D
+	 */
+	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
+	
+	/**
+	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
+	 * 
+	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @return Posicion en el Array1D
+	 */
+	UFUNCTION(BlueprintCallable)
+	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que verifica si la casilla con las coordenadas dadas es accesible
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D
+	 * @return Si la casilla pedida es accesible
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool IsTileAccesible(const FIntPoint& Pos2D) const;
+	
+	/**
 	 * Metodo que devuelve una casilla del mapa dada su posicion en el mismo
 	 * 
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @return Casilla del mapa
 	 */
 	UFUNCTION(BlueprintCallable)
-	AActorTile* GetTileAtPos(const FIntPoint& Pos2D);
+	AActorTile* GetTileAtPos(const FIntPoint& Pos2D) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 	

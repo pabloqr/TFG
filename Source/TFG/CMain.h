@@ -17,7 +17,10 @@ class TFG_API ACMain : public APlayerController
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
-	AActorTile* Tile;
+	AActorTile* HoveredTile;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
+	AActorTile* SelectedTile;
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
 	AActorUnit* Unit;
 

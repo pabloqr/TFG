@@ -80,6 +80,9 @@ void AActorTile::AddState(const TArray<ETileState>& States)
 
 void AActorTile::AddState(const ETileState State)
 {
+	if (State != ETileState::None) TileStates.Remove(ETileState::None);
+	else TileStates.Empty();
+	
 	TileStates.AddUnique(State);
 }
 
@@ -90,7 +93,8 @@ void AActorTile::RemoveState(const TArray<ETileState>& States)
 
 void AActorTile::RemoveState(const ETileState State)
 {
-	if (TileStates.Contains(State)) TileStates.Remove(State);
+	TileStates.Remove(State);
+	if (TileStates.Num() == 0) TileStates.Add(ETileState::None);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

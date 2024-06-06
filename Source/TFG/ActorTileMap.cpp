@@ -9,14 +9,6 @@ AActorTileMap::AActorTileMap()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	/*
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
-	InstancedStaticMeshComponent = CreateDefaultSubobject<UInstancedStaticMeshComponent>(TEXT("TileGrid"));
-	InstancedStaticMeshComponent->SetupAttachment(RootComponent);
-	InstancedStaticMeshComponent->SetVectorParameterValueOnMaterials(TEXT("Color"), FVector(Color.R, Color.G, Color.B));
-	InstancedStaticMeshComponent->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	*/
-
 	GridSize = FVector2D(0.0, 0.0);
 
 	Rows = 32;
@@ -213,7 +205,12 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D)
+bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos2D) const
+{
+	return CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) && Tiles[GetPositionInArray(Pos2D)]->IsAccesible();
+}
+
+AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D) const
 {
 	return CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) ? Tiles[GetPositionInArray(Pos2D)] : nullptr;
 }
@@ -397,9 +394,6 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 
 	// Se actualiza el array de casillas con la que se ha anadido
 	Tiles[GetPositionInArray(TileInfo.Pos2D)] = NewTile;
-
-	// Se actualiza el grid que nos permite interactuar con el mapa
-	// InstancedStaticMeshComponent->AddInstance(FTransform(FVector(TileInfo.MapPos2D.X, TileInfo.MapPos2D.Y, GridOffset)));
 }
 
 void AActorTileMap::BeginPlay()
