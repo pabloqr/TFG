@@ -109,11 +109,6 @@ bool AActorTile::HasUnit() const
 	return Unit != nullptr;
 }
 
-void AActorTile::EmptyTile()
-{
-	Unit = nullptr;
-}
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 int32 AActorTile::TileTypeToInt(const ETileType TileType)

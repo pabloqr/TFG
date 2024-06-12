@@ -508,6 +508,15 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	AActorTile* GetTileAtPos(const FIntPoint& Pos2D) const;
 
+	/**
+	 * Metodo que obtiene la lista de casillas con un estado dado
+	 * 
+	 * @param State Estado de las casillas que se quieren obtener
+	 * @return Array con la Pos2D de las casillas que tienen el estado pedido
+	 */
+	UFUNCTION(BlueprintCallable)
+	TArray<FIntPoint> GetTilesWithState(const ETileState& State) const;
+
 	//----------------------------------------------------------------------------------------------------------------//
 	
 	/**
@@ -566,21 +575,6 @@ protected:
 	 */
 	// UFUNCTION(BlueprintCallable, Category="Map|Json")
 	// void JsonToMap();
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo estatico que verifica si una posicion se encuentra dentro de ciertos limites
-	 * 
-	 * @param Pos Posicion que se quiere comprobar
-	 * @param Limit Limite maximo de posicion
-	 * @return Si la posicion es valida
-	 */
-	UFUNCTION(BlueprintCallable)
-	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit)
-	{
-		return 0 <= Pos.X && Pos.X < Limit.X && 0 <= Pos.Y && Pos.Y < Limit.Y;
-	}
 
 	//----------------------------------------------------------------------------------------------------------------//
 

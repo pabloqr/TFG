@@ -31,7 +31,10 @@ enum class ETileState : uint8
 {
 	None = 0 UMETA(DisplayName="None"),
 	Hovered = 1 UMETA(DisplayName="Hovered"),
-	Selected = 2 UMETA(DisplayName="Selected")
+	Selected = 2 UMETA(DisplayName="Selected"),
+	Neighbor = 3 UMETA(DisplayName="Neighbor"),
+	Reachable = 4 UMETA(DisplayName="Reachable"),
+	InPath = 5 UMETA(DisplayName="InPath")
 };
 
 UCLASS()
@@ -183,12 +186,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool HasUnit() const;
-
-	/**
-	 * Metodo que libera la casilla
-	 */
-	UFUNCTION(BlueprintCallable)
-	void EmptyTile();
 
 	//----------------------------------------------------------------------------------------------------------------//
 

@@ -47,6 +47,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
 	TArray<FIntPoint> GetNeighbors() const;
 	int32 GetDistanceToElement(const FIntPoint& Pos) const;
 

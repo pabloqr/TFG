@@ -16,12 +16,14 @@ class TFG_API UGInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameInstance|Map")
-	FVector2D GridSize;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
+	FIntPoint Size2D;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
+	FVector2D MapSize2D;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameInstance|Map")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
 	EMapTemperature MapTemperature;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameInstance|Map")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
 	EMapSeaLevel MapSeaLevel;
 
 	virtual void Init() override;

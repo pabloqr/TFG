@@ -2,6 +2,7 @@
 
 #include "SaveMap.h"
 #include "GInstance.h"
+#include "LibraryTileMap.h"
 #include "Kismet/GameplayStatics.h"
 
 AActorTileMap::AActorTileMap()
@@ -207,13 +208,27 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos2D) const
 {
-	return CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) && Tiles[GetPositionInArray(Pos2D)]->IsAccesible();
+	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) && Tiles[GetPositionInArray(Pos2D)]->IsAccesible();
 }
 
 AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D) const
 {
-	return CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) ? Tiles[GetPositionInArray(Pos2D)] : nullptr;
+	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) ? Tiles[GetPositionInArray(Pos2D)] : nullptr;
 }
+
+TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState& State) const
+{
+	// Se recorren todas las casillas y se verifica si tienen el estado pedido
+	TArray<FIntPoint> TilesWithState;
+	for (const AActorTile* Tile : Tiles)
+	{
+		if (Tile->GetState().Contains(State)) TilesWithState.Add(Tile->GetPos());
+	}
+
+	return TilesWithState;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
@@ -221,7 +236,7 @@ TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 	const FIntPoint Limit = FIntPoint(Rows, Cols);
 
 	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
-	if (!(CheckValidPosition(PosIni, Limit) && CheckValidPosition(PosIni, Limit)) ||
+	if (!(ULibraryTileMap::CheckValidPosition(PosIni, Limit) && ULibraryTileMap::CheckValidPosition(PosIni, Limit)) ||
 		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
 	{
 		return TArray<FMovement>();
@@ -271,7 +286,7 @@ TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoi
 		{
 			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
 			const AActorTile* NeighborTile;
-			if (CheckValidPosition(NeighborPos, Limit) && (NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
+			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
 			{
 				// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
 				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
@@ -363,10 +378,12 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 		}
 	}
 
+	// Se actualizan los parametros de la instancia del juego para poder usarlos mas adelante
 	UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if (GameInstance)
 	{
-		GameInstance->GridSize = FVector2D(GridSize.X, GridSize.Y - RowOffset);
+		GameInstance->MapSize2D = FVector2D(GridSize.X, GridSize.Y - RowOffset);
+		GameInstance->Size2D = FIntPoint(Rows, Cols);
 	}
 }
 

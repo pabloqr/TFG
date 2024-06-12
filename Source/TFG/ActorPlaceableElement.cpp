@@ -3,6 +3,10 @@
 
 #include "ActorPlaceableElement.h"
 
+#include "GInstance.h"
+#include "LibraryTileMap.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values
 AActorPlaceableElement::AActorPlaceableElement()
@@ -33,7 +37,7 @@ void AActorPlaceableElement::SetPos(const FIntPoint& Pos, const FVector2D& MapPo
 TArray<FIntPoint> AActorPlaceableElement::GetNeighbors() const
 {
 	// Se preasigna el desplazamiento en funcion de si la columna es par o impar
-	TArray<FIntPoint> Neighbors = Pos2D.Y % 2 == 0 ? TArray<FIntPoint> {
+	TArray<FIntPoint> AllNeighbors = Pos2D.Y % 2 == 0 ? TArray<FIntPoint> {
 		FIntPoint(-1, -1), FIntPoint(-1, 0), FIntPoint(-1, 1),
 		FIntPoint(0, 1), FIntPoint(1, 0), FIntPoint(0, -1)
 	}
@@ -42,8 +46,22 @@ TArray<FIntPoint> AActorPlaceableElement::GetNeighbors() const
 		FIntPoint(1, 1), FIntPoint(1, 0), FIntPoint(1, -1)
 	};
 
-	// Se actualizan las posiciones de los vecinos pero no se comprueba si son correctas
-	for (int32 i = 0; i < Neighbors.Num(); ++i) Neighbors[i] += Pos2D;
+	// Se obtiene el tamano del mapa para verificar las posiciones
+	FIntPoint MapSize;
+	
+	const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
+	if (GameInstance)
+	{
+		MapSize = GameInstance->Size2D;
+	}
+	
+	// Se actualizan las posiciones de los vecinos y se comprueba si son correctas
+	TArray<FIntPoint> Neighbors;
+	for (int32 i = 0; i < AllNeighbors.Num(); ++i)
+	{
+		AllNeighbors[i] += Pos2D;
+		if (ULibraryTileMap::CheckValidPosition(AllNeighbors[i], MapSize)) Neighbors.Add(AllNeighbors[i]);
+	}
 	
 	return Neighbors;
 }
