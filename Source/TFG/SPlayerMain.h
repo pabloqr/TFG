@@ -13,7 +13,8 @@ enum class ESelectionState: uint8
 	NoSelection = 1 UMETA(DisplayName="NoSelection"),
 	TileSelected = 2 UMETA(DisplayName="TileSelected"),
 	UnitSelected = 3 UMETA(DisplayName="UnitSelected"),
-	SettlementSelected = 4 UMETA(DisplayName="SettlementSelected"),
+	MovingUnit = 4 UMETA(DisplayName="MovingUnit"),
+	SettlementSelected = 5 UMETA(DisplayName="SettlementSelected")
 };
 
 /**

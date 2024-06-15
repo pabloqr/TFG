@@ -35,13 +35,21 @@ void AActorUnit::BeginPlay()
 
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
-	Path = NewPath;
+	// Se actualiza el camino a seguir
+	Path.Empty();
+	Path.Append(NewPath);
+
+	// Se establece el estado de la unidad
 	State = EUnitState::FollowingPath;
 }
 
 void AActorUnit::ContinuePath()
 {
-	while (State == EUnitState::FollowingPath && MoveUnit()) {}
+	bool Move = true;
+	while (State == EUnitState::FollowingPath && Move)
+	{
+		Move = MoveUnit();
+	}
 }
 
 bool AActorUnit::MoveUnit()
