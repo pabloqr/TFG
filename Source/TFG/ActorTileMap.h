@@ -295,12 +295,14 @@ protected:
 	 * Array con informacion sobre el posicionamiento de las casillas y su tipo. Se emplea en los archivos de guardado
 	 */
 	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
-	TArray<FTileInfo> TilesInfo;
+	TMap<FIntPoint, FTileInfo> TilesInfo;
 	/**
 	 * Array con referencias a las casillas del mapa
 	 */
 	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Posicion de la ultima casilla en coordenadas de la escena
@@ -334,6 +336,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Map|Grid")
 	float VerticalOffset;
 
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Probabilidad de aparicion de casillas de agua en el mapa
 	 */
@@ -362,6 +366,20 @@ protected:
 	 * Numero de filas donde puede aparecer nieve en los polos del mapa
 	 */
 	int32 NumSnowRows;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Almacen del camino a seguir
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Pathfinding")
+	TArray<FMovement> Path;
+	
+	/**
+	 * Diccionario que almacena, para cada nodo, el coste de llegar a el
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Pathfinding")
+	TMap<FIntPoint, int32> TotalCost;
 	
 public:
 	/**
@@ -430,23 +448,21 @@ private:
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
 	 * 
-	 * @param Pos1D Posicion en el Array1D
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
 	 * @return Tipo de casilla a generar
 	 */
-	ETileType GenerateTileType(const int32 Pos1D, const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const;
+	ETileType GenerateTileType(const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo privado que actualiza la casilla deseada al tipo especificado
 	 * 
-	 * @param Pos1D Posicion en el Array1D
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param TileType Tipo de casilla
 	 */
-	void SetTileAtPos(const int32 Pos1D, const FIntPoint& Pos2D, const ETileType TileType);
+	void SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileType);
 
 	/**
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
@@ -516,6 +532,16 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntPoint> GetTilesWithState(const ETileState& State) const;
+
+	/**
+	 * Metodo que obtiene la lista de casillas que se encuentran al alcance desde cierta posicion
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D
+	 * @param Range Alcance desde la posicion dada
+	 * @return Coordenadas de las casillas que se encuentran dentro del rango desde la posicion dada
+	 */
+	UFUNCTION(BlueprintCallable)
+	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
 
 	//----------------------------------------------------------------------------------------------------------------//
 	
@@ -590,4 +616,18 @@ public:
 	 * @param DeltaSeconds Tiempo transcurrido desde el ultimo frame
 	 */
 	virtual void Tick(float DeltaSeconds) override;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathUpdated, FIntPoint, Pos2D);
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTileInfoUpdated OnTileInfoUpdated;
+	
+	UPROPERTY(BlueprintAssignable)
+	FOnPathCreated OnPathCreated;
+	UPROPERTY(BlueprintAssignable)
+	FOnPathUpdated OnPathUpdated;
 };

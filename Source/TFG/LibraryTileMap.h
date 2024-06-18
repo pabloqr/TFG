@@ -3,9 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FMovement.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "LibraryTileMap.generated.h"
 
+enum class ETileType : uint8;
 /**
  * 
  */
@@ -22,9 +24,12 @@ public:
 	 * @param Limit Limite maximo de posicion
 	 * @return Si la posicion es valida
 	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	static bool IsTileTypeAccesible(const ETileType& TileType);
+
 	UFUNCTION(BlueprintCallable)
-	static bool CheckValidPosition(const FIntPoint& Pos, const FIntPoint& Limit)
-	{
-		return 0 <= Pos.X && Pos.X < Limit.X && 0 <= Pos.Y && Pos.Y < Limit.Y;
-	}
+	static int32 IsTileInPath(const TArray<FMovement>& Path, const FIntPoint& Pos);
 };

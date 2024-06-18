@@ -25,6 +25,20 @@ AActorUnit::AActorUnit()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorUnit::UpdatePathCosts()
+{
+	// Se verifica que la unidad se haya movido en el turno
+	if (PathCompleted.Num() == 0) return;
+
+	UE_LOG(LogTemp, Log, TEXT("Updating Unit Path Costs"))
+	
+	// Se obtiene el coste actual y se actualizan el resto de costes
+	const int32 Cost = PathCompleted[PathCompleted.Num()-1].TotalCost;
+	for (int32 i = 0; i < Path.Num(); ++i) Path[i].TotalCost -= Cost;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 // Called when the game starts or when spawned
 void AActorUnit::BeginPlay()
 {
@@ -35,20 +49,26 @@ void AActorUnit::BeginPlay()
 
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
-	// Se actualiza el camino a seguir
+	// Se limpian los valores almacenados del camino previo
 	Path.Empty();
+	PathCompleted.Empty();
+	
+	// Se actualiza el camino a seguir
 	Path.Append(NewPath);
-
+	
 	// Se establece el estado de la unidad
-	State = EUnitState::FollowingPath;
+	if (MovementPoints > 0) State = EUnitState::FollowingPath;
 }
 
 void AActorUnit::ContinuePath()
 {
-	bool Move = true;
-	while (State == EUnitState::FollowingPath && Move)
+	// Se limpian las casillas completadas en el turno previo
+	PathCompleted.Empty();
+
+	// Se realizan todos los movimientos posibles en el turno
+	while (State == EUnitState::FollowingPath)
 	{
-		Move = MoveUnit();
+		MoveUnit();
 	}
 }
 
@@ -63,7 +83,8 @@ bool AActorUnit::MoveUnit()
 		// Se comprueba que la unidad tenga puntos de movimiento suficientes
 		if (MovementPoints >= Move.MovementCost)
 		{
-			// Se elimina la entrada del camino a seguir
+			// Se elimina la entrada correspondiente al movimiento actual
+			PathCompleted.Add(Move);
 			Path.RemoveAt(0);
 			
 			// Se almacena la posicion antes del movimiento
@@ -76,6 +97,7 @@ bool AActorUnit::MoveUnit()
 			// Se actualiza el estado de la unidad
 			if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
 			else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
+			else State = EUnitState::WaitingForNextTurn;
 
 			// Se llama al evento para que se actualicen los datos en el resto de actores
 			OnUnitMoved.Broadcast(PrevPos, Pos2D);
@@ -110,6 +132,8 @@ EUnitState AActorUnit::TurnStarted()
 
 void AActorUnit::TurnEnded()
 {
+	// Se actualizan los costes del camino
+	UpdatePathCosts();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

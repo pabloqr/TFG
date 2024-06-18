@@ -9,14 +9,15 @@
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
-UENUM()
+UENUM(BlueprintType)
 enum class EUnitState : uint8
 {
 	None = 0 UMETA(DisplayName="None"),
 	WaitingForOrders = 1 UMETA(DisplayName="WaitingForOrders"),
 	Sleeping = 2 UMETA(DisplayName="Sleeping"),
 	FollowingPath = 3 UMETA(DisplayName="FollowingPath"),
-	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints")
+	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints"),
+	WaitingForNextTurn = 5 UMETA(DisplayName="WaitingForNextTurn")
 };
 
 UCLASS(Abstract)
@@ -32,8 +33,11 @@ protected:
 	int32 BaseMovementPoints;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 MovementPoints;
+	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
 	TArray<FMovement> Path;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
+	TArray<FMovement> PathCompleted;
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
 	int32 VisibilityPoints;
@@ -49,6 +53,9 @@ protected:
 public:
 	// Sets default values for this actor's properties
 	AActorUnit();
+
+private:
+	void UpdatePathCosts();
 
 protected:
 	// Called when the game starts or when spawned

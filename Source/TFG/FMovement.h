@@ -14,12 +14,15 @@ struct FMovement
 	FIntPoint Pos2D;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
 	int32 MovementCost;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
+	int32 TotalCost;
 
-	FMovement() : FMovement(FIntPoint(-1, -1), -1) {}
+	FMovement() : FMovement(FIntPoint(-1, -1), -1, -1) {}
 	
-	FMovement(const FIntPoint& Pos, const int32 Cost)
+	FMovement(const FIntPoint& Pos, const int32 MCost, const int32 TCost)
 	{
 		Pos2D = Pos;
-		MovementCost = Cost;
+		MovementCost = MCost;
+		TotalCost = TCost;
 	}
 };
