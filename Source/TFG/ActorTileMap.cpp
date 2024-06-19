@@ -10,6 +10,9 @@ AActorTileMap::AActorTileMap()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	TilesInfo = TMap<FIntPoint, FTileInfo>();
+	TilesWithState = TMap<ETileState, FTilesArray>();
+
 	GridSize = FVector2D(0.0, 0.0);
 
 	Rows = 32;
@@ -224,14 +227,9 @@ AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D) const
 
 TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState& State) const
 {
-	// Se recorren todas las casillas y se verifica si tienen el estado pedido
-	TArray<FIntPoint> TilesWithState;
-	for (const AActorTile* Tile : Tiles)
-	{
-		if (Tile->GetState().Contains(State)) TilesWithState.Add(Tile->GetPos());
-	}
+	if (TilesWithState.Contains(State)) return TilesWithState[State].TilesArray;
 
-	return TilesWithState;
+	return TArray<FIntPoint>();
 }
 
 TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range)

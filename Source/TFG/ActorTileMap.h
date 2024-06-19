@@ -12,6 +12,27 @@ struct FMapData;
 enum class ETileType : uint8;
 
 /**
+ * Estructura que almacena una lista de coordenadas de casillas. Disenado para poder ser usado en diccionarios
+ */
+USTRUCT(BlueprintType)
+struct FTilesArray
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
+	TArray<FIntPoint> TilesArray;
+
+	FTilesArray(): FTilesArray(TArray<FIntPoint>()) {}
+
+	explicit FTilesArray(const TArray<FIntPoint>& Tiles)
+	{
+		TilesArray = Tiles;
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+/**
  * Tipo enumerado para la clasificacion de mapas segun su temperatura
  */
 UENUM(BlueprintType)
@@ -302,6 +323,12 @@ protected:
 	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
 
+	/**
+	 * Diccionario que almacena, para cada estado, las casillas que lo tienen
+	 */
+	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	TMap<ETileState, FTilesArray> TilesWithState;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -521,7 +548,7 @@ protected:
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @return Casilla del mapa
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	AActorTile* GetTileAtPos(const FIntPoint& Pos2D) const;
 
 	/**
@@ -530,7 +557,7 @@ protected:
 	 * @param State Estado de las casillas que se quieren obtener
 	 * @return Array con la Pos2D de las casillas que tienen el estado pedido
 	 */
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	TArray<FIntPoint> GetTilesWithState(const ETileState& State) const;
 
 	/**

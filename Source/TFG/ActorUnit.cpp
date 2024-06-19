@@ -47,6 +47,17 @@ void AActorUnit::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorUnit::RemovePath()
+{
+	// Se limpian los valores almacenados del camino previo
+	Path.Empty();
+	PathCompleted.Empty();
+
+	// Se establece el estado de la unidad
+	if (MovementPoints > 0) State = EUnitState::WaitingForOrders;
+	else State = EUnitState::NoMovementPoints;
+}
+
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
 	// Se limpian los valores almacenados del camino previo

@@ -68,6 +68,9 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
+	void RemovePath();
+
+	UFUNCTION(BlueprintCallable)
 	void AssignPath(const TArray<FMovement>& NewPath);
 	
 	UFUNCTION(BlueprintCallable)
