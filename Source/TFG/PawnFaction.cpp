@@ -3,6 +3,7 @@
 #include "PawnFaction.h"
 
 #include "ActorUnit.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APawnFaction::APawnFaction()
@@ -41,17 +42,22 @@ void APawnFaction::TurnStarted()
 	// Se vacian los arrays para actualizarlos
 	AutomaticUnits.Empty();
 	ManualUnits.Empty();
-
+	
 	// Se procesan todas las unidades
 	for (int32 i = 0; i < Units.Num(); ++i)
 	{
+		// Se obtiene la unidad
 		AActorUnit* Unit = Units[i];
 
 		// Se inicia el turno de la unidad
 		const EUnitState UnitState = Unit->TurnStarted();
 
 		// Se clasifica la unidad
-		if (UnitState == EUnitState::FollowingPath) AutomaticUnits.AddUnique(i);
+		if (UnitState == EUnitState::FollowingPath)
+		{
+			// Si tiene un camino asignado
+			AutomaticUnits.AddUnique(i);
+		}
 		else if (UnitState == EUnitState::WaitingForOrders) ManualUnits.AddUnique(i);
 
 		// Se actualiza el balance de dinero con el coste de matenimiento de la unidad actual
@@ -80,22 +86,14 @@ void APawnFaction::TurnStarted()
 
 void APawnFaction::TurnEnded()
 {
-	// Se procesan todas las unidades que estan siguiendo un camino
-	for (int32 i = 0; i < AutomaticUnits.Num(); ++i)
+	// Se procesan todas las unidades
+	for (int32 i = 0; i < Units.Num(); ++i)
 	{
-		// Se obtiene el indice de la unidad que se esta procesando
-		const int32 UnitIndex = AutomaticUnits[i];
-
-		// Se realiza el siguiente movimiento en el camino a seguir
-		AActorUnit* Unit = Units[UnitIndex];
-		Unit->ContinuePath();
-
-		const EUnitState UnitState = Unit->GetState();
-		if (UnitState != EUnitState::FollowingPath)
-		{
-			AutomaticUnits.RemoveAt(i);
-			if (UnitState == EUnitState::WaitingForOrders) ManualUnits.AddUnique(UnitIndex);
-		}
+		// Se obtiene la unidad
+		AActorUnit* Unit = Units[i];
+		
+		// Se finaliza el turno de la unidad
+		Unit->TurnEnded();
 	}
 }
 

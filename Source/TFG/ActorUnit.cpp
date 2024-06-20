@@ -3,6 +3,7 @@
 
 #include "ActorUnit.h"
 
+#include "LibraryTileMap.h"
 #include "Components/TimelineComponent.h"
 
 
@@ -28,24 +29,60 @@ AActorUnit::AActorUnit()
 void AActorUnit::UpdatePathCosts()
 {
 	// Se verifica que la unidad se haya movido en el turno
-	if (PathCompleted.Num() == 0) return;
+	if (PathCompleted.Num() > 0)
+	{
+		// Se obtiene el coste actual y se actualizan el resto de costes
+		const int32 Cost = PathCompleted.Last().TotalCost;
+		for (int32 i = 0; i < Path.Num(); ++i) Path[i].TotalCost -= Cost;
+	}
 
-	UE_LOG(LogTemp, Log, TEXT("Updating Unit Path Costs"))
-	
-	// Se obtiene el coste actual y se actualizan el resto de costes
-	const int32 Cost = PathCompleted[PathCompleted.Num()-1].TotalCost;
-	for (int32 i = 0; i < Path.Num(); ++i) Path[i].TotalCost -= Cost;
+	// Se actualiza el numero de turnos en alcanzar cada una de las casillas
+	UpdatePathTurns();
+}
+
+void AActorUnit::UpdatePathTurns()
+{
+	ULibraryTileMap::UpdatePathTurns(Path, BaseMovementPoints, MovementPoints);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-// Called when the game starts or when spawned
 void AActorUnit::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
+
+void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
+{
+	// Se limpian los valores almacenados del camino previo
+	Path.Empty();
+	PathCompleted.Empty();
+	
+	if (NewPath.Num() > 0)
+	{
+		// Se actualiza el camino a seguir
+		Path.Append(NewPath);
+		if (Path[0].Pos2D == Pos2D) Path.RemoveAt(0);
+	
+		// Se establece el estado de la unidad
+		if (MovementPoints > 0) State = EUnitState::FollowingPath;
+
+		// Se actualiza el numero de turnos para alcanzar las casillas del camino
+		UpdatePathTurns();
+	}
+}
+
+void AActorUnit::UpdatePath()
+{
+	if (Path.Num() > 0 && TileMap)
+	{
+		// Se recalcula el camino
+		const TArray<FMovement> NewPath = TileMap->FindPath(Pos2D, Path.Last().Pos2D, BaseMovementPoints, MovementPoints);
+		AssignPath(NewPath);
+	}
+}
 
 void AActorUnit::RemovePath()
 {
@@ -58,32 +95,16 @@ void AActorUnit::RemovePath()
 	else State = EUnitState::NoMovementPoints;
 }
 
-void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
-{
-	// Se limpian los valores almacenados del camino previo
-	Path.Empty();
-	PathCompleted.Empty();
-	
-	// Se actualiza el camino a seguir
-	Path.Append(NewPath);
-	
-	// Se establece el estado de la unidad
-	if (MovementPoints > 0) State = EUnitState::FollowingPath;
-}
-
 void AActorUnit::ContinuePath()
 {
 	// Se limpian las casillas completadas en el turno previo
 	PathCompleted.Empty();
 
 	// Se realizan todos los movimientos posibles en el turno
-	while (State == EUnitState::FollowingPath)
-	{
-		MoveUnit();
-	}
+	while (State == EUnitState::FollowingPath) MoveUnit();
 }
 
-bool AActorUnit::MoveUnit()
+void AActorUnit::MoveUnit()
 {
 	// Se comprueba que haya pasos en el camino a seguir
 	if (Path.Num() > 0)
@@ -108,15 +129,15 @@ bool AActorUnit::MoveUnit()
 			// Se actualiza el estado de la unidad
 			if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
 			else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
-			else State = EUnitState::WaitingForNextTurn;
 
 			// Se llama al evento para que se actualicen los datos en el resto de actores
 			OnUnitMoved.Broadcast(PrevPos, Pos2D);
-			return true;
+			return;
 		}
-	}
 
-	return false;
+		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
+		State = EUnitState::WaitingForNextTurn;
+	}
 }
 
 void AActorUnit::RestoreMovement()
@@ -144,7 +165,10 @@ EUnitState AActorUnit::TurnStarted()
 void AActorUnit::TurnEnded()
 {
 	// Se actualizan los costes del camino
-	UpdatePathCosts();
+	UpdatePath();
+
+	// Se continua el camino si tiene uno asignado
+	ContinuePath();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

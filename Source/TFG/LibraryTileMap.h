@@ -32,4 +32,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static int32 IsTileInPath(const TArray<FMovement>& Path, const FIntPoint& Pos);
+
+	UFUNCTION(BlueprintCallable)
+	static void UpdatePathTurns(TArray<FMovement>& Path, const int32 BaseMovementPoints, int32 MovementPoints);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetPathTurnAtIndex(TArray<FMovement>& Path, const int32 Index, const int32 BaseMovementPoints, int32& MovementPoints);
 };

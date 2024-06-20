@@ -244,9 +244,12 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 		TArray<FIntPoint> Neighbors = Tiles[GetPositionInArray(Pos2D)]->GetNeighbors();
 		for (const FIntPoint Neighbor : Neighbors)
 		{
+			// Se obtiene la casilla
+			const AActorTile* Tile = Tiles[GetPositionInArray(Neighbor)];
+			
 			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
-			const int32 Cost = Tiles[GetPositionInArray(Neighbor)]->GetMovementCost();
-			if (Cost <= Range && Tiles[GetPositionInArray(Neighbor)]->IsAccesible())
+			const int32 Cost = Tile->GetMovementCost();
+			if (Cost <= Range && Tile->IsAccesible() && !Tile->HasElement())
 			{
 				// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
 				InRange.Add(Neighbor);
@@ -259,116 +262,6 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
-
-TArray<FMovement> AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd)
-{
-	// Se limpian los datos anteriores
-	Path.Empty();
-	TotalCost.Empty();
-
-	// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
-	OnPathCreated.Broadcast(TArray<FMovement>());
-	
-	// Limite del mapa
-	const FIntPoint Limit = FIntPoint(Rows, Cols);
-
-	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
-	if (!(ULibraryTileMap::CheckValidPosition(PosIni, Limit) && ULibraryTileMap::CheckValidPosition(PosIni, Limit)) ||
-		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
-	{
-		return Path;
-	}
-
-	// Si las dos casillas son iguales, se devuelve un array vacio
-	if (PosIni == PosEnd) return Path;
-	
-	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
-	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
-	//
-	// Inicialmente, se inserta el nodo inicial
-	FPriorityQueue Frontier;
-	Frontier.Push(FPathData(PosIni, 0));
-
-	// Se crea un diccionario que almacena, para cada nodo, desde cual se ha llegado a el
-	TMap<FIntPoint, FIntPoint> CameFrom;
-	CameFrom.Add(PosIni, FIntPoint(-1, -1));
-
-	// Se inicializa el diccionario de costes
-	TotalCost.Add(PosIni, 0);
-
-	// Se procesan nodos mientras sigan quedando
-	while (!Frontier.Empty())
-	{
-		// Se obtiene el nodo con la mayor prioridad y se comprueba si se ha llegado al destino
-		const FPathData CurrentData = Frontier.Pop();
-		if (CurrentData.Pos2D == PosEnd)
-		{
-			// Se procesan todos los nodos del diccionario CameFrom que nos permite conocer el camino de vuelta
-			// a la posicion inicial desde el objetivo
-			FIntPoint Current = CurrentData.Pos2D;
-			
-			while (Current != PosIni)
-			{
-				// Se obtiene el coste de movimiento de la casilla actual
-				const int32 CurrentCost = Tiles[GetPositionInArray(Current)]->GetMovementCost();
-				
-				// Se anade el nodo actual al camino a devolver
-				Path.Insert(FMovement(Current, CurrentCost, TotalCost[Current]), 0);
-
-				// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
-				OnPathUpdated.Broadcast(Current);
-
-				// Se actualiza al siguiente nodo
-				Current = CameFrom[Current];
-			}
-			
-			break;
-		}
-
-		// Se obtiene la casilla actual dada su posicion en el Array2D, se calculan los vecinos de la casilla actual
-		// y se procesan
-		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
-		for (const FIntPoint NeighborPos : CurrentTile->GetNeighbors())
-		{
-			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
-			const AActorTile* NeighborTile;
-			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
-			{
-				// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
-				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
-				if (!TotalCost.Contains(NeighborPos))
-				{
-					// Si el nodo no se habia procesado previamente, se anade a las diferentes estructuras
-					// con los valores de prioridad y coste correctos
-					TotalCost.Add(NeighborPos, NewCost);
-
-					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
-					Frontier.Push(FPathData(NeighborPos, Priority));
-					
-					CameFrom.Add(NeighborPos, CurrentData.Pos2D);
-				}
-				else
-				{
-					// Si el nodo se habia procesado previamente, se obtiene una referencia a su coste y, en caso
-					// de ser mayor al nuevo coste calculado, se actualizan todos los valores de las diferentes
-					// estructuras
-					int32& CurrentCost = TotalCost[NeighborPos];
-					if (NewCost < CurrentCost)
-					{
-						CurrentCost = NewCost;
-						
-						const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
-						Frontier.Push(FPathData(NeighborPos, Priority));
-
-						CameFrom[NeighborPos] = CurrentData.Pos2D;
-					}
-				}
-			}
-		}
-	}
-
-	return Path;
-}
 
 void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
 {
@@ -519,6 +412,128 @@ void AActorTileMap::JsonToMap()
 	else UE_LOG(LogTemp, Error, TEXT("%s"), *ResultMessage)
 }
 */
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints, int32 MovementPoints)
+{
+	// Se limpian los datos anteriores
+	Path.Empty();
+	TotalCost.Empty();
+
+	// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
+	OnPathCreated.Broadcast(TArray<FMovement>());
+	
+	// Limite del mapa
+	const FIntPoint Limit = FIntPoint(Rows, Cols);
+
+	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
+	if (!(ULibraryTileMap::CheckValidPosition(PosIni, Limit) && ULibraryTileMap::CheckValidPosition(PosIni, Limit)) ||
+		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
+	{
+		return Path;
+	}
+
+	// Si las dos casillas son iguales, se devuelve un array vacio
+	if (PosIni == PosEnd) return Path;
+	
+	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
+	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
+	//
+	// Inicialmente, se inserta el nodo inicial
+	FPriorityQueue Frontier;
+	Frontier.Push(FPathData(PosIni, 0));
+
+	// Se crea un diccionario que almacena, para cada nodo, desde cual se ha llegado a el
+	TMap<FIntPoint, FIntPoint> CameFrom;
+	CameFrom.Add(PosIni, FIntPoint(-1, -1));
+
+	// Se inicializa el diccionario de costes
+	TotalCost.Add(PosIni, 0);
+
+	// Se procesan nodos mientras sigan quedando
+	while (!Frontier.Empty())
+	{
+		// Se obtiene el nodo con la mayor prioridad y se comprueba si se ha llegado al destino
+		const FPathData CurrentData = Frontier.Pop();
+		if (CurrentData.Pos2D == PosEnd)
+		{
+			// Se procesan todos los nodos del diccionario CameFrom que nos permite conocer el camino de vuelta
+			// a la posicion inicial desde el objetivo
+			FIntPoint Current = CurrentData.Pos2D;
+			
+			while (Current != PosIni)
+			{
+				// Se obtiene el coste de movimiento de la casilla actual
+				const int32 CurrentCost = Tiles[GetPositionInArray(Current)]->GetMovementCost();
+				
+				// Se anade el nodo actual al camino a devolver
+				Path.Insert(FMovement(Current, CurrentCost, TotalCost[Current]), 0);
+
+				// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
+				// OnPathUpdated.Broadcast(Current, Path);
+
+				// Se actualiza al siguiente nodo
+				Current = CameFrom[Current];
+			}
+
+			// Se recorren todos los elementos del camino para llamar al evento que actualiza la visual del mapa
+			for (int32 i = 0; i < Path.Num(); ++i)
+			{
+				// Se actualiza el numero de turnos en alcanzar la casilla actual
+				ULibraryTileMap::GetPathTurnAtIndex(Path, i, BaseMovementPoints, MovementPoints);
+				
+				// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
+				OnPathUpdated.Broadcast(Path[i].Pos2D, Path);
+			}
+			
+			break;
+		}
+
+		// Se obtiene la casilla actual dada su posicion en el Array2D, se calculan los vecinos de la casilla actual
+		// y se procesan
+		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
+		for (const FIntPoint NeighborPos : CurrentTile->GetNeighbors())
+		{
+			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
+			const AActorTile* NeighborTile;
+			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible() && !NeighborTile->HasElement())
+			{
+				// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
+				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
+				if (!TotalCost.Contains(NeighborPos))
+				{
+					// Si el nodo no se habia procesado previamente, se anade a las diferentes estructuras
+					// con los valores de prioridad y coste correctos
+					TotalCost.Add(NeighborPos, NewCost);
+
+					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+					Frontier.Push(FPathData(NeighborPos, Priority));
+					
+					CameFrom.Add(NeighborPos, CurrentData.Pos2D);
+				}
+				else
+				{
+					// Si el nodo se habia procesado previamente, se obtiene una referencia a su coste y, en caso
+					// de ser mayor al nuevo coste calculado, se actualizan todos los valores de las diferentes
+					// estructuras
+					int32& CurrentCost = TotalCost[NeighborPos];
+					if (NewCost < CurrentCost)
+					{
+						CurrentCost = NewCost;
+						
+						const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+						Frontier.Push(FPathData(NeighborPos, Priority));
+
+						CameFrom[NeighborPos] = CurrentData.Pos2D;
+					}
+				}
+			}
+		}
+	}
+
+	return Path;
+}
 
 //--------------------------------------------------------------------------------------------------------------------//
 

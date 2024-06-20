@@ -104,9 +104,19 @@ bool AActorTile::IsAccesible() const
 	return MovementCost != -1;
 }
 
+bool AActorTile::HasElement() const
+{
+	return HasUnit() || HasSettlement();
+}
+
 bool AActorTile::HasUnit() const
 {
 	return Unit != nullptr;
+}
+
+bool AActorTile::HasSettlement() const
+{
+	return Settlement != nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

@@ -65,6 +65,7 @@ protected:
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
 	AActorResource* Resource;
+	
 	/**
 	 * Unidad sobre la casilla. Si no posee, se establece como null
 	 */
@@ -180,12 +181,28 @@ public:
 	bool IsAccesible() const;
 
 	/**
+	 * Metodo que verifica si la casilla esta ocupada
+	 * 
+	 * @return Si la casilla contiene un elemento del juego
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool HasElement() const;
+
+	/**
 	 * Metodo que verifica si la casilla ya contiene una unidad
 	 * 
 	 * @return Si la casilla esta ocupada por una unidad
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool HasUnit() const;
+
+	/**
+	 * Metodo que verifica si la casilla ya contiene un asentamiento
+	 * 
+	 * @return Si la casilla esta ocupada por un asentamiento
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool HasSettlement() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

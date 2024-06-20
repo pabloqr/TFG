@@ -8,6 +8,10 @@
 #include "GameFramework/Actor.h"
 #include "ActorTileMap.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
+
 struct FMapData;
 enum class ETileType : uint8;
 
@@ -571,18 +575,6 @@ protected:
 	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
-	/**
-	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
-	 * 
-	 * @param PosIni Posicion inicial del elemento
-	 * @param PosEnd Posicion de destino del elemento
-	 * @return El mejor camino a seguir
-	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
-	TArray<FMovement> FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd);
-
-	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que genera un mapa de forma aleatoria teniendo en cuenta los modificadores de temperatura y nivel del
@@ -638,6 +630,20 @@ protected:
 	
 public:
 	/**
+	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
+	 * 
+	 * @param PosIni Posicion inicial del elemento
+	 * @param PosEnd Posicion de destino del elemento
+	 * @param BaseMovementPoints
+	 * @param MovementPoints
+	 * @return El mejor camino a seguir
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
+	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints, const int32 MovementPoints);
+
+	//----------------------------------------------------------------------------------------------------------------//
+	
+	/**
 	 * Metodo ejecutado en cada frame
 	 * 
 	 * @param DeltaSeconds Tiempo transcurrido desde el ultimo frame
@@ -645,10 +651,6 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathUpdated, FIntPoint, Pos2D);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileInfoUpdated OnTileInfoUpdated;
