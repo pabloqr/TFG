@@ -1,5 +1,6 @@
 #include "ActorTileMap.h"
 
+#include "ActorCivilUnit.h"
 #include "ActorDamageableElement.h"
 #include "SaveMap.h"
 #include "GInstance.h"
@@ -429,19 +430,32 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 
 	// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
 	OnPathCreated.Broadcast(TArray<FMovement>());
+
+	// Si las dos casillas son iguales, se devuelve un array vacio
+	if (PosIni == PosEnd) return Path;
 	
 	// Limite del mapa
 	const FIntPoint Limit = FIntPoint(Rows, Cols);
 
 	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
-	if (!(ULibraryTileMap::CheckValidPosition(PosIni, Limit) && ULibraryTileMap::CheckValidPosition(PosIni, Limit)) ||
-		!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
+	if (!(ULibraryTileMap::CheckValidPosition(PosIni, Limit) && ULibraryTileMap::CheckValidPosition(PosIni, Limit)))
 	{
 		return Path;
 	}
 
-	// Si las dos casillas son iguales, se devuelve un array vacio
-	if (PosIni == PosEnd) return Path;
+	// Se comprueba que las casillas sean accesibles, si no lo son, se devuelve un array vacio
+	if (!(Tiles[GetPositionInArray(PosIni)]->IsAccesible() && Tiles[GetPositionInArray(PosEnd)]->IsAccesible()))
+	{
+		return Path;
+	}
+	
+	// Se comprueba que la unidad seleccionada no sea una unidad civil
+	if (Cast<AActorCivilUnit>(Tiles[GetPositionInArray(PosIni)]->GetElement()))
+	{
+		// Si la unidad seleccionada es civil y en la casilla de destino hay una unidad civil propia,
+		// se devuelve un array vacio
+		if (Tiles[GetPositionInArray(PosEnd)]->GetElement()) return Path;
+	}
 	
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
