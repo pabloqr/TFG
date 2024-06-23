@@ -9,6 +9,8 @@
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
+
 UENUM(BlueprintType)
 enum class EUnitState : uint8
 {
@@ -93,6 +95,16 @@ private:
 	void UpdatePathTurns();
 
 protected:
+	/**
+	 * Metodo que aplica el movimiento dado actualizando los puntos de movimiento y el estado
+	 * 
+	 * @param Move Movimiento a aplicar
+	 */
+	UFUNCTION(BlueprintCallable, Category="Unit|Movement")
+	void UpdatePosition(const FMovement& Move);
+
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -179,8 +191,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, FIntPoint, PrevPos, FIntPoint, CurrPos);
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;

@@ -5,6 +5,9 @@
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 
+#include "ActorUnit.h"
+#include "ActorSettlement.h"
+
 AActorTile::AActorTile()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -29,6 +32,14 @@ const ETileType& AActorTile::GetType() const
 int32 AActorTile::GetMovementCost() const
 {
 	return MovementCost;
+}
+
+const AActorDamageableElement* AActorTile::GetElement() const
+{
+	if (Unit) return Unit;
+	if (Settlement) return Settlement;
+
+	return nullptr;
 }
 
 const TArray<ETileState>& AActorTile::GetState() const

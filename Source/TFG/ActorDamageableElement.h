@@ -3,8 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FAttackStats.h"
 #include "ActorPlaceableElement.h"
 #include "ActorDamageableElement.generated.h"
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackTriggered, const FAttackStats&, AggressorStats);
 
 UCLASS(Abstract)
 class TFG_API AActorDamageableElement : public AActorPlaceableElement
@@ -76,21 +79,33 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que verifica si el elemento es propiedad del jugador actual
+	 * 
+	 * @return Si el elemtnos es propiedad del jugador actual
+	 */
+	UFUNCTION(BlueprintCallable, Category="GameElement")
+	bool IsMine() const;
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
 	 * Metodo que calcula el dano que se debe aplicar a cada elemento al realizar un ataque
 	 * 
-	 * @param DamageableElement Elemento que se ataca
+	 * @param IsAttacking
+	 * @param Stats Elemento que se ataca
 	 * @return Valores de dano a aplicar a cada uno de los elementos tras el ataque
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
-	FVector2D CalculateAttack(AActorDamageableElement* DamageableElement) const;
+	float CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const;
 	
 	/**
 	 * Metodo que hace efectivo un ataque sobre otro elemento
 	 * 
-	 * @param DamageableElement Elemento que se ataca
+	 * @param IsAttacking
+	 * @param Stats Elemento que se ataca
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
-	void PerformAttack(AActorDamageableElement* DamageableElement);
+	void PerformAttack(const bool IsAttacking, const FAttackStats& Stats);
 	
 	/**
 	 * Metodo que aplica un dano a un elemento. No se verifica si el elemento es destruido o no
@@ -108,4 +123,9 @@ public:
 	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
 	 */
 	virtual void Tick(float DeltaTime) override;
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnAttackTriggered OnAttackTriggered;
 };

@@ -2,6 +2,7 @@
 
 #include "PawnFaction.h"
 
+#include "ActorSettlement.h"
 #include "ActorUnit.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -21,6 +22,21 @@ void APawnFaction::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool APawnFaction::HasElement(const AActorDamageableElement* Element) const
+{
+	// Se comprueba si es una unidad y, si lo es, se verifica si es de esta faccion
+	const AActorUnit* Unit = Cast<AActorUnit>(Element);
+	if (Unit) return Units.Contains(Unit);
+
+	// Se comprueba si es un asentamiento y, si lo es, se verifica si es de esta faccion
+	const AActorSettlement* Settlement = Cast<AActorSettlement>(Element);
+	if (Settlement) return Settlements.Contains(Settlement);
+
+	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

@@ -8,6 +8,7 @@
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
 
+class AActorDamageableElement;
 class AActorUnit;
 class AActorSettlement;
 
@@ -52,6 +53,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	//----------------------------------------------------------------------------------------------------------------//
+
+	bool HasElement(const AActorDamageableElement* Element) const;
+	
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	UFUNCTION(BlueprintCallable)
 	void TurnStarted();
 

@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "ActorTile.generated.h"
 
+class AActorDamageableElement;
 class AActorSettlement;
 class AActorUnit;
 class AActorResource;
@@ -31,10 +32,12 @@ enum class ETileState : uint8
 {
 	None = 0 UMETA(DisplayName="None"),
 	Hovered = 1 UMETA(DisplayName="Hovered"),
-	Selected = 2 UMETA(DisplayName="Selected"),
-	Neighbor = 3 UMETA(DisplayName="Neighbor"),
-	Reachable = 4 UMETA(DisplayName="Reachable"),
-	InPath = 5 UMETA(DisplayName="InPath")
+	HoveredWithFriendElement = 2 UMETA(DisplayName="HoveredWithFriendElement"),
+	HoveredWithEnemyElement = 3 UMETA(DisplayName="HoveredWithEnemyElement"),
+	Selected = 4 UMETA(DisplayName="Selected"),
+	Neighbor = 5 UMETA(DisplayName="Neighbor"),
+	Reachable = 6 UMETA(DisplayName="Reachable"),
+	InPath = 7 UMETA(DisplayName="InPath")
 };
 
 UCLASS()
@@ -104,6 +107,14 @@ public:
 	 * @return Coste de paso por la casilla
 	 */
 	int32 GetMovementCost() const;
+
+	/**
+	 * Getter de los atributos Unit/Settlement
+	 * 
+	 * @return Elemento situado en la casilla actual
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category="Tile|Elements")
+	const AActorDamageableElement* GetElement() const;
 
 	/**
 	 * Getter del atributo TileStatess

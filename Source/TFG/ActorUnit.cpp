@@ -4,7 +4,6 @@
 #include "ActorUnit.h"
 
 #include "LibraryTileMap.h"
-#include "Components/TimelineComponent.h"
 
 
 // Sets default values
@@ -43,6 +42,23 @@ void AActorUnit::UpdatePathCosts()
 void AActorUnit::UpdatePathTurns()
 {
 	ULibraryTileMap::UpdatePathTurns(Path, BaseMovementPoints, MovementPoints);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorUnit::UpdatePosition(const FMovement& Move)
+{
+	if (Move.Pos2D != Pos2D)
+	{
+		// Se actualiza la posicion y los puntos de movimiento restantes
+		SetPos(Move.Pos2D);
+		MovementPoints -= Move.MovementCost;
+
+		// Se actualiza el estado de la unidad
+		if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
+		else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
+		else State = EUnitState::FollowingPath;
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -99,9 +115,15 @@ void AActorUnit::ContinuePath()
 {
 	// Se limpian las casillas completadas en el turno previo
 	PathCompleted.Empty();
+	
+	// Se almacena la posicion antes del movimiento
+	const FIntPoint PrevPos = Pos2D;
 
 	// Se realizan todos los movimientos posibles en el turno
 	while (State == EUnitState::FollowingPath) MoveUnit();
+
+	// Se llama al evento para que se actualicen los datos en el resto de actores
+	OnUnitMoved.Broadcast(PrevPos, PathCompleted);
 }
 
 void AActorUnit::MoveUnit()
@@ -118,20 +140,10 @@ void AActorUnit::MoveUnit()
 			// Se elimina la entrada correspondiente al movimiento actual
 			PathCompleted.Add(Move);
 			Path.RemoveAt(0);
+
+			// Se actualiza la posicion
+			UpdatePosition(Move);
 			
-			// Se almacena la posicion antes del movimiento
-			const FIntPoint PrevPos = Pos2D;
-		
-			// Se actualiza la posicion y los puntos de movimiento restantes
-			SetPos(Move.Pos2D);
-			MovementPoints -= Move.MovementCost;
-
-			// Se actualiza el estado de la unidad
-			if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
-			else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
-
-			// Se llama al evento para que se actualicen los datos en el resto de actores
-			OnUnitMoved.Broadcast(PrevPos, Pos2D);
 			return;
 		}
 

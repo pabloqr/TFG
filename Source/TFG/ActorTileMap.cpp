@@ -1,5 +1,6 @@
 #include "ActorTileMap.h"
 
+#include "ActorDamageableElement.h"
 #include "SaveMap.h"
 #include "GInstance.h"
 #include "LibraryTileMap.h"
@@ -249,11 +250,16 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 			
 			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
 			const int32 Cost = Tile->GetMovementCost();
-			if (Cost <= Range && Tile->IsAccesible() && !Tile->HasElement())
+			if (Cost <= Range && Tile->IsAccesible())
 			{
-				// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
-				InRange.Add(Neighbor);
-				InRange.Append(GetTilesWithinRange(Neighbor, Range-Cost));
+				// Se trata de obtener el elemento de la casilla y se comprueba si es propiedad de la faccion actual
+				const AActorDamageableElement* Element = Tile->GetElement();
+				if (!Element || !Element->IsMine())
+				{
+					// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
+					InRange.Add(Neighbor);
+					InRange.Append(GetTilesWithinRange(Neighbor, Range-Cost));
+				}
 			}
 		}
 	}
@@ -470,9 +476,6 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 				// Se anade el nodo actual al camino a devolver
 				Path.Insert(FMovement(Current, CurrentCost, TotalCost[Current]), 0);
 
-				// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
-				// OnPathUpdated.Broadcast(Current, Path);
-
 				// Se actualiza al siguiente nodo
 				Current = CameFrom[Current];
 			}
@@ -497,35 +500,41 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 		{
 			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
 			const AActorTile* NeighborTile;
-			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible() && !NeighborTile->HasElement())
+			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
 			{
-				// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
-				int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
-				if (!TotalCost.Contains(NeighborPos))
+				// Se trata de obtener el elemento de la casilla actual y, si lo tiene, solo se acepta si se encuentra
+				// en la casilla de destino y si no es propiedad de la faccion actual
+				const AActorDamageableElement* Element = NeighborTile->GetElement();
+				if (!Element || (NeighborTile->GetPos() == PosEnd && !Element->IsMine()))
 				{
-					// Si el nodo no se habia procesado previamente, se anade a las diferentes estructuras
-					// con los valores de prioridad y coste correctos
-					TotalCost.Add(NeighborPos, NewCost);
-
-					const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
-					Frontier.Push(FPathData(NeighborPos, Priority));
-					
-					CameFrom.Add(NeighborPos, CurrentData.Pos2D);
-				}
-				else
-				{
-					// Si el nodo se habia procesado previamente, se obtiene una referencia a su coste y, en caso
-					// de ser mayor al nuevo coste calculado, se actualizan todos los valores de las diferentes
-					// estructuras
-					int32& CurrentCost = TotalCost[NeighborPos];
-					if (NewCost < CurrentCost)
+					// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
+					int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
+					if (!TotalCost.Contains(NeighborPos))
 					{
-						CurrentCost = NewCost;
-						
+						// Si el nodo no se habia procesado previamente, se anade a las diferentes estructuras
+						// con los valores de prioridad y coste correctos
+						TotalCost.Add(NeighborPos, NewCost);
+
 						const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
 						Frontier.Push(FPathData(NeighborPos, Priority));
+					
+						CameFrom.Add(NeighborPos, CurrentData.Pos2D);
+					}
+					else
+					{
+						// Si el nodo se habia procesado previamente, se obtiene una referencia a su coste y, en caso
+						// de ser mayor al nuevo coste calculado, se actualizan todos los valores de las diferentes
+						// estructuras
+						int32& CurrentCost = TotalCost[NeighborPos];
+						if (NewCost < CurrentCost)
+						{
+							CurrentCost = NewCost;
+						
+							const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+							Frontier.Push(FPathData(NeighborPos, Priority));
 
-						CameFrom[NeighborPos] = CurrentData.Pos2D;
+							CameFrom[NeighborPos] = CurrentData.Pos2D;
+						}
 					}
 				}
 			}
