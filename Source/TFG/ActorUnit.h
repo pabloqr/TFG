@@ -9,8 +9,6 @@
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
-
 UENUM(BlueprintType)
 enum class EUnitState : uint8
 {
@@ -21,6 +19,13 @@ enum class EUnitState : uint8
 	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints"),
 	WaitingForNextTurn = 5 UMETA(DisplayName="WaitingForNextTurn")
 };
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState&, State);
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS(Abstract)
 class TFG_API AActorUnit : public AActorDamageableElement
@@ -173,7 +178,7 @@ public:
 	 * @return Estado de la unidad
 	 */
 	UFUNCTION(BlueprintCallable)
-	EUnitState TurnStarted();
+	void TurnStarted();
 
 	/**
 	 * Metodo que actualiza todos los atributos de la unidad al final del turno
@@ -194,4 +199,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitStateChanged OnUnitStateChanged;
 };

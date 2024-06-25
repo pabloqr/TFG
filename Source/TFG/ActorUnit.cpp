@@ -12,7 +12,7 @@ AActorUnit::AActorUnit()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	State = EUnitState::WaitingForOrders;
+	State = EUnitState::None;
 
 	BaseMovementPoints = MovementPoints = 2;
 	VisibilityPoints = 2;
@@ -58,6 +58,9 @@ void AActorUnit::UpdatePosition(const FMovement& Move)
 		if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
 		else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
 		else State = EUnitState::FollowingPath;
+
+		// Se llama al evento tras actualizar el estado
+		OnUnitStateChanged.Broadcast(this, State);
 	}
 }
 
@@ -84,6 +87,9 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 	
 		// Se establece el estado de la unidad
 		if (MovementPoints > 0) State = EUnitState::FollowingPath;
+		
+		// Se llama al evento tras actualizar el estado
+		OnUnitStateChanged.Broadcast(this, State);
 
 		// Se actualiza el numero de turnos para alcanzar las casillas del camino
 		UpdatePathTurns();
@@ -109,6 +115,9 @@ void AActorUnit::RemovePath()
 	// Se establece el estado de la unidad
 	if (MovementPoints > 0) State = EUnitState::WaitingForOrders;
 	else State = EUnitState::NoMovementPoints;
+
+	// Se llama al evento tras actualizar el estado
+	OnUnitStateChanged.Broadcast(this, State);
 }
 
 void AActorUnit::ContinuePath()
@@ -149,6 +158,9 @@ void AActorUnit::MoveUnit()
 
 		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
 		State = EUnitState::WaitingForNextTurn;
+
+		// Se llama al evento tras actualizar el estado
+		OnUnitStateChanged.Broadcast(this, State);
 	}
 }
 
@@ -159,7 +171,7 @@ void AActorUnit::RestoreMovement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-EUnitState AActorUnit::TurnStarted()
+void AActorUnit::TurnStarted()
 {
 	// Se restablecen los puntos de movimiento al comienzo del turno
 	RestoreMovement();
@@ -167,16 +179,21 @@ EUnitState AActorUnit::TurnStarted()
 	// Se actualiza el estado de la unidad
 	if (State != EUnitState::Sleeping)
 	{
-		if (Path.Num() > 0) State = EUnitState::FollowingPath;
-		else State = EUnitState::WaitingForOrders;
-	}
+		// Se recalcula el camino para tener en cuenta cualquier unidad ajena que haya podido interponerse
+		if (Path.Num() > 0) UpdatePath();
+		else
+		{
+			State = EUnitState::WaitingForOrders;
 
-	return State;
+			// Se llama al evento tras actualizar el estado
+			OnUnitStateChanged.Broadcast(this, State);
+		}
+	}
 }
 
 void AActorUnit::TurnEnded()
 {
-	// Se actualizan los costes del camino
+	// Se recalcula el camino para tener en cuenta cualquier unidad propia que haya podido interponerse
 	UpdatePath();
 
 	// Se continua el camino si tiene uno asignado

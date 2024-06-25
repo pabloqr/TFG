@@ -35,9 +35,10 @@ enum class ETileState : uint8
 	HoveredWithFriendElement = 2 UMETA(DisplayName="HoveredWithFriendElement"),
 	HoveredWithEnemyElement = 3 UMETA(DisplayName="HoveredWithEnemyElement"),
 	Selected = 4 UMETA(DisplayName="Selected"),
-	Neighbor = 5 UMETA(DisplayName="Neighbor"),
-	Reachable = 6 UMETA(DisplayName="Reachable"),
-	InPath = 7 UMETA(DisplayName="InPath")
+	Owned = 5 UMETA(DisplayName="Owned"),
+	Neighbor = 6 UMETA(DisplayName="Neighbor"),
+	Reachable = 7 UMETA(DisplayName="Reachable"),
+	InPath = 8 UMETA(DisplayName="InPath")
 };
 
 UCLASS()

@@ -8,6 +8,8 @@
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
 
+enum class ESettlementState : uint8;
+enum class EUnitState : uint8;
 class AActorDamageableElement;
 class AActorUnit;
 class AActorSettlement;
@@ -18,8 +20,8 @@ class TFG_API APawnFaction : public APawn
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction")
-	FElementIdentifier ElementIdentifier;
+	// UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction")
+	// FElementIdentifier ElementIdentifier;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
 	float Money;
@@ -47,6 +49,14 @@ public:
 	APawnFaction();
 
 protected:
+	UFUNCTION(BlueprintCallable, Category="Faction")
+	void OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState& State);
+
+	UFUNCTION(BlueprintCallable, Category="Faction")
+	void OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState& State);
+	
+	//----------------------------------------------------------------------------------------------------------------//
+	
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorUnit.h"
+#include "ActorSettlement.h"
 #include "GameFramework/PlayerController.h"
 #include "CMain.generated.h"
 
@@ -23,6 +24,8 @@ protected:
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
 	AActorUnit* Unit;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
+	AActorSettlement* Settlement;
 
 	//----------------------------------------------------------------------------------------------------------------//
 	

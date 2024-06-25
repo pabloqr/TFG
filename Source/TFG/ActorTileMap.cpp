@@ -2,6 +2,7 @@
 
 #include "ActorCivilUnit.h"
 #include "ActorDamageableElement.h"
+#include "ActorSettlement.h"
 #include "SaveMap.h"
 #include "GInstance.h"
 #include "LibraryTileMap.h"
@@ -516,10 +517,12 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			const AActorTile* NeighborTile;
 			if ((NeighborTile = Tiles[GetPositionInArray(NeighborPos)])->IsAccesible())
 			{
-				// Se trata de obtener el elemento de la casilla actual y, si lo tiene, solo se acepta si se encuentra
-				// en la casilla de destino y si no es propiedad de la faccion actual
+				// Se trata de obtener el elemento de la casilla actual y, si lo tiene, solo se acepta si
+				//		* es un asentamiento propio
+				//		* se encuentra en la casilla de destino y no es propiedad de la faccion actual
 				const AActorDamageableElement* Element = NeighborTile->GetElement();
-				if (!Element || (NeighborTile->GetPos() == PosEnd && !Element->IsMine()))
+				const bool IsMine = Element ? Element->IsMine() : false;
+				if (!Element || (Cast<AActorSettlement>(Element) && IsMine) || (NeighborTile->GetPos() == PosEnd && !IsMine))
 				{
 					// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
 					int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();

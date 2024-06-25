@@ -8,10 +8,6 @@
 #include "GameFramework/Actor.h"
 #include "ActorTileMap.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
-
 struct FMapData;
 enum class ETileType : uint8;
 
@@ -304,6 +300,12 @@ struct FTileInfo
 		this->TileType = TileType;
 	}
 };
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
