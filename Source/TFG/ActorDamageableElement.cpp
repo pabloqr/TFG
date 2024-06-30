@@ -22,8 +22,8 @@ void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 {
 	const float HealthPercentage = 1.0 - DamageableInfo.HealthPoints / DamageableInfo.BaseHealthPoints;
 
-	DamageableInfo.AttackPoints -= DamageableInfo.AttackPoints * HealthPercentage;
-	DamageableInfo.DefensePoints -= DamageableInfo.DefensePoints * HealthPercentage;
+	DamageableInfo.Stats.AttackPoints -= DamageableInfo.Stats.AttackPoints * HealthPercentage;
+	DamageableInfo.Stats.DefensePoints -= DamageableInfo.Stats.DefensePoints * HealthPercentage;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -53,8 +53,8 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 	const float RandomModifier = FMath::RandRange(-0.5f, 0.5f);
 
 	// Se calculan las nuevas estadisticas
-	const float ModAttackPoints = DamageableInfo.AttackPoints + DamageableInfo.AttackPoints * RandomModifier;
-	const float ModDefensePoints = DamageableInfo.DefensePoints + DamageableInfo.DefensePoints * RandomModifier;
+	const float ModAttackPoints = DamageableInfo.Stats.AttackPoints + DamageableInfo.Stats.AttackPoints * RandomModifier;
+	const float ModDefensePoints = DamageableInfo.Stats.DefensePoints + DamageableInfo.Stats.DefensePoints * RandomModifier;
 	
 	// No cambiar el orden, esta bien se mire como se mire
 	return IsAttacking ? Stats.AttackPoints - ModDefensePoints * 0.5 : ModAttackPoints - Stats.DefensePoints * 0.5;

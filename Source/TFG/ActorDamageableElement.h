@@ -42,14 +42,14 @@ protected:
 
 public:
 	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
-	float GetAttackPoints() const { return DamageableInfo.AttackPoints; }
-	float GetDefensePoints() const { return DamageableInfo.DefensePoints; }
+	float GetAttackPoints() const { return DamageableInfo.Stats.AttackPoints; }
+	float GetDefensePoints() const { return DamageableInfo.Stats.DefensePoints; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	void SetHealthPoints(const float Points) { DamageableInfo.HealthPoints = Points; }
-	void SetAttackPoints(const float Points) { DamageableInfo.AttackPoints = Points; }
-	void SetDefensePoints(const float Points) { DamageableInfo.DefensePoints = Points; }
+	void SetAttackPoints(const float Points) { DamageableInfo.Stats.AttackPoints = Points; }
+	void SetDefensePoints(const float Points) { DamageableInfo.Stats.DefensePoints = Points; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
