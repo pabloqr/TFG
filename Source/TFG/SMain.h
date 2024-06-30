@@ -16,11 +16,11 @@ class TFG_API ASMain : public AGameStateBase
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainState")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	TArray<FElementIdentifier> FactionsAlive;
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	int32 CurrentFaction;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	int64 Turn;
 };

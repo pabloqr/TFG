@@ -3,25 +3,22 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorUnit.h"
-#include "ActorSettlement.h"
+#include "CBase.h"
 #include "GameFramework/PlayerController.h"
 #include "CMain.generated.h"
+
+class AActorSettlement;
+class AActorUnit;
 
 /**
  * 
  */
 UCLASS()
-class TFG_API ACMain : public APlayerController
+class TFG_API ACMain : public ACBase
 {
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
-	AActorTile* HoveredTile;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
-	AActorTile* SelectedTile;
-	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
 	AActorUnit* Unit;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")

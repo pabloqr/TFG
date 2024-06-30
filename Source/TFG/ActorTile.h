@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorPlaceableElement.h"
+#include "FTileInfo.h"
 #include "GameFramework/Actor.h"
 #include "ActorTile.generated.h"
 
@@ -12,37 +12,8 @@ class AActorSettlement;
 class AActorUnit;
 class AActorResource;
 
-UENUM(BlueprintType)
-enum class ETileType : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	Plains = 1 UMETA(DisplayName="Plains"),
-	Hills = 2 UMETA(DisplayName="Hills"),
-	Forest = 3 UMETA(DisplayName="Forest"),
-	SnowPlains = 4 UMETA(DisplayName="SnowPlains"),
-	SnowHills = 5 UMETA(DisplayName="SnowHills"),
-	Ice = 6 UMETA(DisplayName="Ice"),
-	Mountains = 7 UMETA(DisplayName="Mountains"),
-	Water = 8 UMETA(DisplayName="Water"),
-	Max = 255 UMETA(Hidden)
-};
-
-UENUM(BlueprintType)
-enum class ETileState : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	Hovered = 1 UMETA(DisplayName="Hovered"),
-	HoveredWithFriendElement = 2 UMETA(DisplayName="HoveredWithFriendElement"),
-	HoveredWithEnemyElement = 3 UMETA(DisplayName="HoveredWithEnemyElement"),
-	Selected = 4 UMETA(DisplayName="Selected"),
-	Owned = 5 UMETA(DisplayName="Owned"),
-	Neighbor = 6 UMETA(DisplayName="Neighbor"),
-	Reachable = 7 UMETA(DisplayName="Reachable"),
-	InPath = 8 UMETA(DisplayName="InPath")
-};
-
 UCLASS()
-class TFG_API AActorTile : public AActorPlaceableElement
+class TFG_API AActorTile : public AActor
 {
 	GENERATED_BODY()
 
@@ -53,39 +24,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="Tile")
 	UStaticMeshComponent* TileMesh;
 
-	/**
-	 * Tipo de casilla
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	ETileType TileType;
-	/**
-	 * Coste de movimiento de la casilla
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	int32 MovementCost;
-
-	/**
-	 * Recurso sobre la casilla. Si no posee, se establece como null
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
-	AActorResource* Resource;
-	
-	/**
-	 * Unidad sobre la casilla. Si no posee, se establece como null
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
-	AActorUnit* Unit;
-	/**
-	 * Asentamiento sobre la casilla. Si no posee, se establece como null
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
-	AActorSettlement* Settlement;
-
-	/**
-	 * Estados de la casilla
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	TArray<ETileState> TileStates;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile")
+	FTileInfo Info;
 	
 public:
 	/**
@@ -94,16 +34,32 @@ public:
 	AActorTile();
 
 	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Getter del atributo Pos2D
+	 * 
+	 * @return Posicion en el Array2D de casillas
+	 */
+	UFUNCTION(BlueprintCallable)
+	const FIntPoint& GetPos() const { return Info.Pos2D; }
 	
 	/**
-	 * Getter del atributo TileType
+	 * Getter del atributo MapPos2D
+	 * 
+	 * @return Posicion en la escena de la casilla
+	 */
+	UFUNCTION(BlueprintCallable)
+	const FVector2D& GetMapPos() const { return Info.MapPos2D; }
+	
+	/**
+	 * Getter del atributo Type
 	 * 
 	 * @return Tipo de casilla
 	 */
-	const ETileType& GetType() const;
+	const ETileType& GetType() const { return Info.Type; }
 
 	/**
-	 * Getter del atributo MovementCost
+	 * Metodo que devuelve el coste de paso por la casilla dado su tipo
 	 * 
 	 * @return Coste de paso por la casilla
 	 */
@@ -122,31 +78,47 @@ public:
 	 * 
 	 * @return Estado de la casilla
 	 */
-	const TArray<ETileState>& GetState() const;
+	const TArray<ETileState>& GetState() const { return Info.States; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
-	 * Setter del atributo TileType
+	 * Setter de los atributos Pos2D y MapPos2D
 	 * 
-	 * @param Type Tipo de casilla
+	 * @param Pos Posicion en el Array2D de casillas
+	 * @param MapPos Posicion en la escena
 	 */
-	void SetType(const ETileType Type);
+	UFUNCTION(BlueprintCallable)
+	void SetPos(const FIntPoint& Pos, const FVector2D& MapPos);
 
 	/**
-	 * Setter del atributo MovementCost
+	 * Setter del atributo Pos2D
 	 * 
-	 * @param Cost Coste de paso por la casilla
+	 * @param Pos Posicion en el Array2D de casillas
 	 */
-	void SetMovementCost(const int32 Cost);
+	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
+	
+	/**
+	 * Setter del atributo MapPos2D
+	 * 
+	 * @param Pos Posicion en la escena de la casilla
+	 */
+	void SetMapPos(const FVector2D& Pos) { Info.MapPos2D = Pos; }
+	
+	/**
+	 * Setter del atributo Type
+	 * 
+	 * @param TileType Tipo de casilla
+	 */
+	void SetType(const ETileType TileType);
 
 	/**
 	 * Setter del atributo TileStatess
 	 * 
-	 * @param States Estados de la casilla
+	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void SetState(const TArray<ETileState>& States);
+	void SetState(const TArray<ETileState>& TileStates);
 	/**
 	 * Setter del atributo TileStatess
 	 * 
@@ -157,10 +129,10 @@ public:
 	/**
 	 * Anade los estados dados a los actuales
 	 * 
-	 * @param States Estados de la casilla
+	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void AddState(const TArray<ETileState>& States);
+	void AddState(const TArray<ETileState>& TileStates);
 	/**
 	 * Anade el estado dado a los actuales
 	 * 
@@ -171,10 +143,10 @@ public:
 	/**
 	 * Elimina los estados dados de los actuales
 	 * 
-	 * @param States Estados de la casilla
+	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void RemoveState(const TArray<ETileState>& States);
+	void RemoveState(const TArray<ETileState>& TileStates);
 	/**
 	 * Elimina el estado dado de los actuales
 	 * 
@@ -215,22 +187,4 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool HasSettlement() const;
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo que transforma el tipo de casilla en un valor numerico
-	 * 
-	 * @param TileType Tipo de casilla
-	 * @return Valor entero dado el tipo de casilla
-	 */
-	static int32 TileTypeToInt(const ETileType TileType);
-	
-	/**
-	 * Metodo que transforma un valor numerico en el tipo de casilla
-	 * 
-	 * @param TileTypeVal Valor numerico del tipo de casilla
-	 * @return Tipo de casilla
-	 */
-	static ETileType IntToTileType(const int32 TileTypeVal);
 };

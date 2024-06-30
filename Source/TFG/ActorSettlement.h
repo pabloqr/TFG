@@ -5,19 +5,10 @@
 #include "CoreMinimal.h"
 #include "ActorDamageableElement.h"
 #include "FProductionElement.h"
+#include "FSettlementInfo.h"
 #include "ActorSettlement.generated.h"
 
 class AActorUnit;
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-UENUM(BlueprintType)
-enum class ESettlementState : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	SelectProduction = 1 UMETA(DisplayName="SelectProduction"),
-	Producing = 2 UMETA(DisplayName="Producing"),
-};
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -33,16 +24,7 @@ class TFG_API AActorSettlement : public AActorDamageableElement
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
-	ESettlementState State;
-	
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
-	TArray<FIntPoint> OwnedTiles;
-	
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
-	TArray<FProductionElement> ProductionQueue;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
-	float MoneyYield;
+	FSettlementInfo Info;
 
 public:
 	/**
@@ -73,11 +55,51 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	ESettlementState GetState() const;
-	float GetMoneyYield() const;
+	/**
+	 * Getter del atributo Pos2D
+	 * 
+	 * @return Posicion en el Array2D de casillas
+	 */
+	UFUNCTION(BlueprintCallable)
+	const FIntPoint& GetPos() const { return Info.Pos2D; }
 	
-	void SetState(const ESettlementState SettlementState);
-	void SetMoneyYield(const float Yield);
+	/**
+	 * Getter del atributo State
+	 * 
+	 * @return Estado del asentamiento
+	 */
+	ESettlementState GetState() const { return Info.State; }
+
+	/**
+	 * Getter del atributo MoneyYield
+	 * 
+	 * @return Cantidad de dinero que genera por turno. Puede ser un valor negativo
+	 */
+	float GetMoneyYield() const { return Info.MoneyYield; }
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Setter del atributo Pos2D
+	 * 
+	 * @param Pos Posicion en el Array2D de casillas
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
+
+	/**
+	 * Setter del atributo State
+	 * 
+	 * @param SettlementState Estado del asentamiento
+	 */
+	void SetState(const ESettlementState SettlementState) { Info.State = SettlementState; }
+
+	/**
+	 * Setter del atributo MoneyYield
+	 * 
+	 * @param Yield Cantidad de dinero que genera por turno. Puede ser un valor negativo
+	 */
+	void SetMoneyYield(const float Yield) { Info.MoneyYield = Yield; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 	

@@ -4,23 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "ActorDamageableElement.h"
-#include "ActorTileMap.h"
 #include "FMovement.h"
+#include "FUnitInfo.h"
 #include "GameFramework/Actor.h"
 #include "ActorUnit.generated.h"
 
-UENUM(BlueprintType)
-enum class EUnitState : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	WaitingForOrders = 1 UMETA(DisplayName="WaitingForOrders"),
-	Sleeping = 2 UMETA(DisplayName="Sleeping"),
-	FollowingPath = 3 UMETA(DisplayName="FollowingPath"),
-	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints"),
-	WaitingForNextTurn = 5 UMETA(DisplayName="WaitingForNextTurn")
-};
-
-//--------------------------------------------------------------------------------------------------------------------//
+class AActorTileMap;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState&, State);
@@ -33,50 +22,8 @@ class TFG_API AActorUnit : public AActorDamageableElement
 	GENERATED_BODY()
 
 protected:
-	/**
-	 * Estado
-	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	EUnitState State;
-
-	/**
-	 * Puntos de movimiento base
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Unit")
-	int32 BaseMovementPoints;
-	/**
-	 * Puntos de movimiento en un instante concreto
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	int32 MovementPoints;
-
-	/**
-	 * Camino a seguir
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
-	TArray<FMovement> Path;
-	/**
-	 * Casillas completadas del camino en el turno actual
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Path")
-	TArray<FMovement> PathCompleted;
-
-	/**
-	 * Puntos de visibilidad
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	int32 VisibilityPoints;
-
-	/**
-	 * Coste de produccion
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	float ProductionCost;
-	/**
-	 * Coste de mantenimiento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit")
-	float MaintenanceCost;
+	FUnitInfo Info;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|AditionalData")
 	AActorTileMap* TileMap;
@@ -117,17 +64,35 @@ protected:
 
 public:
 	/**
+	 * Getter del atributo Pos2D
+	 * 
+	 * @return Posicion en el Array2D de casillas
+	 */
+	UFUNCTION(BlueprintCallable)
+	const FIntPoint& GetPos() const { return Info.Pos2D; }
+	
+	/**
 	 * Getter del atributo State
 	 * 
 	 * @return Estado de la unidad
 	 */
-	EUnitState GetState() const { return State; }
+	EUnitState GetState() const { return Info.State; }
 	/**
 	 * Getter del atributo MaintenanceCost
 	 * 
 	 * @return Coste de mantenimiento de la unidad
 	 */
-	float GetMaintenanceCost() const { return MaintenanceCost; }
+	float GetMaintenanceCost() const { return Info.MaintenanceCost; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Setter del atributo Pos2D
+	 * 
+	 * @param Pos Posicion en el Array2D de casillas
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

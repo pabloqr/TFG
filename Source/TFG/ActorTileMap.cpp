@@ -192,7 +192,7 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	GridSize.Y = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
 	// Se anade la informacion de la casilla al diccionario que la almacena
-	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, TileType));
+	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, TileType, FTileElements(), { ETileState::None }));
 
 	// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
 	OnTileInfoUpdated.Broadcast(Pos2D);
@@ -204,7 +204,7 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
 		AActorTile* Tile = Tiles[i];
-		const ETileType TileType = AActorTile::IntToTileType(TilesData[i].TileType);
+		const ETileType TileType = TilesData[i].Type;
 		
 		if (Tile->GetType() != TileType)
 		{
@@ -244,7 +244,7 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 	if (Range > 0)
 	{
 		// Se obtienen los vecinos de la casilla actual y se procesan
-		TArray<FIntPoint> Neighbors = Tiles[GetPositionInArray(Pos2D)]->GetNeighbors();
+		TArray<FIntPoint> Neighbors = ULibraryTileMap::GetNeighbors(Pos2D, FIntPoint(Rows, Cols));
 		for (const FIntPoint Neighbor : Neighbors)
 		{
 			// Se obtiene la casilla
@@ -336,7 +336,7 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 {
 	// Se calcula la rotacion de la casilla que se va a anadir a la escena
 	const int32 RotationSelector = FMath::RandRange(0, 5);
-	const float Rotation = TileInfo.TileType == ETileType::Mountains ? 180.0 / 3.0 * RotationSelector : 0.0;
+	const float Rotation = TileInfo.Type == ETileType::Mountains ? 180.0 / 3.0 * RotationSelector : 0.0;
 
 	// Se anade la casilla a la escena
 	AActorTile* NewTile = GetWorld()->SpawnActor<AActorTile>(
@@ -348,7 +348,7 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	if (NewTile != nullptr)
 	{
 		NewTile->SetPos(TileInfo.Pos2D, TileInfo.MapPos2D);
-		NewTile->SetType(TileInfo.TileType);
+		NewTile->SetType(TileInfo.Type);
 		
 		// TODO quitar para lanzamiento
 		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
@@ -372,7 +372,7 @@ void AActorTileMap::SaveMap() const
 	
 	if (USaveMap* SaveGameInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
-		SaveGameInstance->TilesInfo = MapData;
+		SaveGameInstance->Tiles = MapData;
 		if (!UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("MapTest"), 0))
 		{
 			UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
@@ -387,7 +387,7 @@ void AActorTileMap::LoadMap()
 {
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
 	{
-		SetMapFromSave(LoadedGame->TilesInfo);
+		SetMapFromSave(LoadedGame->Tiles);
 	}
 }
 
@@ -400,9 +400,9 @@ void AActorTileMap::MapToJson()
 	for (int32 i = 0; i < Tiles.Num(); ++i)
 	{
 		const AActorTile *Tile = Tiles[i];
-		const int32 TileType = AActorTile::TileTypeToInt(Tile->GetType());
+		const int32 Type = AActorTile::TileTypeToInt(Tile->GetType());
 		
-		JsonData[i] = FMapDataForJson(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, TileType);
+		JsonData[i] = FMapDataForJson(Tile->GetMapPosition().X, Tile->GetMapPosition().Y, Type);
 	}
 
 	bool Success = true;
@@ -508,10 +508,8 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			break;
 		}
 
-		// Se obtiene la casilla actual dada su posicion en el Array2D, se calculan los vecinos de la casilla actual
-		// y se procesan
-		const AActorTile* CurrentTile = Tiles[GetPositionInArray(CurrentData.Pos2D)];
-		for (const FIntPoint NeighborPos : CurrentTile->GetNeighbors())
+		// Se calculan los vecinos de la casilla actual y se procesan
+		for (const FIntPoint NeighborPos : ULibraryTileMap::GetNeighbors(CurrentData.Pos2D, FIntPoint(Rows, Cols)))
 		{
 			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
 			const AActorTile* NeighborTile;
@@ -532,7 +530,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 						// con los valores de prioridad y coste correctos
 						TotalCost.Add(NeighborPos, NewCost);
 
-						const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+						const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(NeighborTile->GetPos(), PosEnd);
 						Frontier.Push(FPathData(NeighborPos, Priority));
 					
 						CameFrom.Add(NeighborPos, CurrentData.Pos2D);
@@ -547,7 +545,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 						{
 							CurrentCost = NewCost;
 						
-							const int32 Priority = NewCost + NeighborTile->GetDistanceToElement(PosEnd);
+							const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(NeighborTile->GetPos(), PosEnd);
 							Frontier.Push(FPathData(NeighborPos, Priority));
 
 							CameFrom[NeighborPos] = CurrentData.Pos2D;

@@ -3,37 +3,56 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorTileMap.h"
+#include "FSettlementInfo.h"
+#include "FUnitInfo.h"
 #include "GameFramework/SaveGame.h"
 #include "SaveMap.generated.h"
 
 /**
  * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
  */
-USTRUCT(BlueprintType, Category="Saves|Map")
+USTRUCT(BlueprintType, Category="Saves")
 struct FMapData
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	int32 Row;
-	UPROPERTY()
-	int32 Col;
-	UPROPERTY()
-	int32 TileType;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|MapData")
+	FIntPoint Pos2D;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|MapData")
+	ETileType Type;
 
-	FMapData()
-	{
-		Row = -1;
-		Col = -1;
-		TileType = -1;
-	}
+	FMapData(): FMapData(FIntPoint(-1), ETileType::None) {}
 
-	FMapData(const int32 Row, const int32 Col, const int32 TileType)
+	FMapData(const FIntPoint& Pos, const ETileType TileType)
 	{
-		this->Row = Row;
-		this->Col = Col;
-		this->TileType = TileType;
+		Pos2D = Pos;
+		Type = TileType;
 	}
+};
+
+USTRUCT(BlueprintType)
+struct FUnitData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|UnitData")
+	int32 Owner;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|UnitData")
+	FUnitInfo Info;
+};
+
+USTRUCT(BlueprintType)
+struct FSettlementData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|UnitData")
+	int32 Owner;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|UnitData")
+	FSettlementInfo Info;
 };
 
 /**
@@ -45,6 +64,12 @@ class TFG_API USaveMap : public USaveGame
 	GENERATED_BODY()
 
 public:
-	UPROPERTY()
-	TArray<FMapData> TilesInfo;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	TArray<FMapData> Tiles;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	TArray<FUnitData> Units;
+	
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	TArray<FSettlementData> Settlements;
 };

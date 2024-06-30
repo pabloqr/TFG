@@ -254,55 +254,6 @@ public:
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-/**
- * Estructura que almacena informacion sobre las casillas para los archivos de guardado
- */
-USTRUCT(BlueprintType)
-struct FTileInfo
-{
-	GENERATED_BODY()
-
-	/**
-	 * Posicion en el Array2D que representa el mapa
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	FIntPoint Pos2D;
-	/**
-	 * Posicion en coordenadas de la escena
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	FVector2D MapPos2D;
-	/**
-	 * Tipo de casilla
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	ETileType TileType;
-
-	/**
-	 * Constructor por defecto
-	 */
-	FTileInfo(): FTileInfo(
-		FIntPoint(0, 0),
-		FVector2D(0.0, 0.0),
-		ETileType::None) {}
-
-	/**
-	 * Constructor con parametros
-	 * 
-	 * @param Pos2D Posicion en el Array2D que representa el mapa
-	 * @param MapPos2D Posicion en coordenadas de la escena
-	 * @param TileType Tipo de casilla
-	 */
-	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const ETileType TileType)
-	{
-		this->Pos2D = FIntPoint(Pos2D);
-		this->MapPos2D = FVector2D(MapPos2D);
-		this->TileType = TileType;
-	}
-};
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);

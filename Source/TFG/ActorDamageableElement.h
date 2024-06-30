@@ -4,48 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "FAttackStats.h"
-#include "ActorPlaceableElement.h"
+#include "FDamageableInfo.h"
 #include "ActorDamageableElement.generated.h"
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackTriggered, const FAttackStats&, AggressorStats);
 
+//--------------------------------------------------------------------------------------------------------------------//
+
 UCLASS(Abstract)
-class TFG_API AActorDamageableElement : public AActorPlaceableElement
+class TFG_API AActorDamageableElement : public AActor
 {
 	GENERATED_BODY()
-	
+
 protected:
-	/**
-	 * Puntos de vida base del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float BaseHealthPoints;
-	/**
-	 * Puntos de ataque base del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float BaseAttackPoints;
-	/**
-	 * Puntos de defensa base del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float BaseDefensePoints;
-	
-	/**
-	 * Puntos de vida del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float HealthPoints;
-	/**
-	 * Puntos de ataque del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float AttackPoints;
-	/**
-	 * Puntos de defensa del elemento
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
-	float DefensePoints;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="DamageableElement")
+	FDamageableInfo DamageableInfo;
 	
 public:
 	/**
@@ -66,15 +41,15 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	float GetHealthPoints() const { return HealthPoints; }
-	float GetAttackPoints() const { return AttackPoints; }
-	float GetDefensePoints() const { return DefensePoints; }
+	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
+	float GetAttackPoints() const { return DamageableInfo.AttackPoints; }
+	float GetDefensePoints() const { return DamageableInfo.DefensePoints; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void SetHealthPoints(const float Points) { this->HealthPoints = Points; }
-	void SetAttackPoints(const float Points) { this->AttackPoints = Points; }
-	void SetDefensePoints(const float Points) { this->DefensePoints = Points; }
+	void SetHealthPoints(const float Points) { DamageableInfo.HealthPoints = Points; }
+	void SetAttackPoints(const float Points) { DamageableInfo.AttackPoints = Points; }
+	void SetDefensePoints(const float Points) { DamageableInfo.DefensePoints = Points; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

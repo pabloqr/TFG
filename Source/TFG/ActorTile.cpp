@@ -7,6 +7,7 @@
 
 #include "ActorUnit.h"
 #include "ActorSettlement.h"
+#include "LibraryTileMap.h"
 
 AActorTile::AActorTile()
 {
@@ -16,103 +17,79 @@ AActorTile::AActorTile()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
-
-	MovementCost = 1;
 	
-	TileStates.Add(ETileState::None);
+	Info = FTileInfo();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-const ETileType& AActorTile::GetType() const
-{
-	return TileType;
-}
-
 int32 AActorTile::GetMovementCost() const
 {
-	return MovementCost;
+	return ULibraryTileMap::GetTileCostFromType(Info.Type);
 }
 
 const AActorDamageableElement* AActorTile::GetElement() const
 {
-	if (Unit) return Unit;
-	if (Settlement) return Settlement;
+	if (Info.Elements.Unit) return Info.Elements.Unit;
+	if (Info.Elements.Settlement) return Info.Elements.Settlement;
 
 	return nullptr;
 }
 
-const TArray<ETileState>& AActorTile::GetState() const
-{
-	return TileStates;
-}
-
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTile::SetType(const ETileType Type)
+void AActorTile::SetPos(const FIntPoint& Pos, const FVector2D& MapPos)
 {
-	TileType = Type;
-	
-	switch (TileType)
-	{
-		case ETileType::Plains: MovementCost = 1; break;
-		case ETileType::Hills: MovementCost = 2; break;
-		case ETileType::Forest: MovementCost = 2; break;
-		case ETileType::SnowPlains: MovementCost = 1; break;
-		case ETileType::SnowHills: MovementCost = 2; break;
-		case ETileType::Ice: MovementCost = -1; break;
-		case ETileType::Mountains: MovementCost = -1; break;
-		case ETileType::Water: MovementCost = -1; break;
-		default: MovementCost = 1; break;
-	}
+	Info.Pos2D = Pos;
+	Info.MapPos2D = MapPos;
 }
 
-void AActorTile::SetMovementCost(const int32 Cost)
+void AActorTile::SetType(const ETileType TileType)
 {
-	MovementCost = Cost;
+	Info.Type = TileType;
 }
 
-void AActorTile::SetState(const TArray<ETileState>& States)
+void AActorTile::SetState(const TArray<ETileState>& TileStates)
 {
-	TileStates.Empty();
-	AddState(States);
+	Info.States.Empty();
+	AddState(TileStates);
 }
 
 void AActorTile::SetState(const ETileState State)
 {
-	TileStates.Empty();
+	Info.States.Empty();
 	AddState(State);
 }
 
-void AActorTile::AddState(const TArray<ETileState>& States)
+void AActorTile::AddState(const TArray<ETileState>& TileStates)
 {
-	for (const ETileState State : States) AddState(State);
+	for (const ETileState State : TileStates) AddState(State);
 }
 
 void AActorTile::AddState(const ETileState State)
 {
-	if (State != ETileState::None) TileStates.Remove(ETileState::None);
-	else TileStates.Empty();
+	if (State != ETileState::None) Info.States.Remove(ETileState::None);
+	else Info.States.Empty();
 	
-	TileStates.AddUnique(State);
+	Info.States.AddUnique(State);
 }
 
-void AActorTile::RemoveState(const TArray<ETileState>& States)
+void AActorTile::RemoveState(const TArray<ETileState>& TileStates)
 {
-	for (const ETileState State : States) RemoveState(State);
+	for (const ETileState State : TileStates) RemoveState(State);
 }
 
 void AActorTile::RemoveState(const ETileState State)
 {
-	TileStates.Remove(State);
-	if (TileStates.Num() == 0) TileStates.Add(ETileState::None);
+	Info.States.Remove(State);
+	if (Info.States.Num() == 0) Info.States.Add(ETileState::None);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
 bool AActorTile::IsAccesible() const
 {
-	return MovementCost != -1;
+	return ULibraryTileMap::GetTileCostFromType(Info.Type) != -1;
 }
 
 bool AActorTile::HasElement() const
@@ -122,50 +99,10 @@ bool AActorTile::HasElement() const
 
 bool AActorTile::HasUnit() const
 {
-	return Unit != nullptr;
+	return Info.Elements.Unit != nullptr;
 }
 
 bool AActorTile::HasSettlement() const
 {
-	return Settlement != nullptr;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-int32 AActorTile::TileTypeToInt(const ETileType TileType)
-{
-	int32 TileTypeVal;
-	switch (TileType)
-	{
-	case ETileType::Plains: TileTypeVal = 1; break;
-	case ETileType::Hills: TileTypeVal = 2; break;
-	case ETileType::Forest: TileTypeVal = 3; break;
-	case ETileType::SnowPlains: TileTypeVal = 4; break;
-	case ETileType::SnowHills: TileTypeVal = 5; break;
-	case ETileType::Ice: TileTypeVal = 6; break;
-	case ETileType::Mountains: TileTypeVal = 7; break;
-	case ETileType::Water: TileTypeVal = 8; break;
-	default: TileTypeVal = 0; break;
-	}
-
-	return TileTypeVal;
-}
-
-ETileType AActorTile::IntToTileType(const int32 TileTypeVal)
-{
-	ETileType TileType;
-	switch (TileTypeVal)
-	{
-	case 1: TileType = ETileType::Plains; break;
-	case 2: TileType = ETileType::Hills; break;
-	case 3: TileType = ETileType::Forest; break;
-	case 4: TileType = ETileType::SnowPlains; break;
-	case 5: TileType = ETileType::SnowHills; break;
-	case 6: TileType = ETileType::Ice; break;
-	case 7: TileType = ETileType::Mountains; break;
-	case 8: TileType = ETileType::Water; break;
-	default: TileType = ETileType::None; break;
-	}
-
-	return TileType;
+	return Info.Elements.Settlement != nullptr;
 }

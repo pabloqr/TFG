@@ -3,6 +3,7 @@
 
 #include "ActorUnit.h"
 
+#include "ActorTileMap.h"
 #include "LibraryTileMap.h"
 
 
@@ -12,14 +13,7 @@ AActorUnit::AActorUnit()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	State = EUnitState::None;
-
-	BaseMovementPoints = MovementPoints = 2;
-	VisibilityPoints = 2;
-
-	ProductionCost = 100.0;
-	MaintenanceCost = 2.0;
-
+	Info = FUnitInfo();
 	TileMap = nullptr;
 }
 
@@ -28,11 +22,11 @@ AActorUnit::AActorUnit()
 void AActorUnit::UpdatePathCosts()
 {
 	// Se verifica que la unidad se haya movido en el turno
-	if (PathCompleted.Num() > 0)
+	if (Info.PathCompleted.Num() > 0)
 	{
 		// Se obtiene el coste actual y se actualizan el resto de costes
-		const int32 Cost = PathCompleted.Last().TotalCost;
-		for (int32 i = 0; i < Path.Num(); ++i) Path[i].TotalCost -= Cost;
+		const int32 Cost = Info.PathCompleted.Last().TotalCost;
+		for (int32 i = 0; i < Info.Path.Num(); ++i) Info.Path[i].TotalCost -= Cost;
 	}
 
 	// Se actualiza el numero de turnos en alcanzar cada una de las casillas
@@ -41,26 +35,26 @@ void AActorUnit::UpdatePathCosts()
 
 void AActorUnit::UpdatePathTurns()
 {
-	ULibraryTileMap::UpdatePathTurns(Path, BaseMovementPoints, MovementPoints);
+	ULibraryTileMap::UpdatePathTurns(Info.Path, Info.BaseMovementPoints, Info.MovementPoints);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorUnit::UpdatePosition(const FMovement& Move)
 {
-	if (Move.Pos2D != Pos2D)
+	if (Move.Pos2D != Info.Pos2D)
 	{
 		// Se actualiza la posicion y los puntos de movimiento restantes
-		SetPos(Move.Pos2D);
-		MovementPoints -= Move.MovementCost;
+		Info.Pos2D = Move.Pos2D;
+		Info.MovementPoints -= Move.MovementCost;
 
 		// Se actualiza el estado de la unidad
-		if (MovementPoints == 0) State = EUnitState::NoMovementPoints;
-		else if (Path.Num() == 0) State = EUnitState::WaitingForOrders;
-		else State = EUnitState::FollowingPath;
+		if (Info.MovementPoints == 0) Info.State = EUnitState::NoMovementPoints;
+		else if (Info.Path.Num() == 0) Info.State = EUnitState::WaitingForOrders;
+		else Info.State = EUnitState::FollowingPath;
 
 		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, State);
+		OnUnitStateChanged.Broadcast(this, Info.State);
 	}
 }
 
@@ -76,20 +70,20 @@ void AActorUnit::BeginPlay()
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
 	// Se limpian los valores almacenados del camino previo
-	Path.Empty();
-	PathCompleted.Empty();
+	Info.Path.Empty();
+	Info.PathCompleted.Empty();
 	
 	if (NewPath.Num() > 0)
 	{
 		// Se actualiza el camino a seguir
-		Path.Append(NewPath);
-		if (Path[0].Pos2D == Pos2D) Path.RemoveAt(0);
+		Info.Path.Append(NewPath);
+		if (Info.Path[0].Pos2D == Info.Pos2D) Info.Path.RemoveAt(0);
 	
 		// Se establece el estado de la unidad
-		if (MovementPoints > 0) State = EUnitState::FollowingPath;
+		if (Info.MovementPoints > 0) Info.State = EUnitState::FollowingPath;
 		
 		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, State);
+		OnUnitStateChanged.Broadcast(this, Info.State);
 
 		// Se actualiza el numero de turnos para alcanzar las casillas del camino
 		UpdatePathTurns();
@@ -98,10 +92,10 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 
 void AActorUnit::UpdatePath()
 {
-	if (Path.Num() > 0 && TileMap)
+	if (Info.Path.Num() > 0 && TileMap)
 	{
 		// Se recalcula el camino
-		const TArray<FMovement> NewPath = TileMap->FindPath(Pos2D, Path.Last().Pos2D, BaseMovementPoints, MovementPoints);
+		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D, Info.BaseMovementPoints, Info.MovementPoints);
 		AssignPath(NewPath);
 	}
 }
@@ -109,46 +103,46 @@ void AActorUnit::UpdatePath()
 void AActorUnit::RemovePath()
 {
 	// Se limpian los valores almacenados del camino previo
-	Path.Empty();
-	PathCompleted.Empty();
+	Info.Path.Empty();
+	Info.PathCompleted.Empty();
 
 	// Se establece el estado de la unidad
-	if (MovementPoints > 0) State = EUnitState::WaitingForOrders;
-	else State = EUnitState::NoMovementPoints;
+	if (Info.MovementPoints > 0) Info.State = EUnitState::WaitingForOrders;
+	else Info.State = EUnitState::NoMovementPoints;
 
 	// Se llama al evento tras actualizar el estado
-	OnUnitStateChanged.Broadcast(this, State);
+	OnUnitStateChanged.Broadcast(this, Info.State);
 }
 
 void AActorUnit::ContinuePath()
 {
 	// Se limpian las casillas completadas en el turno previo
-	PathCompleted.Empty();
+	Info.PathCompleted.Empty();
 	
 	// Se almacena la posicion antes del movimiento
-	const FIntPoint PrevPos = Pos2D;
+	const FIntPoint PrevPos = Info.Pos2D;
 
 	// Se realizan todos los movimientos posibles en el turno
-	while (State == EUnitState::FollowingPath) MoveUnit();
+	while (Info.State == EUnitState::FollowingPath) MoveUnit();
 
 	// Se llama al evento para que se actualicen los datos en el resto de actores
-	OnUnitMoved.Broadcast(PrevPos, PathCompleted);
+	OnUnitMoved.Broadcast(PrevPos, Info.PathCompleted);
 }
 
 void AActorUnit::MoveUnit()
 {
 	// Se comprueba que haya pasos en el camino a seguir
-	if (Path.Num() > 0)
+	if (Info.Path.Num() > 0)
 	{
 		// Se obtiene el siguiente movimiento
-		const FMovement Move = Path[0];
+		const FMovement Move = Info.Path[0];
 	
 		// Se comprueba que la unidad tenga puntos de movimiento suficientes
-		if (MovementPoints >= Move.MovementCost)
+		if (Info.MovementPoints >= Move.MovementCost)
 		{
 			// Se elimina la entrada correspondiente al movimiento actual
-			PathCompleted.Add(Move);
-			Path.RemoveAt(0);
+			Info.PathCompleted.Add(Move);
+			Info.Path.RemoveAt(0);
 
 			// Se actualiza la posicion
 			UpdatePosition(Move);
@@ -157,16 +151,16 @@ void AActorUnit::MoveUnit()
 		}
 
 		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
-		State = EUnitState::WaitingForNextTurn;
+		Info.State = EUnitState::WaitingForNextTurn;
 
 		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, State);
+		OnUnitStateChanged.Broadcast(this, Info.State);
 	}
 }
 
 void AActorUnit::RestoreMovement()
 {
-	MovementPoints = BaseMovementPoints;
+	Info.MovementPoints = Info.BaseMovementPoints;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -177,16 +171,16 @@ void AActorUnit::TurnStarted()
 	RestoreMovement();
 
 	// Se actualiza el estado de la unidad
-	if (State != EUnitState::Sleeping)
+	if (Info.State != EUnitState::Sleeping)
 	{
 		// Se recalcula el camino para tener en cuenta cualquier unidad ajena que haya podido interponerse
-		if (Path.Num() > 0) UpdatePath();
+		if (Info.Path.Num() > 0) UpdatePath();
 		else
 		{
-			State = EUnitState::WaitingForOrders;
+			Info.State = EUnitState::WaitingForOrders;
 
 			// Se llama al evento tras actualizar el estado
-			OnUnitStateChanged.Broadcast(this, State);
+			OnUnitStateChanged.Broadcast(this, Info.State);
 		}
 	}
 }

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorUnit.h"
+#include "FResourceInfo.h"
 #include "GameFramework/Actor.h"
 #include "ActorMilitaryUnit.generated.h"
 
@@ -26,7 +27,7 @@ protected:
 	EUnitType Type;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
-	FElementIdentifier ProductionResource;
+	EResourceType ProductionResource;
 
 public:
 	// Sets default values for this actor's properties

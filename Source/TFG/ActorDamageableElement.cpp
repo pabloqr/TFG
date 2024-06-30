@@ -13,19 +13,17 @@ AActorDamageableElement::AActorDamageableElement()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	BaseHealthPoints = HealthPoints = 100.0;
-	BaseAttackPoints = AttackPoints = 10.0;
-	BaseDefensePoints = DefensePoints = 10.0;
+	DamageableInfo = FDamageableInfo();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 {
-	const float HealthPercentage = 1.0 - HealthPoints / BaseHealthPoints;
+	const float HealthPercentage = 1.0 - DamageableInfo.HealthPoints / DamageableInfo.BaseHealthPoints;
 
-	AttackPoints -= AttackPoints * HealthPercentage;
-	DefensePoints -= DefensePoints * HealthPercentage;
+	DamageableInfo.AttackPoints -= DamageableInfo.AttackPoints * HealthPercentage;
+	DamageableInfo.DefensePoints -= DamageableInfo.DefensePoints * HealthPercentage;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -55,8 +53,8 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 	const float RandomModifier = FMath::RandRange(-0.5f, 0.5f);
 
 	// Se calculan las nuevas estadisticas
-	const float ModAttackPoints = AttackPoints + AttackPoints * RandomModifier;
-	const float ModDefensePoints = DefensePoints + DefensePoints * RandomModifier;
+	const float ModAttackPoints = DamageableInfo.AttackPoints + DamageableInfo.AttackPoints * RandomModifier;
+	const float ModDefensePoints = DamageableInfo.DefensePoints + DamageableInfo.DefensePoints * RandomModifier;
 	
 	// No cambiar el orden, esta bien se mire como se mire
 	return IsAttacking ? Stats.AttackPoints - ModDefensePoints * 0.5 : ModAttackPoints - Stats.DefensePoints * 0.5;
@@ -72,7 +70,7 @@ void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttac
 void AActorDamageableElement::ApplyDamage(const float Damage)
 {
 	// Se restan los puntos de vida correspondientes
-	HealthPoints = FMath::Clamp(HealthPoints - Damage, 0.0f, BaseHealthPoints);
+	DamageableInfo.HealthPoints = FMath::Clamp(DamageableInfo.HealthPoints - Damage, 0.0f, DamageableInfo.BaseHealthPoints);
 
 	// Se actualizan los atributos de la unidad de acuerdo a la vida restante
 	UpdateAttackAndDefenseParameters();
