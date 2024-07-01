@@ -6,6 +6,21 @@
 #include "FMovement.h"
 #include "FUnitInfo.generated.h"
 
+/**
+ * Tipo enumerado para determinar el tipo de unidad
+ */
+UENUM(BlueprintType)
+enum class EUnitType : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	Infantry = 1 UMETA(DisplayName="Infantry unit"),
+	Armoured = 2 UMETA(DisplayName="Armoured unit"),
+	AntiTank = 3 UMETA(DisplayName="Anti-tank unit")
+};
+
+/**
+ * Tipo enumerado para determinar el estado de la unidad
+ */
 UENUM(BlueprintType)
 enum class EUnitState : uint8
 {
@@ -19,6 +34,9 @@ enum class EUnitState : uint8
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+/**
+ * Estructura que almacena informacion sobre los atributos de la unidad
+ */
 USTRUCT(BlueprintType)
 struct FUnitInfo
 {
@@ -29,6 +47,11 @@ struct FUnitInfo
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	FIntPoint Pos2D;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
+	EUnitType Type;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -85,11 +108,32 @@ struct FUnitInfo
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	FUnitInfo(): FUnitInfo(FIntPoint(-1), 2, TArray<FMovement>(), 2, 100.0, 2.0, EUnitState::None) {}
+	/**
+	 * Constructor por defecto
+	 */
+	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, 2, TArray<FMovement>(), 2,
+	                       100.0, 2.0, EUnitState::None)
+	{
+	}
 
-	FUnitInfo(const FIntPoint& Pos, const int32 UnitBaseMovP, const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitProdC, const float UnitMaintC, const EUnitState UnitState)
+	/**
+	 * Constructor con parametros
+	 * 
+	 * @param Pos Posicion en el Array2D de casillas
+	 * @param UnitType Tipo de unidad. 'None' si es una unidad civil
+	 * @param UnitBaseMovP Movimiento base de la unidad
+	 * @param UnitPath Camino asignado
+	 * @param UnitVisP Puntos de visibilidad
+	 * @param UnitProdC Coste de produccion
+	 * @param UnitMaintC Coste de mantenimiento
+	 * @param UnitState Estado de la unidad
+	 */
+	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const int32 UnitBaseMovP,
+	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitProdC, const float UnitMaintC,
+	          const EUnitState UnitState)
 	{
 		Pos2D = Pos;
+		Type = UnitType;
 		BaseMovementPoints = MovementPoints = UnitBaseMovP;
 
 		Path = UnitPath;

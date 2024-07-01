@@ -3,6 +3,7 @@
 #include "ActorCivilUnit.h"
 #include "ActorDamageableElement.h"
 #include "ActorSettlement.h"
+#include "ActorTile.h"
 #include "SaveMap.h"
 #include "GInstance.h"
 #include "LibraryTileMap.h"
@@ -10,11 +11,21 @@
 
 AActorTileMap::AActorTileMap()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	TilesInfo = TMap<FIntPoint, FTileInfo>();
 	TilesWithState = TMap<ETileState, FTilesArray>();
+	TileTypeCount = TMap<ETileType, int32>({
+		{ETileType::Plains, 0},
+		{ETileType::Hills, 0},
+		{ETileType::Forest, 0},
+		{ETileType::SnowPlains, 0},
+		{ETileType::SnowHills, 0},
+		{ETileType::Ice, 0},
+		{ETileType::Mountains, 0},
+		{ETileType::Water, 0}
+	});
 
 	GridSize = FVector2D(0.0, 0.0);
 
@@ -44,7 +55,7 @@ float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 	// Se comprueba si la casilla es la primera de la fila para actualizar el indice
 	if (Col == 0)
 	{
-		IceRow += Row <= NumIceRows ? 1 : Row >= Rows-NumIceRows ? -1 : 0;
+		IceRow += Row <= NumIceRows ? 1 : Row >= Rows - NumIceRows ? -1 : 0;
 	}
 	// Si la casilla esta fuera del rango de casillas que pueden contener Hielo, la probabilidad es 0
 	// En caso contrario, se verifica el numero de filas que pueden contener Hielo para aplicar ajustes
@@ -53,42 +64,57 @@ float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 	{
 		// Si el numero de filas que pueden contener Hielo es 1, limitaremos la aparicion de este tipo de casillas
 		// A aquellas que se situen en el limite exterior del mapa dado que el tamano del mapa es pequeno
-		const bool CorrectPos = (Row < NumIceRows && Col%2 != 0) || (Row >= Rows-NumIceRows && Col%2 == 0);
+		const bool CorrectPos = (Row < NumIceRows && Col % 2 != 0) || (Row >= Rows - NumIceRows && Col % 2 == 0);
 		CurrentProbability = CorrectPos ? 0.0 : CurrentProbability;
 	}
-	
+
 	for (int32 i = 0; i < IceRow && IceRow > 0 && IceRow < NumIceRows; ++i)
 	{
 		CurrentProbability *= FMath::Pow(0.1 / CurrentProbability, 1.f / NumIceRows);
 	}
-	
+
 	return CurrentProbability;
 }
 
-void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability,
+                                      TArray<FTileProbability>& Probabilities) const
 {
-	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y), TileType, Probability, Probabilities);
-	UpdateProbabilityAtPos(FIntPoint(Pos2D.X-1, Pos2D.Y+1), TileType, Probability, Probabilities);
-	UpdateProbabilityAtPos(FIntPoint(Pos2D.X, Pos2D.Y+1), TileType, Probability, Probabilities);
-	UpdateProbabilityAtPos(FIntPoint(Pos2D.X+1, Pos2D.Y+1), TileType, Probability, Probabilities);
+	UpdateProbabilityAtPos(FIntPoint(Pos2D.X + 1, Pos2D.Y), TileType, Probability, Probabilities);
+	UpdateProbabilityAtPos(FIntPoint(Pos2D.X - 1, Pos2D.Y + 1), TileType, Probability, Probabilities);
+	UpdateProbabilityAtPos(FIntPoint(Pos2D.X, Pos2D.Y + 1), TileType, Probability, Probabilities);
+	UpdateProbabilityAtPos(FIntPoint(Pos2D.X + 1, Pos2D.Y + 1), TileType, Probability, Probabilities);
 }
 
-void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const
+void AActorTileMap::UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability,
+                                           TArray<FTileProbability>& Probabilities) const
 {
 	// Se verifica que la posicion dada sea valida y no se salga de las dimensiones del mapa
-	if (Pos2D.X-1 >= 0 && Pos2D.X+1 < Rows && Pos2D.Y+1 < Cols)
+	if (Pos2D.X - 1 >= 0 && Pos2D.X + 1 < Rows && Pos2D.Y + 1 < Cols)
 	{
 		// Se obtiene la posicion en el Array1D y se actualiza segun el tipo de casilla a modificar
 		const int32 UpdatePos = GetPositionInArray(Pos2D);
 		switch (TileType)
 		{
-			case ETileType::Plains: Probabilities[UpdatePos].PlainsProbability += CheckProbability(Probabilities[UpdatePos].PlainsProbability, Probability); break;
-			case ETileType::Hills: Probabilities[UpdatePos].HillsProbability += CheckProbability(Probabilities[UpdatePos].HillsProbability, Probability); break;
-			case ETileType::Forest: Probabilities[UpdatePos].ForestProbability += CheckProbability(Probabilities[UpdatePos].ForestProbability, Probability); break;
-			case ETileType::Ice: Probabilities[UpdatePos].IceProbability += CheckProbability(Probabilities[UpdatePos].IceProbability, Probability); break;
-			case ETileType::Mountains: Probabilities[UpdatePos].MountainsProbability += CheckProbability(Probabilities[UpdatePos].MountainsProbability, Probability); break;
-			case ETileType::Water: Probabilities[UpdatePos].WaterProbability += CheckProbability(Probabilities[UpdatePos].WaterProbability, Probability); break;
-			default: Probabilities[UpdatePos].Error++; break;
+		case ETileType::Plains: Probabilities[UpdatePos].PlainsProbability += CheckProbability(
+				Probabilities[UpdatePos].PlainsProbability, Probability);
+			break;
+		case ETileType::Hills: Probabilities[UpdatePos].HillsProbability += CheckProbability(
+				Probabilities[UpdatePos].HillsProbability, Probability);
+			break;
+		case ETileType::Forest: Probabilities[UpdatePos].ForestProbability += CheckProbability(
+				Probabilities[UpdatePos].ForestProbability, Probability);
+			break;
+		case ETileType::Ice: Probabilities[UpdatePos].IceProbability += CheckProbability(
+				Probabilities[UpdatePos].IceProbability, Probability);
+			break;
+		case ETileType::Mountains: Probabilities[UpdatePos].MountainsProbability += CheckProbability(
+				Probabilities[UpdatePos].MountainsProbability, Probability);
+			break;
+		case ETileType::Water: Probabilities[UpdatePos].WaterProbability += CheckProbability(
+				Probabilities[UpdatePos].WaterProbability, Probability);
+			break;
+		default: Probabilities[UpdatePos].Error++;
+			break;
 		}
 	}
 }
@@ -140,13 +166,14 @@ ETileType AActorTileMap::GenerateTileType(const FIntPoint& Pos2D, TArray<FTilePr
 			Probabilities[Pos1D].PlainsProbability + Probabilities[Pos1D].HillsProbability +
 			Probabilities[Pos1D].ForestProbability + Probabilities[Pos1D].MountainsProbability;
 		const float RandVal = FMath::RandRange(0.f, TotalProbability);
-		
+
 		float PrevAccumProbability = 0.0;
 		float AccumProbability = Probabilities[Pos1D].PlainsProbability;
 		if (PrevAccumProbability <= RandVal && RandVal <= AccumProbability)
 		{
 			// Se debe comprobar si la casilla en la que aparece es fria o no para que aparezca Nieve o Llanura
-			if (Pos2D.X < NumIceRows+NumSnowRows || (Pos2D.X >= Rows-NumIceRows-NumSnowRows && Pos2D.X <= Rows-NumIceRows))
+			if (Pos2D.X < NumIceRows + NumSnowRows || (Pos2D.X >= Rows - NumIceRows - NumSnowRows && Pos2D.X <= Rows -
+				NumIceRows))
 			{
 				GeneratedTile = ETileType::SnowPlains;
 			}
@@ -158,7 +185,8 @@ ETileType AActorTileMap::GenerateTileType(const FIntPoint& Pos2D, TArray<FTilePr
 		if (PrevAccumProbability < RandVal && RandVal <= AccumProbability)
 		{
 			// Se debe comprobar si la casilla en la que aparece es fria o no para que aparezca ColinasNevadas o Colinas
-			if (Pos2D.X < NumIceRows+NumSnowRows || (Pos2D.X >= Rows-NumIceRows-NumSnowRows && Pos2D.X <= Rows-NumIceRows))
+			if (Pos2D.X < NumIceRows + NumSnowRows || (Pos2D.X >= Rows - NumIceRows - NumSnowRows && Pos2D.X <= Rows -
+				NumIceRows))
 			{
 				GeneratedTile = ETileType::SnowHills;
 			}
@@ -181,7 +209,7 @@ ETileType AActorTileMap::GenerateTileType(const FIntPoint& Pos2D, TArray<FTilePr
 			UpdateProbability(Pos2D, ETileType::Mountains, 0.1, Probabilities);
 		}
 	}
-	
+
 	return GeneratedTile;
 }
 
@@ -192,27 +220,24 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	GridSize.Y = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
 	// Se anade la informacion de la casilla al diccionario que la almacena
-	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, TileType, FTileElements(), { ETileState::None }));
+	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, TileType, FTileElements(), {ETileState::None}));
+	// Se actualiza el diccionaro que almacena el conteo de casillas por tipo
+	TileTypeCount[TileType] += 1;
 
 	// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
 	OnTileInfoUpdated.Broadcast(Pos2D);
 }
 
-void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
+void AActorTileMap::SetMapFromSave(const TArray<FMapSaveData>& TilesData)
 {
+	// Se inicializa el array de casillas y se procesan todas las casillas del archivo de guardado
 	Tiles.SetNumZeroed(TilesData.Num());
 	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
-		AActorTile* Tile = Tiles[i];
 		const ETileType TileType = TilesData[i].Type;
-		
-		if (Tile->GetType() != TileType)
-		{
-			const FIntPoint TilePos = Tile->GetPos();
-			Tile->Destroy();
+		const FIntPoint Pos = TilesData[i].Pos2D;
 
-			SetTileAtPos(TilePos, TileType);
-		}
+		UpdateTileAtPos(Pos, TileType);
 	}
 }
 
@@ -220,12 +245,15 @@ void AActorTileMap::SetMapFromSave(const TArray<FMapData>& TilesData)
 
 bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos2D) const
 {
-	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) && Tiles[GetPositionInArray(Pos2D)]->IsAccesible();
+	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) &&
+		Tiles[GetPositionInArray(Pos2D)]->IsAccesible();
 }
 
 AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos2D) const
 {
-	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols)) ? Tiles[GetPositionInArray(Pos2D)] : nullptr;
+	return ULibraryTileMap::CheckValidPosition(Pos2D, FIntPoint(Rows, Cols))
+		       ? Tiles[GetPositionInArray(Pos2D)]
+		       : nullptr;
 }
 
 TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState& State) const
@@ -249,7 +277,7 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 		{
 			// Se obtiene la casilla
 			const AActorTile* Tile = Tiles[GetPositionInArray(Neighbor)];
-			
+
 			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
 			const int32 Cost = Tile->GetMovementCost();
 			if (Cost <= Range && Tile->IsAccesible())
@@ -260,7 +288,7 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 				{
 					// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
 					InRange.Add(Neighbor);
-					InRange.Append(GetTilesWithinRange(Neighbor, Range-Cost));
+					InRange.Append(GetTilesWithinRange(Neighbor, Range - Cost));
 				}
 			}
 		}
@@ -271,12 +299,31 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileType)
+{
+	// Se verifica que el indice que se obtiene es correcto
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index < Tiles.Num())
+	{
+		// Se obtiene la casilla y, si existe y el tipo es diferente al dado, se destruye
+		AActorTile* Tile = Tiles[Index];
+		if (Tile && Tile->GetType() != TileType)
+		{
+			// Se destruye el actor y se actualiza el diccionario que almacena el conteo de casillas por tipo
+			Tile->Destroy();
+			TileTypeCount[TileType] -= 1;
+		}
+		// Si la casilla no existe se crea una nueva, en caso contrario, no se hace nada
+		else if (!Tile)	SetTileAtPos(Pos, TileType);
+	}
+}
+
 void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
 {
 	// Se actualizan los valores para los modificadores del mapa
 	MapTemperature = MapTemp;
 	MapSeaLevel = MapSeaLvl;
-	
+
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
 	NumSnowRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 12.0));
@@ -284,13 +331,16 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 	// Se establece el modificador de probabilidad de aparicion de agua en funcion del tipo de mapa
 	switch (MapSeaLevel)
 	{
-		case EMapSeaLevel::Arid: WaterProbabilityModifier = 0.1; break;
-		case EMapSeaLevel::Standard: WaterProbabilityModifier = 0.13; break;
-		case EMapSeaLevel::Wet: WaterProbabilityModifier = 0.17; break;
+	case EMapSeaLevel::Arid: WaterProbabilityModifier = 0.1;
+		break;
+	case EMapSeaLevel::Standard: WaterProbabilityModifier = 0.13;
+		break;
+	case EMapSeaLevel::Wet: WaterProbabilityModifier = 0.17;
+		break;
 	}
 
 	// Se declaran e inicializan los vectores necesarios para la generacion del mapa
-	const int32 Dimension = Rows*Cols;
+	const int32 Dimension = Rows * Cols;
 	TArray<FTileProbability> Probabilities;
 
 	Tiles.SetNumZeroed(Dimension);
@@ -305,10 +355,10 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 		Probabilities[Pos].HillsProbability = 0.15;
 		Probabilities[Pos].ForestProbability = 0.15;
 		Probabilities[Pos].MountainsProbability = 0.1;
-		
+
 		Probabilities[Pos].WaterProbability = WaterTileChance;
 	}
-	
+
 	// Se genera el mapa
 	// Se recorren primero las filas y, despues, las columnas de forma que se establece su posicion en el mapa,
 	// se calcula la nueva casilla a generar, se genera en el juego y se actualiza el array de casillas interno
@@ -319,7 +369,7 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 			const FIntPoint Pos2D = FIntPoint(Row, Col);
 			const ETileType TileType = GenerateTileType(Pos2D, Probabilities);
 
-			SetTileAtPos(Pos2D, TileType);
+			UpdateTileAtPos(Pos2D, TileType);
 		}
 	}
 
@@ -349,7 +399,7 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	{
 		NewTile->SetPos(TileInfo.Pos2D, TileInfo.MapPos2D);
 		NewTile->SetType(TileInfo.Type);
-		
+
 		// TODO quitar para lanzamiento
 		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
 	}
@@ -367,9 +417,9 @@ void AActorTileMap::BeginPlay()
 
 void AActorTileMap::SaveMap() const
 {
-	TArray<FMapData> MapData;
+	TArray<FMapSaveData> MapData;
 	MapData.SetNumZeroed(Tiles.Num());
-	
+
 	if (USaveMap* SaveGameInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
 		SaveGameInstance->Tiles = MapData;
@@ -423,7 +473,8 @@ void AActorTileMap::JsonToMap()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints, int32 MovementPoints)
+const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd,
+                                                 const int32 BaseMovementPoints, int32 MovementPoints)
 {
 	// Se limpian los datos anteriores
 	Path.Empty();
@@ -434,7 +485,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 
 	// Si las dos casillas son iguales, se devuelve un array vacio
 	if (PosIni == PosEnd) return Path;
-	
+
 	// Limite del mapa
 	const FIntPoint Limit = FIntPoint(Rows, Cols);
 
@@ -449,7 +500,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	{
 		return Path;
 	}
-	
+
 	// Se comprueba que la unidad seleccionada no sea una unidad civil
 	if (Cast<AActorCivilUnit>(Tiles[GetPositionInArray(PosIni)]->GetElement()))
 	{
@@ -457,7 +508,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 		// se devuelve un array vacio
 		if (Tiles[GetPositionInArray(PosEnd)]->GetElement()) return Path;
 	}
-	
+
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
 	//
@@ -482,12 +533,12 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			// Se procesan todos los nodos del diccionario CameFrom que nos permite conocer el camino de vuelta
 			// a la posicion inicial desde el objetivo
 			FIntPoint Current = CurrentData.Pos2D;
-			
+
 			while (Current != PosIni)
 			{
 				// Se obtiene el coste de movimiento de la casilla actual
 				const int32 CurrentCost = Tiles[GetPositionInArray(Current)]->GetMovementCost();
-				
+
 				// Se anade el nodo actual al camino a devolver
 				Path.Insert(FMovement(Current, CurrentCost, TotalCost[Current]), 0);
 
@@ -500,11 +551,11 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			{
 				// Se actualiza el numero de turnos en alcanzar la casilla actual
 				ULibraryTileMap::GetPathTurnAtIndex(Path, i, BaseMovementPoints, MovementPoints);
-				
+
 				// Se llama al evento para que todos los suscriptores realicen las operaciones definidas
 				OnPathUpdated.Broadcast(Path[i].Pos2D, Path);
 			}
-			
+
 			break;
 		}
 
@@ -520,7 +571,8 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 				//		* se encuentra en la casilla de destino y no es propiedad de la faccion actual
 				const AActorDamageableElement* Element = NeighborTile->GetElement();
 				const bool IsMine = Element ? Element->IsMine() : false;
-				if (!Element || (Cast<AActorSettlement>(Element) && IsMine) || (NeighborTile->GetPos() == PosEnd && !IsMine))
+				if (!Element || (Cast<AActorSettlement>(Element) && IsMine) || (NeighborTile->GetPos() == PosEnd &&
+					!IsMine))
 				{
 					// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
 					int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();
@@ -530,9 +582,10 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 						// con los valores de prioridad y coste correctos
 						TotalCost.Add(NeighborPos, NewCost);
 
-						const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(NeighborTile->GetPos(), PosEnd);
+						const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(
+							NeighborTile->GetPos(), PosEnd);
 						Frontier.Push(FPathData(NeighborPos, Priority));
-					
+
 						CameFrom.Add(NeighborPos, CurrentData.Pos2D);
 					}
 					else
@@ -544,8 +597,9 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 						if (NewCost < CurrentCost)
 						{
 							CurrentCost = NewCost;
-						
-							const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(NeighborTile->GetPos(), PosEnd);
+
+							const int32 Priority = NewCost + ULibraryTileMap::GetDistanceToElement(
+								NeighborTile->GetPos(), PosEnd);
 							Frontier.Push(FPathData(NeighborPos, Priority));
 
 							CameFrom[NeighborPos] = CurrentData.Pos2D;

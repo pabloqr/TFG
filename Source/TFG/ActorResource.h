@@ -31,7 +31,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
-	
+
 	EResourceType GetType() const { return Info.Type; }
 	int32 GetQuantity() const { return Info.Quantity; }
 

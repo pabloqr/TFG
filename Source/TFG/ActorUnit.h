@@ -12,6 +12,7 @@
 class AActorTileMap;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState&, State);
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -56,7 +57,7 @@ protected:
 	void UpdatePosition(const FMovement& Move);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -70,7 +71,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
-	
+
 	/**
 	 * Getter del atributo State
 	 * 
@@ -106,7 +107,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void UpdatePath();
-	
+
 	/**
 	 * Metodo que elimina el camino que la unidad estaba siguiendo
 	 */
@@ -152,7 +153,7 @@ public:
 	void TurnEnded();
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado en cada frame
 	 * 

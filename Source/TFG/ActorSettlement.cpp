@@ -23,13 +23,13 @@ void AActorSettlement::SetInitialOwnedTiles()
 {
 	// Se obtiene el tamano del mapa para verificar las posiciones
 	FIntPoint MapSize;
-	
+
 	const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
 	if (GameInstance)
 	{
 		MapSize = GameInstance->Size2D;
 	}
-	
+
 	Info.OwnedTiles = ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize);
 	Info.OwnedTiles.AddUnique(Info.Pos2D);
 }
@@ -58,7 +58,7 @@ void AActorSettlement::RemoveFromProduction(const int32 Index)
 
 		// Se actualiza el estado
 		Info.State = Info.ProductionQueue.Num() > 0 ? ESettlementState::Producing : ESettlementState::SelectProduction;
-		
+
 		// Se llama al evento tras actualizar el estado
 		OnSettlementStateChanged.Broadcast(this, Info.State);
 	}
@@ -80,13 +80,13 @@ void AActorSettlement::TurnStarted()
 	{
 		// Se actualiza el coste de produccion
 		Info.ProductionQueue[0].ProductionCost -= 1;
-		
+
 		// Se comprueba si se han completado todos los turnos para producir la unidad
 		if (Info.ProductionQueue[0].ProductionCost <= 0)
 		{
 			// Se obtiene la unidad a generar
 			const TSubclassOf<AActorUnit> UnitToSpawn = Info.ProductionQueue[0].Unit;
-		
+
 			// Se elimina la unidad de la cola de produccion
 			Info.ProductionQueue.RemoveAt(0);
 
@@ -112,4 +112,3 @@ void AActorSettlement::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

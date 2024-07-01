@@ -17,7 +17,6 @@ AActorResource::AActorResource()
 void AActorResource::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -25,4 +24,3 @@ void AActorResource::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

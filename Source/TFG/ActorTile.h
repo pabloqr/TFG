@@ -26,7 +26,7 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile")
 	FTileInfo Info;
-	
+
 public:
 	/**
 	 * Constructor de la clase que inicializa los parametros del actor
@@ -42,7 +42,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
-	
+
 	/**
 	 * Getter del atributo MapPos2D
 	 * 
@@ -50,7 +50,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FVector2D& GetMapPos() const { return Info.MapPos2D; }
-	
+
 	/**
 	 * Getter del atributo Type
 	 * 
@@ -97,14 +97,14 @@ public:
 	 * @param Pos Posicion en el Array2D de casillas
 	 */
 	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
-	
+
 	/**
 	 * Setter del atributo MapPos2D
 	 * 
 	 * @param Pos Posicion en la escena de la casilla
 	 */
 	void SetMapPos(const FVector2D& Pos) { Info.MapPos2D = Pos; }
-	
+
 	/**
 	 * Setter del atributo Type
 	 * 

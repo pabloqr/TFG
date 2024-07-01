@@ -15,7 +15,6 @@ AActorMilitaryUnit::AActorMilitaryUnit()
 void AActorMilitaryUnit::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -23,4 +22,3 @@ void AActorMilitaryUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

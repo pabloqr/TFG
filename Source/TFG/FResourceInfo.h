@@ -20,16 +20,18 @@ USTRUCT(BlueprintType)
 struct FResourceInfo
 {
 	GENERATED_BODY()
-	
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
 	FIntPoint Pos2D;
-	
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
 	EResourceType Type;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
 	int32 Quantity;
 
-	FResourceInfo(): FResourceInfo(FIntPoint(-1), EResourceType::None, 0.0) {}
+	FResourceInfo(): FResourceInfo(FIntPoint(-1), EResourceType::None, 0.0)
+	{
+	}
 
 	FResourceInfo(const FIntPoint& Pos, const EResourceType ResourceType, const int32 ResourceQuantity)
 	{

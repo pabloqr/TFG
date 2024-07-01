@@ -23,8 +23,7 @@ enum class ETileType : uint8
 	SnowHills = 5 UMETA(DisplayName="SnowHills"),
 	Ice = 6 UMETA(DisplayName="Ice"),
 	Mountains = 7 UMETA(DisplayName="Mountains"),
-	Water = 8 UMETA(DisplayName="Water"),
-	Max = 255 UMETA(Hidden)
+	Water = 8 UMETA(DisplayName="Water")
 };
 
 /**
@@ -44,6 +43,9 @@ enum class ETileState : uint8
 	InPath = 8 UMETA(DisplayName="InPath")
 };
 
+/**
+ * Estructura que almacena informacion sobre los elementos de la partida situados sobre la casilla
+ */
 USTRUCT(BlueprintType)
 struct FTileElements
 {
@@ -54,21 +56,33 @@ struct FTileElements
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	AActorResource* Resource;
-	
+
 	/**
 	 * Unidad sobre la casilla. Si no posee, se establece como null
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	AActorUnit* Unit;
-	
+
 	/**
 	 * Asentamiento sobre la casilla. Si no posee, se establece como null
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	AActorSettlement* Settlement;
 
-	FTileElements(): FTileElements(nullptr, nullptr, nullptr) {}
+	/**
+	 * Constructor por defecto
+	 */
+	FTileElements(): FTileElements(nullptr, nullptr, nullptr)
+	{
+	}
 
+	/**
+	 * Constructor con parametros
+	 * 
+	 * @param ResourceAtTile Recurso situado en la casilla
+	 * @param UnitAtTile Unidad situada en la casilla
+	 * @param SettlementAtTile Asentamiento situado en la casilla
+	 */
 	FTileElements(AActorResource* ResourceAtTile, AActorUnit* UnitAtTile, AActorSettlement* SettlementAtTile)
 	{
 		Resource = ResourceAtTile;
@@ -97,32 +111,34 @@ struct FTileInfo
 	FVector2D MapPos2D;
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Tipo de casilla
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	ETileType Type;
 
-	//----------------------------------------------------------------------------------------------------------------//
-
+	/**
+	 * Elementos del juego contenidos en la casilla
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Elements")
 	FTileElements Elements;
-
-	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Estados de la casilla
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
 	TArray<ETileState> States;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Constructor por defecto
 	 */
-	FTileInfo(): FTileInfo(FIntPoint(-1), FVector2D(0.0), ETileType::None, FTileElements(), { ETileState::None }) {}
+	FTileInfo(): FTileInfo(FIntPoint(-1), FVector2D(0.0), ETileType::None, FTileElements(),
+	                       {ETileState::None})
+	{
+	}
 
 	/**
 	 * Constructor con parametros
@@ -133,7 +149,8 @@ struct FTileInfo
 	 * @param TileElements Elementos del juego presentes en la casilla
 	 * @param TileStates Estado de la casilla
 	 */
-	FTileInfo(const FIntPoint& Pos, const FVector2D& MapPos, const ETileType TileType, const FTileElements& TileElements, const TArray<ETileState>& TileStates)
+	FTileInfo(const FIntPoint& Pos, const FVector2D& MapPos, const ETileType TileType,
+	          const FTileElements& TileElements, const TArray<ETileState>& TileStates)
 	{
 		Pos2D = Pos;
 		MapPos2D = MapPos;

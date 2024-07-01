@@ -16,11 +16,14 @@ struct FDamageableInfo
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
 	float BaseHealthPoints;
+
 	/**
 	 * Puntos de vida del elemento
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
 	float HealthPoints;
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Estadisticas base de ataque del elemento
@@ -34,7 +37,11 @@ struct FDamageableInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameElement|Damage")
 	FAttackStats Stats;
 
-	FDamageableInfo(): FDamageableInfo(100.0, FAttackStats(10.0, 10.0)) {}
+	//----------------------------------------------------------------------------------------------------------------//
+
+	FDamageableInfo(): FDamageableInfo(100.0, FAttackStats(10.0, 10.0))
+	{
+	}
 
 	FDamageableInfo(const float BaseHealthP, const FAttackStats& BaseS)
 	{

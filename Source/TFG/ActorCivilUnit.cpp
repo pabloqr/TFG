@@ -15,7 +15,6 @@ AActorCivilUnit::AActorCivilUnit()
 void AActorCivilUnit::BeginPlay()
 {
 	Super::BeginPlay();
-	
 }
 
 // Called every frame
@@ -23,4 +22,3 @@ void AActorCivilUnit::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

@@ -34,14 +34,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static TArray<FIntPoint> GetNeighbors(const FIntPoint& Pos, const FIntPoint& MapSize);
-	
+
 	static int32 GetDistanceToElement(const FIntPoint& PosIni, const FIntPoint& PosEnd);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static int32 GetTileCostFromType(const ETileType TileType);
-	
+
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	static bool IsTileTypeAccesible(const ETileType& TileType);
 
@@ -54,5 +54,6 @@ public:
 	static void UpdatePathTurns(TArray<FMovement>& Path, const int32 BaseMovementPoints, int32 MovementPoints);
 
 	UFUNCTION(BlueprintCallable)
-	static void GetPathTurnAtIndex(TArray<FMovement>& Path, const int32 Index, const int32 BaseMovementPoints, int32& MovementPoints);
+	static void GetPathTurnAtIndex(TArray<FMovement>& Path, const int32 Index, const int32 BaseMovementPoints,
+	                               int32& MovementPoints);
 };

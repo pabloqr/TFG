@@ -5,17 +5,31 @@
 #include "CoreMinimal.h"
 #include "FAttackStats.generated.h"
 
+/**
+ * Estructura que almacena informacion sobre los atributos de ataque y defensa de un elemento del juego
+ */
 USTRUCT(BlueprintType)
 struct FAttackStats
 {
 	GENERATED_BODY()
 
-	UPROPERTY(BlueprintReadWrite, Category="GameElement|Attack")
+	/**
+	 * Puntos de ataque
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GameElement|Attack")
 	float AttackPoints;
-	UPROPERTY(BlueprintReadWrite, Category="GameElement|Attack")
+
+	/**
+	 * Puntos de defensa
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GameElement|Attack")
 	float DefensePoints;
 
-	FAttackStats(): FAttackStats(0, 0) {}
+	//----------------------------------------------------------------------------------------------------------------//
+
+	FAttackStats(): FAttackStats(0, 0)
+	{
+	}
 
 	FAttackStats(const float Attack, const float Defense)
 	{

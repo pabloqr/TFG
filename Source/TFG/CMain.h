@@ -25,6 +25,6 @@ protected:
 	AActorSettlement* Settlement;
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	virtual void BeginPlay() override;
 };

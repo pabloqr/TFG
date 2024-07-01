@@ -3,13 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorTile.h"
 #include "FMovement.h"
+#include "SaveMap.h"
 #include "GameFramework/Actor.h"
 #include "ActorTileMap.generated.h"
 
-struct FMapData;
-enum class ETileType : uint8;
+class AActorTile;
 
 /**
  * Estructura que almacena una lista de coordenadas de casillas. Disenado para poder ser usado en diccionarios
@@ -22,7 +21,9 @@ struct FTilesArray
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
 	TArray<FIntPoint> TilesArray;
 
-	FTilesArray(): FTilesArray(TArray<FIntPoint>()) {}
+	FTilesArray(): FTilesArray(TArray<FIntPoint>())
+	{
+	}
 
 	explicit FTilesArray(const TArray<FIntPoint>& Tiles)
 	{
@@ -62,14 +63,14 @@ USTRUCT()
 struct FTileProbability
 {
 	GENERATED_BODY()
-	
+
 	float PlainsProbability = 0.f;
 	float HillsProbability = 0.f;
 	float ForestProbability = 0.f;
 	float IceProbability = 0.f;
 	float MountainsProbability = 0.f;
 	float WaterProbability = 0.f;
-	
+
 	int32 Error = 0;
 };
 
@@ -95,7 +96,9 @@ struct FPathData
 	/**
 	 * Constructor por defecto. Establece los atributos a valores invalidos
 	 */
-	FPathData() :FPathData(FIntPoint(-1, -1), -1) {}
+	FPathData() : FPathData(FIntPoint(-1, -1), -1)
+	{
+	}
 
 	/**
 	 * Constructor con parametros
@@ -206,17 +209,18 @@ public:
 	{
 		// Se comprueba si el elemento tiene menos prioridad que el ultimo para evitar recorrer todo el array
 		if (Empty() || Element >= Elements.Last()) Elements.Add(Element);
-		else for (int32 i = 0; i < Elements.Num(); ++i)
-		{
-			// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) P(%d) - PQ(%d)"), i, Element.Priority, Elements[i].Priority))
-
-			// Si el elemento tiene menos prioridad se inserta y se finaliza
-			if (Elements[i] >= Element)
+		else
+			for (int32 i = 0; i < Elements.Num(); ++i)
 			{
-				Elements.Insert(Element, i);
-				break;
+				// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) P(%d) - PQ(%d)"), i, Element.Priority, Elements[i].Priority))
+
+				// Si el elemento tiene menos prioridad se inserta y se finaliza
+				if (Elements[i] >= Element)
+				{
+					Elements.Insert(Element, i);
+					break;
+				}
 			}
-		}
 	}
 
 	/**
@@ -228,7 +232,7 @@ public:
 	{
 		FPathData Element = Elements[0];
 		Elements.RemoveAt(0);
-		
+
 		return Element;
 	}
 
@@ -255,7 +259,9 @@ public:
 //--------------------------------------------------------------------------------------------------------------------//
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -285,6 +291,9 @@ protected:
 	 */
 	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TMap<ETileState, FTilesArray> TilesWithState;
+
+	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	TMap<ETileType, int32> TileTypeCount;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -358,13 +367,13 @@ protected:
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Pathfinding")
 	TArray<FMovement> Path;
-	
+
 	/**
 	 * Diccionario que almacena, para cada nodo, el coste de llegar a el
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Pathfinding")
 	TMap<FIntPoint, int32> TotalCost;
-	
+
 public:
 	/**
 	 * Constructor de la clase que inicializa los parametros del actor
@@ -379,7 +388,7 @@ private:
 	 * @return Pareja de valores con las coordenadas de la fila y la columna en el Array2D
 	 */
 	FIntPoint GetCoordsInMap(const int32 Pos1D) const { return FIntPoint(GetRowInMap(Pos1D), GetColInMap(Pos1D)); }
-	
+
 	/**
 	 * Metodo privado que obtiene la coordenada de la fila en el Array2D
 	 * 
@@ -387,7 +396,7 @@ private:
 	 * @return Valor de la fila en el Array2D
 	 */
 	int32 GetRowInMap(const int32 Pos1D) const { return Pos1D / Cols; }
-	
+
 	/**
 	 * Metodo privado que obtiene la coordenada de la columna en el Array2D
 	 * 
@@ -417,7 +426,8 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const;
+	void UpdateProbability(const FIntPoint& Pos2D, const ETileType TileType, const float Probability,
+	                       TArray<FTileProbability>& Probabilities) const;
 	/**
 	 * Metodo privado que actualiza el valor de la probabilidad de aparicion de un tipo de casilla en una posicion
 	 * concreta del Array2D
@@ -427,8 +437,9 @@ private:
 	 * @param Probability Variacion en el valor de la probabilidad
 	 * @param Probabilities Array de probabilidades
 	 */
-	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability, TArray<FTileProbability>& Probabilities) const;
-	
+	void UpdateProbabilityAtPos(const FIntPoint& Pos2D, const ETileType TileType, const float Probability,
+	                            TArray<FTileProbability>& Probabilities) const;
+
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
 	 * 
@@ -453,8 +464,8 @@ private:
 	 * 
 	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
 	 */
-	void SetMapFromSave(const TArray<FMapData>& TilesData);
-	
+	void SetMapFromSave(const TArray<FMapSaveData>& TilesData);
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -466,7 +477,7 @@ private:
 	 */
 	static float CheckProbability(const float CurrentProbability, const float NewProbability)
 	{
-		return CurrentProbability+NewProbability > 0.0 ? NewProbability : -CurrentProbability;
+		return CurrentProbability + NewProbability > 0.0 ? NewProbability : -CurrentProbability;
 	}
 
 protected:
@@ -478,7 +489,7 @@ protected:
 	 * @return Posicion en el Array1D
 	 */
 	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
-	
+
 	/**
 	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
 	 * 
@@ -498,7 +509,7 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool IsTileAccesible(const FIntPoint& Pos2D) const;
-	
+
 	/**
 	 * Metodo que devuelve una casilla del mapa dada su posicion en el mismo
 	 * 
@@ -528,6 +539,15 @@ protected:
 	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
 
 	//----------------------------------------------------------------------------------------------------------------//
+	
+	/**
+	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
+	 * 
+	 * @param Pos Coordenadas en el Array2D
+	 * @param TileType Tipo de casilla
+	 */
+	UFUNCTION(BlueprintCallable)
+	void UpdateTileAtPos(const FIntPoint& Pos, ETileType TileType);
 
 	/**
 	 * Metodo que genera un mapa de forma aleatoria teniendo en cuenta los modificadores de temperatura y nivel del
@@ -580,7 +600,7 @@ protected:
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
 	virtual void BeginPlay() override;
-	
+
 public:
 	/**
 	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
@@ -592,10 +612,11 @@ public:
 	 * @return El mejor camino a seguir
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
-	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints, const int32 MovementPoints);
+	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints,
+	                                  const int32 MovementPoints);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado en cada frame
 	 * 
@@ -607,7 +628,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileInfoUpdated OnTileInfoUpdated;
-	
+
 	UPROPERTY(BlueprintAssignable)
 	FOnPathCreated OnPathCreated;
 	UPROPERTY(BlueprintAssignable)

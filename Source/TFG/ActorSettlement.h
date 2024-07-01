@@ -13,7 +13,9 @@ class AActorUnit;
 //--------------------------------------------------------------------------------------------------------------------//
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, TSubclassOf<AActorUnit>, Unit);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement, const ESettlementState&, State);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
+                                             const ESettlementState&, State);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -48,7 +50,7 @@ protected:
 	void RemoveFromProduction(const int32 Index);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -62,7 +64,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
-	
+
 	/**
 	 * Getter del atributo State
 	 * 
@@ -76,7 +78,7 @@ public:
 	 * @return Cantidad de dinero que genera por turno. Puede ser un valor negativo
 	 */
 	float GetMoneyYield() const { return Info.MoneyYield; }
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -102,7 +104,7 @@ public:
 	void SetMoneyYield(const float Yield) { Info.MoneyYield = Yield; }
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo que actualiza todos los atributos del asentamiento al comienzo del turno
 	 */
@@ -116,7 +118,7 @@ public:
 	void TurnEnded();
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado en cada frame
 	 * 

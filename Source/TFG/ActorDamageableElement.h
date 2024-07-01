@@ -21,7 +21,7 @@ class TFG_API AActorDamageableElement : public AActor
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="DamageableElement")
 	FDamageableInfo DamageableInfo;
-	
+
 public:
 	/**
 	 * Constructor por defecto
@@ -60,7 +60,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement")
 	bool IsMine() const;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -72,7 +72,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
 	float CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const;
-	
+
 	/**
 	 * Metodo que hace efectivo un ataque sobre otro elemento
 	 * 
@@ -81,7 +81,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
 	void PerformAttack(const bool IsAttacking, const FAttackStats& Stats);
-	
+
 	/**
 	 * Metodo que aplica un dano a un elemento. No se verifica si el elemento es destruido o no
 	 * 
@@ -98,7 +98,7 @@ public:
 	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
 	 */
 	virtual void Tick(float DeltaTime) override;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)

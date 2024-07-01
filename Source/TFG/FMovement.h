@@ -19,8 +19,10 @@ struct FMovement
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Movement")
 	int32 TotalTurns;
 
-	FMovement() : FMovement(FIntPoint(-1, -1), -1, -1) {}
-	
+	FMovement() : FMovement(FIntPoint(-1, -1), -1, -1)
+	{
+	}
+
 	FMovement(const FIntPoint& Pos, const int32 MCost, const int32 TCost, const int32 TTurns = -1)
 	{
 		Pos2D = Pos;

@@ -72,16 +72,16 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 	// Se limpian los valores almacenados del camino previo
 	Info.Path.Empty();
 	Info.PathCompleted.Empty();
-	
+
 	if (NewPath.Num() > 0)
 	{
 		// Se actualiza el camino a seguir
 		Info.Path.Append(NewPath);
 		if (Info.Path[0].Pos2D == Info.Pos2D) Info.Path.RemoveAt(0);
-	
+
 		// Se establece el estado de la unidad
 		if (Info.MovementPoints > 0) Info.State = EUnitState::FollowingPath;
-		
+
 		// Se llama al evento tras actualizar el estado
 		OnUnitStateChanged.Broadcast(this, Info.State);
 
@@ -95,7 +95,8 @@ void AActorUnit::UpdatePath()
 	if (Info.Path.Num() > 0 && TileMap)
 	{
 		// Se recalcula el camino
-		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D, Info.BaseMovementPoints, Info.MovementPoints);
+		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D,
+		                                                    Info.BaseMovementPoints, Info.MovementPoints);
 		AssignPath(NewPath);
 	}
 }
@@ -118,7 +119,7 @@ void AActorUnit::ContinuePath()
 {
 	// Se limpian las casillas completadas en el turno previo
 	Info.PathCompleted.Empty();
-	
+
 	// Se almacena la posicion antes del movimiento
 	const FIntPoint PrevPos = Info.Pos2D;
 
@@ -136,7 +137,7 @@ void AActorUnit::MoveUnit()
 	{
 		// Se obtiene el siguiente movimiento
 		const FMovement Move = Info.Path[0];
-	
+
 		// Se comprueba que la unidad tenga puntos de movimiento suficientes
 		if (Info.MovementPoints >= Move.MovementCost)
 		{
@@ -146,7 +147,7 @@ void AActorUnit::MoveUnit()
 
 			// Se actualiza la posicion
 			UpdatePosition(Move);
-			
+
 			return;
 		}
 

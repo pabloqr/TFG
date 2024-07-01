@@ -22,4 +22,3 @@ void AActorGameManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }
-

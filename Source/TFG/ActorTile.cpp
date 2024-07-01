@@ -17,7 +17,7 @@ AActorTile::AActorTile()
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("RootComp"));
 	TileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TileMesh"));
 	TileMesh->SetupAttachment(RootComponent);
-	
+
 	Info = FTileInfo();
 }
 
@@ -70,7 +70,7 @@ void AActorTile::AddState(const ETileState State)
 {
 	if (State != ETileState::None) Info.States.Remove(ETileState::None);
 	else Info.States.Empty();
-	
+
 	Info.States.AddUnique(State);
 }
 

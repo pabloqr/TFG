@@ -9,7 +9,7 @@ FIntVector ULibraryTileMap::OffsetCoordsToCubeCoords(const FIntPoint& OffsetCoor
 {
 	const int32 X = OffsetCoords.Y;
 	const int32 Y = OffsetCoords.X - (OffsetCoords.Y - FMath::Abs(OffsetCoords.Y));
-	return FIntVector(X, Y, -X-Y);
+	return FIntVector(X, Y, -X - Y);
 }
 
 FIntPoint ULibraryTileMap::CubeCoordsToOffsetCoords(const FIntVector& CubeCoords)
@@ -29,15 +29,16 @@ bool ULibraryTileMap::CheckValidPosition(const FIntPoint& Pos, const FIntPoint& 
 TArray<FIntPoint> ULibraryTileMap::GetNeighbors(const FIntPoint& Pos, const FIntPoint& MapSize)
 {
 	// Se preasigna el desplazamiento en funcion de si la columna es par o impar
-	TArray<FIntPoint> AllNeighbors = Pos.Y % 2 == 0 ? TArray<FIntPoint> {
-		FIntPoint(-1, -1), FIntPoint(-1, 0), FIntPoint(-1, 1),
-		FIntPoint(0, 1), FIntPoint(1, 0), FIntPoint(0, -1)
-	}
-	: TArray<FIntPoint> {
-		FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(0, 1),
-		FIntPoint(1, 1), FIntPoint(1, 0), FIntPoint(1, -1)
-	};
-	
+	TArray<FIntPoint> AllNeighbors = Pos.Y % 2 == 0
+		? TArray<FIntPoint>{
+			 FIntPoint(-1, -1), FIntPoint(-1, 0), FIntPoint(-1, 1), FIntPoint(0, 1),
+			 FIntPoint(1, 0), FIntPoint(0, -1)
+		}
+		: TArray<FIntPoint>{
+			 FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(0, 1), FIntPoint(1, 1),
+			 FIntPoint(1, 0), FIntPoint(1, -1)
+		};
+
 	// Se actualizan las posiciones de los vecinos y se comprueba si son correctas
 	TArray<FIntPoint> Neighbors;
 	for (int32 i = 0; i < AllNeighbors.Num(); ++i)
@@ -45,7 +46,7 @@ TArray<FIntPoint> ULibraryTileMap::GetNeighbors(const FIntPoint& Pos, const FInt
 		AllNeighbors[i] += Pos;
 		if (CheckValidPosition(AllNeighbors[i], MapSize)) Neighbors.Add(AllNeighbors[i]);
 	}
-	
+
 	return Neighbors;
 }
 
@@ -62,16 +63,22 @@ int32 ULibraryTileMap::GetTileCostFromType(const ETileType TileType)
 	int32 MovementCost;
 	switch (TileType)
 	{
-		case ETileType::Plains: MovementCost = 1; break;
-		case ETileType::Hills: MovementCost = 2; break;
-		case ETileType::Forest: MovementCost = 2; break;
-		case ETileType::SnowPlains: MovementCost = 1; break;
-		case ETileType::SnowHills: MovementCost = 2; break;
-		case ETileType::Ice:
-		case ETileType::Mountains:
-		case ETileType::Water:
-		case ETileType::Max: MovementCost = -1; break;
-		default: MovementCost = 1; break;
+	case ETileType::Plains: MovementCost = 1;
+		break;
+	case ETileType::Hills: MovementCost = 2;
+		break;
+	case ETileType::Forest: MovementCost = 2;
+		break;
+	case ETileType::SnowPlains: MovementCost = 1;
+		break;
+	case ETileType::SnowHills: MovementCost = 2;
+		break;
+	case ETileType::Ice:
+	case ETileType::Mountains:
+	case ETileType::Water: MovementCost = -1;
+		break;
+	default: MovementCost = 1;
+		break;
 	}
 
 	return MovementCost;
@@ -100,13 +107,14 @@ void ULibraryTileMap::UpdatePathTurns(TArray<FMovement>& Path, const int32 BaseM
 	for (int32 i = 0; i < Path.Num(); ++i) GetPathTurnAtIndex(Path, i, BaseMovementPoints, MovementPoints);
 }
 
-void ULibraryTileMap::GetPathTurnAtIndex(TArray<FMovement>& Path, const int32 Index, const int32 BaseMovementPoints, int32& MovementPoints)
+void ULibraryTileMap::GetPathTurnAtIndex(TArray<FMovement>& Path, const int32 Index, const int32 BaseMovementPoints,
+                                         int32& MovementPoints)
 {
 	// Se comprueba que el camino tenga elementos y que el indice dado sea correcto
 	if (Path.Num() > 0 && 0 <= Index && Index < Path.Num())
 	{
 		// Se establece el contador de turnos a 0
-		int32 Turn = Index > 0 ? Path[Index-1].TotalTurns : 1;
+		int32 Turn = Index > 0 ? Path[Index - 1].TotalTurns : 1;
 
 		// Si no hay puntos de movimiento suficientes se aumenta en uno el turno y se restablece el numero de
 		// puntos de movimiento
