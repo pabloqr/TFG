@@ -3,10 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FTileInfo.h"
 #include "GameFramework/PlayerController.h"
 #include "CBase.generated.h"
 
 class AActorTile;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedTileUpdated, ETileType, TileType);
+
 /**
  * 
  */
@@ -20,4 +24,8 @@ protected:
 	AActorTile* HoveredTile;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ControllerMain")
 	AActorTile* SelectedTile;
+
+public:
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnSelectedTileUpdated OnSelectedTileUpdated;
 };

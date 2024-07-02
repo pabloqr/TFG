@@ -443,11 +443,11 @@ private:
 	/**
 	 * Metodo privado que calcula el tipo de casilla a generar en el mapa
 	 * 
-	 * @param Pos2D Coordenadas en el Array2D
+	 * @param Pos Coordenadas en el Array2D
 	 * @param Probabilities Array de probabilidades de aparicion de los diferentes tipos de casillas
 	 * @return Tipo de casilla a generar
 	 */
-	ETileType GenerateTileType(const FIntPoint& Pos2D, TArray<FTileProbability>& Probabilities) const;
+	ETileType GenerateTileType(const FIntPoint& Pos, TArray<FTileProbability>& Probabilities) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -488,36 +488,36 @@ protected:
 	 * @param Col Indice de la columna
 	 * @return Posicion en el Array1D
 	 */
-	int32 GetPositionInArray(const int32 Row, const int32 Col) const { return Row * Cols + Col; }
+	int32 GetPositionInArray(const int32 Row, const int32 Col) const;
 
 	/**
 	 * Metodo privado que obtiene la posicion de una casilla dentro del Array1D dadas sus coordenadas en el Array2D
 	 * 
-	 * @param Pos2D Pareja de valores con las coordenadas de la fila y la columna en el Array2D
+	 * @param Pos Posicion en el Array2D de casillas
 	 * @return Posicion en el Array1D
 	 */
 	UFUNCTION(BlueprintCallable)
-	int32 GetPositionInArray(const FIntPoint& Pos2D) const { return Pos2D.X * Cols + Pos2D.Y; }
+	int32 GetPositionInArray(const FIntPoint& Pos) const { return GetPositionInArray(Pos.X, Pos.Y); }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que verifica si la casilla con las coordenadas dadas es accesible
 	 * 
-	 * @param Pos2D Coordenadas en el Array2D
+	 * @param Pos Coordenadas en el Array2D
 	 * @return Si la casilla pedida es accesible
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool IsTileAccesible(const FIntPoint& Pos2D) const;
+	bool IsTileAccesible(const FIntPoint& Pos) const;
 
 	/**
 	 * Metodo que devuelve una casilla del mapa dada su posicion en el mismo
 	 * 
-	 * @param Pos2D Coordenadas en el Array2D
+	 * @param Pos Coordenadas en el Array2D
 	 * @return Casilla del mapa
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure=false)
-	AActorTile* GetTileAtPos(const FIntPoint& Pos2D) const;
+	AActorTile* GetTileAtPos(const FIntPoint& Pos) const;
 
 	/**
 	 * Metodo que obtiene la lista de casillas con un estado dado
@@ -539,7 +539,7 @@ protected:
 	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
 	 * 
