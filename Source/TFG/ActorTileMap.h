@@ -278,21 +278,21 @@ protected:
 	/**
 	 * Array con informacion sobre el posicionamiento de las casillas y su tipo. Se emplea en los archivos de guardado
 	 */
-	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	TMap<FIntPoint, FTileInfo> TilesInfo;
 	/**
 	 * Array con referencias a las casillas del mapa
 	 */
-	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
 
 	/**
 	 * Diccionario que almacena, para cada estado, las casillas que lo tienen
 	 */
-	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	TMap<ETileState, FTilesArray> TilesWithState;
 
-	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	TMap<ETileType, int32> TileTypeCount;
 
 	//----------------------------------------------------------------------------------------------------------------//
