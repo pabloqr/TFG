@@ -324,7 +324,7 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 	// Se verifica que el indice que se obtiene es correcto
 	const int32 Index = GetPositionInArray(Pos);
 	if (Index == -1) return;
-	
+
 	// Se obtiene la casilla y, si existe y el tipo es diferente al dado, se destruye
 	AActorTile* Tile = Tiles[Index];
 	if (Tile && Tile->GetType() != TileType)
@@ -332,10 +332,13 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 		// Se destruye el actor
 		Tile->Destroy();
 
+		// Se obtiene el tipo previo de la casilla
+		const ETileType PreviousTileType = TilesInfo[Pos].Type;
+
 		// Se elimina la informacion de la casilla al diccionario que la almacena
 		TilesInfo.Remove(Pos);
 		// Se actualiza el diccionario que almacena el conteo de casillas por tipo
-		TileTypeCount[TileType] -= 1;
+		TileTypeCount[PreviousTileType] -= 1;
 		// Se elimina la referencia de la casilla eliminada
 		Tiles[Index] = nullptr;
 
@@ -515,9 +518,6 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	// Si las dos casillas son iguales, se devuelve un array vacio
 	if (PosIni == PosEnd) return Path;
 
-	// Limite del mapa
-	const FIntPoint Limit = FIntPoint(Rows, Cols);
-
 	// Se comprueba que los datos son correctos, si no lo son, se devuelve un array vacio
 	if (!(GetPositionInArray(PosIni) != -1 && GetPositionInArray(PosEnd) != -1))
 	{
@@ -592,7 +592,8 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 		}
 
 		// Se calculan los vecinos de la casilla actual y se procesan
-		for (const FIntPoint NeighborPos : ULibraryTileMap::GetNeighbors(CurrentData.Pos2D, FIntPoint(Rows, Cols)))
+		const FIntPoint Limit = FIntPoint(Rows, Cols);
+		for (const FIntPoint NeighborPos : ULibraryTileMap::GetNeighbors(CurrentData.Pos2D, Limit))
 		{
 			// Si el indice no es valido, se salta el vecino actual
 			const int32 Index = GetPositionInArray(NeighborPos);

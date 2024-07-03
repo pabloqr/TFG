@@ -556,7 +556,7 @@ protected:
 	 * @param MapTemp Temperatura del mapa
 	 * @param MapSeaLvl Nivel del mar del mapa
 	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Grid")
+	UFUNCTION(BlueprintCallable)
 	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
 
 	/**
@@ -565,7 +565,7 @@ protected:
 	 * @param Tile Clase de la casilla
 	 * @param TileInfo Informacion sobre la casilla
 	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Grid")
+	UFUNCTION(BlueprintCallable)
 	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
 
 	//----------------------------------------------------------------------------------------------------------------//
