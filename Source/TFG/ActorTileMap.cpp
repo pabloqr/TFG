@@ -332,12 +332,17 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 		// Se destruye el actor
 		Tile->Destroy();
 
-		// Se anade la informacion de la casilla al diccionario que la almacena
+		// Se elimina la informacion de la casilla al diccionario que la almacena
 		TilesInfo.Remove(Pos);
 		// Se actualiza el diccionario que almacena el conteo de casillas por tipo
 		TileTypeCount[TileType] -= 1;
+		// Se elimina la referencia de la casilla eliminada
+		Tiles[Index] = nullptr;
+
+		// Se actualizan los datos de la nueva casilla
+		SetTileAtPos(Pos, TileType);
 	}
-	// Si la casilla no existe se crea una nueva, en caso contrario, no se hace nada
+	// Si la casilla no existe se actualizan los datos de una nueva, en caso contrario, no se hace nada
 	else if (!Tile) SetTileAtPos(Pos, TileType);
 }
 
