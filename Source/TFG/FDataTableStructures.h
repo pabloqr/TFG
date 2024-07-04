@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "FAttackStats.h"
+#include "FResourceInfo.h"
 #include "FTileInfo.h"
 #include "Engine/DataTable.h"
 #include "FUnitInfo.h"
 #include "FDataTableStructures.generated.h"
 
 USTRUCT(BlueprintType)
-struct FTileIconData
+struct FIconData
 {
 	GENERATED_BODY()
 
@@ -23,11 +24,11 @@ struct FTileIconData
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FVector2D Scale;
 
-	FTileIconData(): FTileIconData(nullptr, FVector2D(0.0), FVector2D(0.0))
+	FIconData(): FIconData(nullptr, FVector2D(0.0), FVector2D(0.0))
 	{
 	}
 
-	FTileIconData(UTexture2D* const Image, const FVector2D& Translation, const FVector2D& Scale)
+	FIconData(UTexture2D* const Image, const FVector2D& Translation, const FVector2D& Scale)
 		: Image(Image),
 		  Translation(Translation),
 		  Scale(Scale)
@@ -50,17 +51,45 @@ struct FTileData : public FTableRowBase
 	int32 MovementCost;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FTileIconData Icon;
+	FIconData Icon;
 
-	FTileData(): FTileData("", ETileType::None, 0, FTileIconData())
+	FTileData(): FTileData("", ETileType::None, 0, FIconData())
 	{
 	}
 
-	FTileData(const FString& Name, const ETileType Type, const int32 MovementCost, const FTileIconData& IconData)
+	FTileData(const FString& Name, const ETileType Type, const int32 MovementCost, const FIconData& IconData)
 		: Name(Name),
 		  Type(Type),
 		  MovementCost(MovementCost),
 		  Icon(IconData)
+	{
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+USTRUCT(BlueprintType)
+struct FResourceData : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FString Name;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FResource Resource;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FIconData Icon;
+
+	FResourceData(): FResourceData("", FResource(), FIconData())
+	{
+	}
+
+	FResourceData(const FString& Name, const FResource& Resource, const FIconData& Icon)
+		: Name(Name),
+		  Resource(Resource),
+		  Icon(Icon)
 	{
 	}
 };

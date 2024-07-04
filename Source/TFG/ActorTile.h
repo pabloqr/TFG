@@ -68,10 +68,18 @@ public:
 	/**
 	 * Getter de los atributos Unit/Settlement
 	 * 
-	 * @return Elemento situado en la casilla actual
+	 * @return Elemento situado sobre la casilla
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category="Tile|Elements")
 	const AActorDamageableElement* GetElement() const;
+
+	/**
+	 * Getter del atributo Resource
+	 * 
+	 * @return Recurso situado sobre la casilla
+	 */
+	UFUNCTION(BlueprintCallable, Category="Tile|Elements")
+	const AActorResource* GetResource() const;
 
 	/**
 	 * Getter del atributo TileStatess
@@ -111,6 +119,13 @@ public:
 	 * @param TileType Tipo de casilla
 	 */
 	void SetType(const ETileType TileType);
+
+	/**
+	 * Setter del atributo Resource
+	 * 
+	 * @param Resource Recurso situado sobre la casilla
+	 */
+	void SetResource(AActorResource* Resource);
 
 	/**
 	 * Setter del atributo TileStatess

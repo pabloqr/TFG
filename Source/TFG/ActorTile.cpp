@@ -5,6 +5,7 @@
 #include <Components/SceneComponent.h>
 #include <Components/StaticMeshComponent.h>
 
+#include "ActorResource.h"
 #include "ActorUnit.h"
 #include "ActorSettlement.h"
 #include "LibraryTileMap.h"
@@ -36,6 +37,11 @@ const AActorDamageableElement* AActorTile::GetElement() const
 	return nullptr;
 }
 
+const AActorResource* AActorTile::GetResource() const
+{
+	return Info.Elements.Resource;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorTile::SetPos(const FIntPoint& Pos, const FVector2D& MapPos)
@@ -47,6 +53,14 @@ void AActorTile::SetPos(const FIntPoint& Pos, const FVector2D& MapPos)
 void AActorTile::SetType(const ETileType TileType)
 {
 	Info.Type = TileType;
+}
+
+void AActorTile::SetResource(AActorResource* Resource)
+{
+	// Si la casilla tiene un recurso, se elimina
+	if (Info.Elements.Resource) Info.Elements.Resource->Destroy();
+	
+	Info.Elements.Resource = Resource;
 }
 
 void AActorTile::SetState(const TArray<ETileState>& TileStates)

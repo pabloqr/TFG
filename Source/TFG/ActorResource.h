@@ -31,12 +31,27 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
+	
+	/**
+	 * Getter del atributo Info
+	 * 
+	 * @return Informacion del recurso
+	 */
+	const FResourceInfo& GetInfo() const { return Info; }
 
-	EResourceType GetType() const { return Info.Type; }
-	int32 GetQuantity() const { return Info.Quantity; }
+	EResource GetResource() const { return Info.Resource.Resource; }
+	EResourceType GetType() const { return Info.Resource.Type; }
+	int32 GetQuantity() const { return Info.Resource.Quantity; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Setter del atributo Info
+	 * 
+	 * @param ResourceInfo Informacion del recurso
+	 */
+	void SetInfo(const FResourceInfo& ResourceInfo) { Info = ResourceInfo; }
+	
 	/**
 	 * Setter del atributo Pos2D
 	 * 

@@ -2,6 +2,7 @@
 
 #include "ActorCivilUnit.h"
 #include "ActorDamageableElement.h"
+#include "ActorResource.h"
 #include "ActorSettlement.h"
 #include "ActorTile.h"
 #include "SaveMap.h"
@@ -25,6 +26,14 @@ AActorTileMap::AActorTileMap()
 		{ETileType::Ice, 0},
 		{ETileType::Mountains, 0},
 		{ETileType::Water, 0}
+	});
+	ResourceCount = TMap<EResource, int32>({
+		{EResource::Diamond, 0},
+		{EResource::Gold, 0},
+		{EResource::Copper, 0},
+		{EResource::Aluminium, 0},
+		{EResource::Coal, 0},
+		{EResource::Oil, 0},
 	});
 
 	GridSize = FVector2D(0.0, 0.0);
@@ -319,36 +328,6 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileType)
-{
-	// Se verifica que el indice que se obtiene es correcto
-	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
-
-	// Se obtiene la casilla y, si existe y el tipo es diferente al dado, se destruye
-	AActorTile* Tile = Tiles[Index];
-	if (Tile && Tile->GetType() != TileType)
-	{
-		// Se destruye el actor
-		Tile->Destroy();
-
-		// Se obtiene el tipo previo de la casilla
-		const ETileType PreviousTileType = TilesInfo[Pos].Type;
-
-		// Se elimina la informacion de la casilla al diccionario que la almacena
-		TilesInfo.Remove(Pos);
-		// Se actualiza el diccionario que almacena el conteo de casillas por tipo
-		TileTypeCount[PreviousTileType] -= 1;
-		// Se elimina la referencia de la casilla eliminada
-		Tiles[Index] = nullptr;
-
-		// Se actualizan los datos de la nueva casilla
-		SetTileAtPos(Pos, TileType);
-	}
-	// Si la casilla no existe se actualizan los datos de una nueva, en caso contrario, no se hace nada
-	else if (!Tile) SetTileAtPos(Pos, TileType);
-}
-
 void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
 {
 	// Se actualizan los valores para los modificadores del mapa
@@ -413,6 +392,36 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 	}
 }
 
+void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileType)
+{
+	// Se verifica que el indice que se obtiene es correcto
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se obtiene la casilla y, si existe y el tipo es diferente al dado, se destruye
+	AActorTile* Tile = Tiles[Index];
+	if (Tile && Tile->GetType() != TileType)
+	{
+		// Se destruye el actor
+		Tile->Destroy();
+
+		// Se obtiene el tipo previo de la casilla
+		const ETileType PreviousTileType = TilesInfo[Pos].Type;
+
+		// Se elimina la informacion de la casilla al diccionario que la almacena
+		TilesInfo.Remove(Pos);
+		// Se actualiza el diccionario que almacena el conteo de casillas por tipo
+		TileTypeCount[PreviousTileType] -= 1;
+		// Se elimina la referencia de la casilla eliminada
+		Tiles[Index] = nullptr;
+
+		// Se actualizan los datos de la nueva casilla
+		SetTileAtPos(Pos, TileType);
+	}
+	// Si la casilla no existe se actualizan los datos de una nueva, en caso contrario, no se hace nada
+	else if (!Tile) SetTileAtPos(Pos, TileType);
+}
+
 void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo)
 {
 	// Se calcula la rotacion de la casilla que se va a anadir a la escena
@@ -426,7 +435,7 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 		FRotator(0, Rotation, 0));
 
 	// Se actualizan los atributos de la casilla
-	if (NewTile != nullptr)
+	if (NewTile)
 	{
 		NewTile->SetPos(TileInfo.Pos2D, TileInfo.MapPos2D);
 		NewTile->SetType(TileInfo.Type);
@@ -438,6 +447,57 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	// Se actualiza el array de casillas con la que se ha anadido
 	const int32 Index = GetPositionInArray(TileInfo.Pos2D);
 	if (Index != -1) Tiles[Index] = NewTile;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const FResource& Resource)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se obtiene la casilla
+	AActorTile* Tile = Tiles[Index];
+
+	// Se genera el nuevo recurso en la posicion de la casilla
+	AActorResource* NewResource = GetWorld()->SpawnActor<AActorResource>(
+		AActorResource::StaticClass(),
+		FVector(Tile->GetMapPos().X, Tile->GetMapPos().Y, 0.0),
+		FRotator(0.0));
+	
+	if (NewResource)
+	{
+		// Se actualizan los atributos del recurso
+		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), Resource));
+
+		// Se actualiza el contador de recursos si la casilla ya contiene uno
+		const AActorResource* ResourceInTile;
+		if ((ResourceInTile = Tile->GetResource()) != nullptr) ResourceCount[ResourceInTile->GetResource()] -= 1;
+
+		// Se asigna el recurso a la casilla
+		Tile->SetResource(NewResource);
+
+		// Se actualiza el contador de recursos
+		ResourceCount[Resource.Resource] += 1;
+	}
+}
+
+void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se obtiene la casilla
+	AActorTile* Tile = Tiles[Index];
+
+	// Se actualiza el contador de recursos
+	const AActorResource* ResourceInTile;
+	if ((ResourceInTile = Tile->GetResource()) != nullptr) ResourceCount[ResourceInTile->GetResource()] -= 1;
+
+	// Se elimina el recurso de la casilla
+	Tile->SetResource(nullptr);
 }
 
 void AActorTileMap::BeginPlay()

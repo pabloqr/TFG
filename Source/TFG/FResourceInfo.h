@@ -14,7 +14,45 @@ enum class EResourceType : uint8
 	Monetary = 2 UMETA(DisplayName="Monetary")
 };
 
+UENUM(BlueprintType, meta=(ScriptName="GameResource"))
+enum class EResource : uint8
+{
+	None = 0 UMETA(DisplayName="None"),
+	Diamond = 1 UMETA(DisplayName="Diamond"),
+	Gold = 2 UMETA(DisplayName="Gold"),
+	Copper = 3 UMETA(DisplayName="Copper"),
+	Aluminium = 4 UMETA(DisplayName="Aluminium"),
+	Coal = 5 UMETA(DisplayName="Coal"),
+	Oil = 6 UMETA(DisplayName="Oil")
+};
+
 //--------------------------------------------------------------------------------------------------------------------//
+
+USTRUCT(BlueprintType)
+struct FResource
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource")
+	EResource Resource;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource")
+	EResourceType Type;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Resource")
+	int32 Quantity;
+
+	FResource(): FResource(EResource::None, EResourceType::None, 0)
+	{
+	}
+
+	FResource(const EResource Resource, const EResourceType Type, const int32 Quantity)
+		: Resource(Resource),
+		  Type(Type),
+		  Quantity(Quantity)
+	{
+	}
+};
 
 USTRUCT(BlueprintType)
 struct FResourceInfo
@@ -25,19 +63,15 @@ struct FResourceInfo
 	FIntPoint Pos2D;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
-	EResourceType Type;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
-	int32 Quantity;
+	FResource Resource;
 
-	FResourceInfo(): FResourceInfo(FIntPoint(-1), EResourceType::None, 0.0)
+	FResourceInfo(): FResourceInfo(FIntPoint(-1), FResource())
 	{
 	}
 
-	FResourceInfo(const FIntPoint& Pos, const EResourceType ResourceType, const int32 ResourceQuantity)
+	FResourceInfo(const FIntPoint& Pos2D, const FResource& Resource)
+		: Pos2D(Pos2D),
+		  Resource(Resource)
 	{
-		Pos2D = Pos;
-
-		Type = ResourceType;
-		Quantity = ResourceQuantity;
 	}
 };

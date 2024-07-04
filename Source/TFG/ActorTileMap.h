@@ -283,7 +283,7 @@ protected:
 	/**
 	 * Array con referencias a las casillas del mapa
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(BlueprintReadWrite, Category="Map|Grid")
 	TArray<AActorTile*> Tiles;
 
 	/**
@@ -294,6 +294,9 @@ protected:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	TMap<ETileType, int32> TileTypeCount;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
+	TMap<EResource, int32> ResourceCount;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -541,15 +544,6 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
-	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
-	 * 
-	 * @param Pos Coordenadas en el Array2D
-	 * @param TileType Tipo de casilla
-	 */
-	UFUNCTION(BlueprintCallable)
-	void UpdateTileAtPos(const FIntPoint& Pos, ETileType TileType);
-
-	/**
 	 * Metodo que genera un mapa de forma aleatoria teniendo en cuenta los modificadores de temperatura y nivel del
 	 * mar del mapa. El resultado sera un tablero de casillas que trata de asemejarse a la Tierra
 	 * 
@@ -560,6 +554,15 @@ protected:
 	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
 
 	/**
+	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
+	 * 
+	 * @param Pos Coordenadas en el Array2D
+	 * @param TileType Tipo de casilla
+	 */
+	UFUNCTION(BlueprintCallable)
+	void UpdateTileAtPos(const FIntPoint& Pos, ETileType TileType);
+
+	/**
 	 * Metodo que crea y almacena una nueva casilla en el mapa
 	 * 
 	 * @param Tile Clase de la casilla
@@ -567,6 +570,14 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AddResourceToTile(const FIntPoint& Pos, const FResource& Resource);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveResourceFromTile(const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

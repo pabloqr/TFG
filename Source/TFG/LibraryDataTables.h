@@ -18,4 +18,7 @@ class TFG_API ULibraryDataTables : public UBlueprintFunctionLibrary
 public:
 	UFUNCTION(BlueprintCallable)
 	static FTileData GetTileDataFromType(const UDataTable* DataTable, const ETileType& TileType);
+	
+	UFUNCTION(BlueprintCallable)
+	static FResourceData GetResourceDataFromType(const UDataTable* DataTable, const EResource& Resource);
 };
