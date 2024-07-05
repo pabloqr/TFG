@@ -264,6 +264,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMoveme
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreated, AActorResource*, Resource);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 /**
@@ -466,8 +468,9 @@ private:
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
 	 * 
 	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
+	 * @param ResourcesData
 	 */
-	void SetMapFromSave(const TArray<FMapSaveData>& TilesData);
+	void SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceSaveData>& ResourcesData);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -569,12 +572,13 @@ protected:
 	 * @param TileInfo Informacion sobre la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void DisplayTileAtPos(TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
+	void DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	void AddResourceToTile(const FIntPoint& Pos, const FResource& Resource);
+	void AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AActorResource> ResourceClass,
+	                       const FResource& Resource);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveResourceFromTile(const FIntPoint& Pos);
@@ -644,4 +648,7 @@ public:
 	FOnPathCreated OnPathCreated;
 	UPROPERTY(BlueprintAssignable)
 	FOnPathUpdated OnPathUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnResourceCreated OnResourceCreated;
 };

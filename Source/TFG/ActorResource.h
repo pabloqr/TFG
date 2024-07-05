@@ -35,9 +35,15 @@ public:
 	/**
 	 * Getter del atributo Info
 	 * 
-	 * @return Informacion del recurso
+	 * @return Informacion completa del recurso
 	 */
 	const FResourceInfo& GetInfo() const { return Info; }
+
+	/**
+	 * Getter del atributo Resource
+	 * @return Informacion de los atributos del recurso
+	 */
+	const FResource& GetResourceInfo() const { return Info.Resource; }
 
 	EResource GetResource() const { return Info.Resource.Resource; }
 	EResourceType GetType() const { return Info.Resource.Type; }

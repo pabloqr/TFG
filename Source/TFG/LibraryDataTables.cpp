@@ -5,6 +5,9 @@
 
 FTileData ULibraryDataTables::GetTileDataFromType(const UDataTable* DataTable, const ETileType& TileType)
 {
+	// Si es no es un tipo valido, se devuelve una estructura nula
+	if (TileType == ETileType::None) return FTileData();
+	
 	// Se obtiene el nombre del tipo enumerado seleccionado
 	TArray<FString> ParsedEnum;
 	UEnum::GetValueAsString(TileType).ParseIntoArray(ParsedEnum, TEXT(":"), false);
@@ -16,6 +19,9 @@ FTileData ULibraryDataTables::GetTileDataFromType(const UDataTable* DataTable, c
 
 FResourceData ULibraryDataTables::GetResourceDataFromType(const UDataTable* DataTable, const EResource& Resource)
 {
+	// Si es no es un tipo valido, se devuelve una estructura nula
+	if (Resource == EResource::None) return FResourceData();
+	
 	// Se obtiene el nombre del tipo enumerado seleccionado
 	TArray<FString> ParsedEnum;
 	UEnum::GetValueAsString(Resource).ParseIntoArray(ParsedEnum, TEXT(":"), false);

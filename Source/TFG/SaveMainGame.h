@@ -3,22 +3,21 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FSaveStructures.h"
+#include "SaveMap.h"
 #include "GameFramework/SaveGame.h"
-#include "SaveMap.generated.h"
+#include "SaveMainGame.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TFG_API USaveMap : public USaveGame
+class TFG_API USaveMainGame : public USaveMap
 {
 	GENERATED_BODY()
 
-public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
-	TArray<FTileSaveData> Tiles;
+	TArray<FUnitSaveData> Units;
 	
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
-	TArray<FResourceInfo> Resources;
+	TArray<FSettlementSaveData> Settlements;
 };

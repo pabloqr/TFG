@@ -12,7 +12,7 @@
  * Estructura que almacena la informacion sobre las casillas a guardar en un archivo de texto
  */
 USTRUCT(BlueprintType)
-struct FMapSaveData
+struct FTileSaveData
 {
 	GENERATED_BODY()
 
@@ -21,11 +21,11 @@ struct FMapSaveData
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	ETileType Type;
 
-	FMapSaveData(): FMapSaveData(FIntPoint(-1), ETileType::None)
+	FTileSaveData(): FTileSaveData(FIntPoint(-1), ETileType::None)
 	{
 	}
 
-	FMapSaveData(const FIntPoint& Pos, const ETileType TileType)
+	FTileSaveData(const FIntPoint& Pos, const ETileType TileType)
 	{
 		Pos2D = Pos;
 		Type = TileType;

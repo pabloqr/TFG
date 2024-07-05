@@ -244,7 +244,7 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	OnTileInfoUpdated.Broadcast(Pos2D);
 }
 
-void AActorTileMap::SetMapFromSave(const TArray<FMapSaveData>& TilesData)
+void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const ::TArray<__resharper_unknown_type>& ResourcesData)
 {
 	// Se inicializa el array de casillas y se procesan todas las casillas del archivo de guardado
 	Tiles.SetNumZeroed(TilesData.Num());
@@ -451,7 +451,8 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const FResource& Resource)
+void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AActorResource> ResourceClass,
+                                      const FResource& Resource)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
@@ -462,10 +463,10 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const FResource& Res
 
 	// Se genera el nuevo recurso en la posicion de la casilla
 	AActorResource* NewResource = GetWorld()->SpawnActor<AActorResource>(
-		AActorResource::StaticClass(),
+		ResourceClass,
 		FVector(Tile->GetMapPos().X, Tile->GetMapPos().Y, 0.0),
 		FRotator(0.0));
-	
+
 	if (NewResource)
 	{
 		// Se actualizan los atributos del recurso
@@ -480,6 +481,9 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const FResource& Res
 
 		// Se actualiza el contador de recursos
 		ResourceCount[Resource.Resource] += 1;
+
+		// Se llama al evento para actualiza la interfaz
+		OnResourceCreated.Broadcast(NewResource);
 	}
 }
 
@@ -500,6 +504,8 @@ void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
 	Tile->SetResource(nullptr);
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+
 void AActorTileMap::BeginPlay()
 {
 	Super::BeginPlay();
@@ -509,12 +515,20 @@ void AActorTileMap::BeginPlay()
 
 void AActorTileMap::SaveMap() const
 {
-	TArray<FMapSaveData> MapData;
-	MapData.SetNumZeroed(Tiles.Num());
-
 	if (USaveMap* SaveGameInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
-		SaveGameInstance->Tiles = MapData;
+		// Se inicilaiza la estructura de casillas con la informacion del mapa actual
+		for (auto Tile : TilesInfo)
+		{
+			SaveGameInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Type));
+
+			// Si contiene un recurso, se anade a la lista de recursos del mapa
+			if (Tile.Value.Elements.Resource)
+			{
+				SaveGameInstance->Resources.Add(Tile.Value.Elements.Resource->GetInfo());
+			}
+		}
+		
 		if (!UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("MapTest"), 0))
 		{
 			UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
@@ -529,7 +543,7 @@ void AActorTileMap::LoadMap()
 {
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
 	{
-		SetMapFromSave(LoadedGame->Tiles);
+		SetMapFromSave(LoadedGame->Tiles, LoadedGame->Resources);
 	}
 }
 
