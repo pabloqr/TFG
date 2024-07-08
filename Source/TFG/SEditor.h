@@ -17,5 +17,5 @@ class TFG_API ASEditor : public AGameStateBase
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="EditorState")
-	ETileType TileTypeToSpawn;
+	FString CurrentMapName;
 };

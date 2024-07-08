@@ -26,4 +26,6 @@ void UGInstance::Init()
 	// Se inicializan los parametros de la instancia
 	MapTemperature = EMapTemperature::Temperate;
 	MapSeaLevel = EMapSeaLevel::Standard;
+
+	WaterTileChance = 0.4;
 }

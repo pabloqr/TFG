@@ -239,11 +239,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileUpdated, FTileInfo, TileInfo);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreation, FResourceInfo, ResourceInfo);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreated, AActorResource*, Resource);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreated, AActorResource*, Resource);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -318,7 +320,9 @@ protected:
 	/**
 	 * Probabilidad de aparicion de casillas de agua en el mapa
 	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
 	float WaterTileChance = 0.4f;
+
 	/**
 	 * Modificador de la probabilidad de aparicion de casillas de agua dependiente del atributo MapSeaLevel
 	 */
@@ -535,9 +539,10 @@ protected:
 	 * 
 	 * @param MapTemp Temperatura del mapa
 	 * @param MapSeaLvl Nivel del mar del mapa
+	 * @param WaterChance
 	 */
 	UFUNCTION(BlueprintCallable)
-	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl);
+	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl, const float WaterChance);
 
 	/**
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
@@ -630,10 +635,13 @@ public:
 	FOnTileUpdated OnTileUpdated;
 
 	UPROPERTY(BlueprintAssignable)
-	FOnPathCreated OnPathCreated;
-	UPROPERTY(BlueprintAssignable)
-	FOnPathUpdated OnPathUpdated;
+	FOnResourceCreation OnResourceCreation;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnResourceCreated OnResourceCreated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPathCreated OnPathCreated;
+	UPROPERTY(BlueprintAssignable)
+	FOnPathUpdated OnPathUpdated;
 };

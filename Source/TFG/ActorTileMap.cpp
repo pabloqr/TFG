@@ -295,7 +295,7 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const
 	}
 
 	// Se inicializa el array de casillas
-	Tiles.SetNumZeroed(TilesData.Num());
+	if (TilesData.Num() != Tiles.Num()) Tiles.SetNum(TilesData.Num());
 
 	// Se procesan todas las casillas del archivo de guardado
 	for (int32 i = 0; i < TilesData.Num(); ++i)
@@ -308,8 +308,11 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const
 
 		// Se llama al evento para crear el actor correspondiente
 		const int32 Index = GetPositionInArray(Pos);
-		if (Index != -1 && !Tiles[Index]) OnTileUpdated.Broadcast(TilesInfo[Pos]);
+		if (Index != -1 && !Tiles[Index] && TilesInfo.Contains(Pos)) OnTileUpdated.Broadcast(TilesInfo[Pos]);
 	}
+
+	// Se procesan todos los recursos del archivo de guardado
+	for (int32 i = 0; i < ResourcesData.Num(); ++i) OnResourceCreation.Broadcast(ResourcesData[i]);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -383,11 +386,13 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl)
+void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl, const float WaterChance)
 {
 	// Se actualizan los valores para los modificadores del mapa
 	MapTemperature = MapTemp;
 	MapSeaLevel = MapSeaLvl;
+
+	WaterTileChance = WaterChance;
 
 	// Se inicializan los valores para el numero de filas que pueden contener hielo y casillas de nieve
 	NumIceRows = FMath::Max(1, static_cast<int32>(Rows * static_cast<uint8>(MapTemperature) / 20.0));
@@ -408,7 +413,7 @@ void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLeve
 	const int32 Dimension = Rows * Cols;
 	TArray<FTileProbability> Probabilities;
 
-	Tiles.SetNumZeroed(Dimension);
+	Tiles.SetNum(Dimension);
 	Probabilities.SetNumZeroed(Dimension);
 
 	// Se inicializa el array de probabilidaddes con los valores calculados o por defecto en funcion del tipo de casilla
@@ -539,6 +544,7 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 
 		// Se asigna el recurso a la casilla
 		Tile->SetResource(NewResource);
+		if (TilesInfo.Contains(Pos)) TilesInfo[Pos].Elements.Resource = NewResource;
 
 		// Se actualiza el contador de recursos
 		ResourceCount[Resource.Resource] += 1;
@@ -564,6 +570,7 @@ void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
 
 		// Se elimina el recurso de la casilla
 		Tile->SetResource(nullptr);
+		if (TilesInfo.Contains(Pos)) TilesInfo[Pos].Elements.Resource = nullptr;
 	}
 }
 
@@ -584,6 +591,8 @@ void AActorTileMap::SaveMap(const FString CustomName) const
 		// Se almacenan los atributos del mapa
 		MapSaveInstance->MapTemperature = MapTemperature;
 		MapSaveInstance->MapSeaLevel = MapSeaLevel;
+
+		MapSaveInstance->WaterTileChance = WaterTileChance;
 
 		// Se inicilaiza la estructura de casillas con la informacion del mapa actual
 		for (auto Tile : TilesInfo)
@@ -618,14 +627,16 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(MapSaveData.SaveName, 0)))
 	{
 		// Se actualizan la dimension del mapa
-		Rows = Tiles.Last()->GetPos().X;
-		Cols = Tiles.Last()->GetPos().Y;
+		Rows = LoadedGame->Tiles.Last().Pos2D.X + 1;
+		Cols = LoadedGame->Tiles.Last().Pos2D.Y + 1;
 
 		SetMapFromSave(LoadedGame->Tiles, LoadedGame->Resources);
 
 		// Se actualizan los atributos del mapa
 		MapTemperature = LoadedGame->MapTemperature;
 		MapSeaLevel = LoadedGame->MapSeaLevel;
+
+		WaterTileChance = LoadedGame->WaterTileChance;
 
 		// Se actualiza la instancia del juego
 		if (UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
@@ -634,6 +645,8 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 
 			GameInstance->MapTemperature = LoadedGame->MapTemperature;
 			GameInstance->MapSeaLevel = LoadedGame->MapSeaLevel;
+
+			GameInstance->WaterTileChance = LoadedGame->WaterTileChance;
 		}
 	}
 }

@@ -48,6 +48,9 @@ public:
 	EMapSeaLevel MapSeaLevel;
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+	float WaterTileChance;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FTileSaveData> Tiles;
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")

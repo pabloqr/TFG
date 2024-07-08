@@ -7,6 +7,10 @@
 #include "Engine/GameInstance.h"
 #include "GInstance.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTileMapUpdated);
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 /**
  * 
  */
@@ -26,5 +30,13 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
 	EMapSeaLevel MapSeaLevel;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="GameInstance|Map")
+	float WaterTileChance;
+
 	virtual void Init() override;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnTileMapUpdated OnTileMapUpdated;
 };
