@@ -53,7 +53,7 @@ struct FTileData : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FIconData Icon;
 
-	FTileData(): FTileData("", ETileType::None, 0, FIconData())
+	FTileData(): FTileData(TEXT(""), ETileType::None, 0, FIconData())
 	{
 	}
 
@@ -82,7 +82,7 @@ struct FResourceData : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FIconData Icon;
 
-	FResourceData(): FResourceData("", FResource(), FIconData())
+	FResourceData(): FResourceData(TEXT(""), FResource(), FIconData())
 	{
 	}
 
@@ -153,7 +153,7 @@ struct FUnitData : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FAttackStats Stats;
 
-	FUnitData(): FUnitData("", EUnitType::None, 0, 0, 0.0, 0.0,
+	FUnitData(): FUnitData(TEXT(""), EUnitType::None, 0, 0, 0.0, 0.0,
 	                       0.0, FAttackStats())
 	{
 	}

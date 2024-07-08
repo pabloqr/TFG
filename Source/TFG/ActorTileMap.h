@@ -260,6 +260,8 @@ public:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileUpdated, FTileInfo, TileInfo);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPathCreated, const TArray<FMovement>&, TilesToReset);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPathUpdated, FIntPoint, Pos2D, const TArray<FMovement>&, Path);
@@ -386,6 +388,10 @@ public:
 	AActorTileMap();
 
 private:
+	void ResetInfoStructures();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
@@ -470,7 +476,7 @@ private:
 	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
 	 * @param ResourcesData
 	 */
-	void SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceSaveData>& ResourcesData);
+	void SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceInfo>& ResourcesData);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -589,13 +595,13 @@ protected:
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Save")
-	void SaveMap() const;
+	void SaveMap(const FString CustomName = TEXT("")) const;
 
 	/**
 	 * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Save")
-	void LoadMap();
+	void LoadMap(const FSaveData& MapSaveData);
 
 	/**
 	 * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json
@@ -643,6 +649,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileInfoUpdated OnTileInfoUpdated;
+	UPROPERTY(BlueprintAssignable)
+	FOnTileUpdated OnTileUpdated;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnPathCreated OnPathCreated;

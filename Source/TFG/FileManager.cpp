@@ -10,17 +10,17 @@ FString UFileManager::ReadStringFromFile(FString FilePath, bool& Success, FStrin
 	{
 		Success = false;
 		ResultMessage = FString::Printf(TEXT("(%s) ERROR: fallo al leer el archivo. El archivo no existe"), *FilePath);
-		return "";
+		return TEXT("");
 	}
 
-	FString ReadString = "";
+	FString ReadString = TEXT("");
 
 	// Se intenta cargar el contenido del archivo al String resultado
 	if (!FFileHelper::LoadFileToString(ReadString, *FilePath))
 	{
 		Success = false;
 		ResultMessage = FString::Printf(TEXT("(%s) ERROR: fallo al leer el archivo. No se pudo leer, ¿es un archivo de texto?"), *FilePath);
-		return "";		
+		return TEXT("");		
 	}
 
 	// Se actualizan las variables sobre el estado de la operacion y se devuelve la cadena leida

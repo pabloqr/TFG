@@ -15,9 +15,10 @@ class TFG_API USaveMainGame : public USaveMap
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+public:
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FUnitSaveData> Units;
 	
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FSettlementSaveData> Settlements;
 };

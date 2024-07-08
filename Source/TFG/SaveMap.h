@@ -16,9 +16,9 @@ class TFG_API USaveMap : public USaveGame
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FTileSaveData> Tiles;
 	
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FResourceInfo> Resources;
 };

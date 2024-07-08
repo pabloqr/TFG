@@ -7,6 +7,7 @@
 #include "ActorTile.h"
 #include "SaveMap.h"
 #include "GInstance.h"
+#include "LibrarySaves.h"
 #include "LibraryTileMap.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -51,6 +52,36 @@ AActorTileMap::AActorTileMap()
 
 	NumIceRows = 0;
 	NumSnowRows = 0;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorTileMap::ResetInfoStructures()
+{
+	TilesInfo.Empty();
+	TilesWithState.Empty();
+
+	TileTypeCount.Empty();
+	TileTypeCount.Append(TMap<ETileType, int32>({
+		{ETileType::Plains, 0},
+		{ETileType::Hills, 0},
+		{ETileType::Forest, 0},
+		{ETileType::SnowPlains, 0},
+		{ETileType::SnowHills, 0},
+		{ETileType::Ice, 0},
+		{ETileType::Mountains, 0},
+		{ETileType::Water, 0}
+	}));
+
+	ResourceCount.Empty();
+	ResourceCount.Append(TMap<EResource, int32>({
+		{EResource::Diamond, 0},
+		{EResource::Gold, 0},
+		{EResource::Copper, 0},
+		{EResource::Aluminium, 0},
+		{EResource::Coal, 0},
+		{EResource::Oil, 0},
+	}));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -244,16 +275,24 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	OnTileInfoUpdated.Broadcast(Pos2D);
 }
 
-void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const ::TArray<__resharper_unknown_type>& ResourcesData)
+void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceInfo>& ResourcesData)
 {
+	// Se libera toda la informacion de las casillas previas para actualizarla con la nueva
+	TilesInfo.Empty();
+
 	// Se inicializa el array de casillas y se procesan todas las casillas del archivo de guardado
 	Tiles.SetNumZeroed(TilesData.Num());
 	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
-		const ETileType TileType = TilesData[i].Type;
 		const FIntPoint Pos = TilesData[i].Pos2D;
+		const ETileType TileType = TilesData[i].Type;
 
+		// Se actualiza la casilla
 		UpdateTileAtPos(Pos, TileType);
+
+		// Se llama al evento para crear el actor correspondiente
+		const int32 Index = GetPositionInArray(Pos);
+		if (Index != -1 && !Tiles[Index]) OnTileUpdated.Broadcast(TilesInfo[Pos]);
 	}
 }
 
@@ -398,6 +437,9 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 	const int32 Index = GetPositionInArray(Pos);
 	if (Index == -1) return;
 
+	// Se elimina el recurso de la casilla si lo contiene
+	RemoveResourceFromTile(Pos);
+
 	// Se obtiene la casilla y, si existe y el tipo es diferente al dado, se destruye
 	AActorTile* Tile = Tiles[Index];
 	if (Tile && Tile->GetType() != TileType)
@@ -405,21 +447,24 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 		// Se destruye el actor
 		Tile->Destroy();
 
-		// Se obtiene el tipo previo de la casilla
-		const ETileType PreviousTileType = TilesInfo[Pos].Type;
+		// Se verifica que la informacion de la casilla que se esta procesando es valida
+		if (TilesInfo.Contains(Pos))
+		{
+			// Se obtiene el tipo previo de la casilla
+			const ETileType PreviousTileType = TilesInfo[Pos].Type;
 
-		// Se elimina la informacion de la casilla al diccionario que la almacena
-		TilesInfo.Remove(Pos);
-		// Se actualiza el diccionario que almacena el conteo de casillas por tipo
-		TileTypeCount[PreviousTileType] -= 1;
+			// Se elimina la informacion de la casilla al diccionario que la almacena
+			TilesInfo.Remove(Pos);
+			// Se actualiza el diccionario que almacena el conteo de casillas por tipo
+			TileTypeCount[PreviousTileType] -= 1;
+		}
+
 		// Se elimina la referencia de la casilla eliminada
 		Tiles[Index] = nullptr;
-
-		// Se actualizan los datos de la nueva casilla
-		SetTileAtPos(Pos, TileType);
 	}
-	// Si la casilla no existe se actualizan los datos de una nueva, en caso contrario, no se hace nada
-	else if (!Tile) SetTileAtPos(Pos, TileType);
+
+	// Se actualizan los datos de la casilla
+	SetTileAtPos(Pos, TileType);
 }
 
 void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo)
@@ -494,14 +539,16 @@ void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
 	if (Index == -1) return;
 
 	// Se obtiene la casilla
-	AActorTile* Tile = Tiles[Index];
+	AActorTile* Tile;
+	if ((Tile = Tiles[Index]) != nullptr)
+	{
+		// Se actualiza el contador de recursos
+		const AActorResource* ResourceInTile;
+		if ((ResourceInTile = Tile->GetResource()) != nullptr) ResourceCount[ResourceInTile->GetResource()] -= 1;
 
-	// Se actualiza el contador de recursos
-	const AActorResource* ResourceInTile;
-	if ((ResourceInTile = Tile->GetResource()) != nullptr) ResourceCount[ResourceInTile->GetResource()] -= 1;
-
-	// Se elimina el recurso de la casilla
-	Tile->SetResource(nullptr);
+		// Se elimina el recurso de la casilla
+		Tile->SetResource(nullptr);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -513,35 +560,42 @@ void AActorTileMap::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::SaveMap() const
+void AActorTileMap::SaveMap(const FString CustomName) const
 {
-	if (USaveMap* SaveGameInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
+	// Se crea el archivo de guardado para el mapa
+	if (USaveMap* MapSaveInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
 		// Se inicilaiza la estructura de casillas con la informacion del mapa actual
 		for (auto Tile : TilesInfo)
 		{
-			SaveGameInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Type));
+			MapSaveInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Type));
 
 			// Si contiene un recurso, se anade a la lista de recursos del mapa
 			if (Tile.Value.Elements.Resource)
 			{
-				SaveGameInstance->Resources.Add(Tile.Value.Elements.Resource->GetInfo());
+				MapSaveInstance->Resources.Add(Tile.Value.Elements.Resource->GetInfo());
 			}
 		}
-		
-		if (!UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("MapTest"), 0))
+
+		// Se obtiene el nombre con el que se almacena el archivo de guardado
+		const FString SaveFileName = ULibrarySaves::GetSaveName(ESaveType::MapSave);
+		if (!UGameplayStatics::SaveGameToSlot(MapSaveInstance, SaveFileName, 0))
 		{
 			UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
 			return;
 		}
 
-		UE_LOG(LogTemp, Log, TEXT("Guardado correcto"))
+		UE_LOG(LogTemp, Log, TEXT("Guardado correcto del mapa"))
+
+		// Se actualiza el archivo de guardado 'master'
+		ULibrarySaves::UpdateSaveList(SaveFileName, ESaveType::MapSave,
+		                              CustomName.IsEmpty() ? SaveFileName : CustomName);
 	}
 }
 
-void AActorTileMap::LoadMap()
+void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 {
-	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(TEXT("MapTest"), 0)))
+	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(MapSaveData.SaveName, 0)))
 	{
 		SetMapFromSave(LoadedGame->Tiles, LoadedGame->Resources);
 	}
@@ -562,14 +616,14 @@ void AActorTileMap::MapToJson()
 	}
 
 	bool Success = true;
-	FString ResultMessage = "";
+	FString ResultMessage = TEXT("");
 	UJsonManager::MapStructToJson("C:/Users/Pablo/AppData/Local/Temp/Test.json", JsonData, Success, ResultMessage);
 }
 
 void AActorTileMap::JsonToMap()
 {
 	bool Success = true;
-	FString ResultMessage = "";
+	FString ResultMessage = TEXT("");
 	const TArray<FMapDataForJson> JsonData = UJsonManager::JsonToMapStruct("C:/Users/Pablo/AppData/Local/Temp/Test.json", Success, ResultMessage);
 
 	if (Success) SetMapFromSave(JsonData);
