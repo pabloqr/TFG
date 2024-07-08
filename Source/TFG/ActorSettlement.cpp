@@ -24,8 +24,7 @@ void AActorSettlement::SetInitialOwnedTiles()
 	// Se obtiene el tamano del mapa para verificar las posiciones
 	FIntPoint MapSize;
 
-	const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld()));
-	if (GameInstance)
+	if (const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
 	{
 		MapSize = GameInstance->Size2D;
 	}

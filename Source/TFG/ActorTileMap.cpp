@@ -280,8 +280,24 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const
 	// Se libera toda la informacion de las casillas previas para actualizarla con la nueva
 	TilesInfo.Empty();
 
-	// Se inicializa el array de casillas y se procesan todas las casillas del archivo de guardado
+	// Se eliminan las casillas sobrantes
+	if (TilesData.Num() < Tiles.Num())
+	{
+		for (int32 i = TilesData.Num(); i < Tiles.Num(); ++i)
+		{
+			// Se elimina el recurso de la casilla si lo contiene
+			RemoveResourceFromTile(Tiles[i]->GetPos());
+
+			// Se elimina el actor y su referencia
+			Tiles[i]->Destroy();
+			Tiles[i] = nullptr;
+		}
+	}
+
+	// Se inicializa el array de casillas
 	Tiles.SetNumZeroed(TilesData.Num());
+
+	// Se procesan todas las casillas del archivo de guardado
 	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
 		const FIntPoint Pos = TilesData[i].Pos2D;
@@ -447,6 +463,9 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 		// Se destruye el actor
 		Tile->Destroy();
 
+		// Se elimina la referencia de la casilla eliminada
+		Tiles[Index] = nullptr;
+
 		// Se verifica que la informacion de la casilla que se esta procesando es valida
 		if (TilesInfo.Contains(Pos))
 		{
@@ -458,9 +477,6 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 			// Se actualiza el diccionario que almacena el conteo de casillas por tipo
 			TileTypeCount[PreviousTileType] -= 1;
 		}
-
-		// Se elimina la referencia de la casilla eliminada
-		Tiles[Index] = nullptr;
 	}
 
 	// Se actualizan los datos de la casilla
@@ -565,6 +581,10 @@ void AActorTileMap::SaveMap(const FString CustomName) const
 	// Se crea el archivo de guardado para el mapa
 	if (USaveMap* MapSaveInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
 	{
+		// Se almacenan los atributos del mapa
+		MapSaveInstance->MapTemperature = MapTemperature;
+		MapSaveInstance->MapSeaLevel = MapSeaLevel;
+
 		// Se inicilaiza la estructura de casillas con la informacion del mapa actual
 		for (auto Tile : TilesInfo)
 		{
@@ -597,7 +617,24 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 {
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(MapSaveData.SaveName, 0)))
 	{
+		// Se actualizan la dimension del mapa
+		Rows = Tiles.Last()->GetPos().X;
+		Cols = Tiles.Last()->GetPos().Y;
+
 		SetMapFromSave(LoadedGame->Tiles, LoadedGame->Resources);
+
+		// Se actualizan los atributos del mapa
+		MapTemperature = LoadedGame->MapTemperature;
+		MapSeaLevel = LoadedGame->MapSeaLevel;
+
+		// Se actualiza la instancia del juego
+		if (UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
+		{
+			GameInstance->Size2D = FIntPoint(Rows, Cols);
+
+			GameInstance->MapTemperature = LoadedGame->MapTemperature;
+			GameInstance->MapSeaLevel = LoadedGame->MapSeaLevel;
+		}
 	}
 }
 
