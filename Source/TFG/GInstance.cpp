@@ -24,6 +24,8 @@ void UGInstance::Init()
 	}
 
 	// Se inicializan los parametros de la instancia
+	Size2D = FIntPoint(32, 64);
+
 	MapTemperature = EMapTemperature::Temperate;
 	MapSeaLevel = EMapSeaLevel::Standard;
 

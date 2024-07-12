@@ -386,11 +386,16 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl, const float WaterChance)
+void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
+                                const float WaterChance)
 {
+	// Se actualizan los valores del tamano del mapa
+	Rows = Size2D.X;
+	Cols = Size2D.Y;
+
 	// Se actualizan los valores para los modificadores del mapa
-	MapTemperature = MapTemp;
-	MapSeaLevel = MapSeaLvl;
+	MapTemperature = Temperature;
+	MapSeaLevel = SeaLevel;
 
 	WaterTileChance = WaterChance;
 
@@ -843,11 +848,4 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	}
 
 	return Path;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-void AActorTileMap::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
 }

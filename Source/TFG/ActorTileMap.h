@@ -537,12 +537,14 @@ protected:
 	 * Metodo que genera un mapa de forma aleatoria teniendo en cuenta los modificadores de temperatura y nivel del
 	 * mar del mapa. El resultado sera un tablero de casillas que trata de asemejarse a la Tierra
 	 * 
-	 * @param MapTemp Temperatura del mapa
-	 * @param MapSeaLvl Nivel del mar del mapa
+	 * @param Size2D Tamano del mapa
+	 * @param Temperature Temperatura del mapa
+	 * @param SeaLevel Nivel del mar del mapa
 	 * @param WaterChance
 	 */
 	UFUNCTION(BlueprintCallable)
-	void GenerateMap(const EMapTemperature MapTemp, const EMapSeaLevel MapSeaLvl, const float WaterChance);
+	void GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
+	                 const float WaterChance);
 
 	/**
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
@@ -629,15 +631,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
 	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints,
 	                                  const int32 MovementPoints);
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado en cada frame
-	 * 
-	 * @param DeltaSeconds Tiempo transcurrido desde el ultimo frame
-	 */
-	virtual void Tick(float DeltaSeconds) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
