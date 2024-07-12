@@ -581,9 +581,21 @@ protected:
 
 	/**
 	 * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
+	 * 
+	 * @param MapSaveData Informacion del archivo de guardado
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Save")
 	void LoadMap(const FSaveData& MapSaveData);
+
+	/**
+	 * Metodo que elimina el archivo de guardado correspondiente al mapa seleccionado
+	 * 
+	 * @param MapSaveData Informacion del archivo de guardado
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Save")
+	static void DeleteMap(const FSaveData& MapSaveData);
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que transforma la informacion de las casillas para que pueda ser almacenada en un archivo Json

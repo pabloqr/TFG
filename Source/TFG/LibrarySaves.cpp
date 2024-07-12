@@ -21,11 +21,7 @@ FString ULibrarySaves::GetSaveName(const ESaveType SaveType)
 	const FDateTime CurrentTime = FDateTime::Now();
 
 	// Se construyen los diferentes elementos del nombre
-	const FString Prefix = SaveType == ESaveType::MapSave
-		                       ? TEXT("MapSave")
-		                       : SaveType == ESaveType::GameSave
-		                       ? TEXT("GameSave")
-		                       : TEXT("");
+	const FString Prefix = SaveType == ESaveType::MapSave ? TEXT("MapSave") : TEXT("GameSave");
 
 	const FString Time = FormatNumber(CurrentTime.GetHour(), 2) + FormatNumber(CurrentTime.GetMinute(), 2) +
 		FormatNumber(CurrentTime.GetSecond(), 2);
@@ -44,17 +40,22 @@ TArray<FSaveData> ULibrarySaves::GetSavesList(const ESaveType SaveType)
 	TArray<FSaveData> SavesList = TArray<FSaveData>();
 
 	// Se intenta obtener el archivo de guardado 'master'
-	if (const USaveList* SaveListInstance = Cast<USaveList>(UGameplayStatics::LoadGameFromSlot(TEXT("SavesList"), 0)))
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("SavesList"), 0))
 	{
-		// Se actualiza la lista de entradas
-		if (SaveType == ESaveType::MapSave) SavesList.Append(SaveListInstance->MapSaves);
-		else if (SaveType == ESaveType::GameSave) SavesList.Append(SaveListInstance->GameSaves);
+		if (const USaveList* SaveListInstance = Cast<USaveList>(
+			UGameplayStatics::LoadGameFromSlot(TEXT("SavesList"), 0)))
+		{
+			// Se actualiza la lista de entradas
+			if (SaveType == ESaveType::MapSave) SavesList.Append(SaveListInstance->MapSaves);
+			else SavesList.Append(SaveListInstance->GameSaves);
+		}
 	}
 
 	return SavesList;
 }
 
-void ULibrarySaves::UpdateSaveList(const FString SaveName, const ESaveType SaveType, const FString CustomName)
+void ULibrarySaves::UpdateSaveList(const bool CreateSave, const FString SaveName, const ESaveType SaveType,
+                                   const FString CustomName)
 {
 	// Se obtienen las listas de archivos de guardado almacenados
 	TArray<FSaveData> MapSavesList = GetSavesList(ESaveType::MapSave);
@@ -70,16 +71,24 @@ void ULibrarySaves::UpdateSaveList(const FString SaveName, const ESaveType SaveT
 		// Si el nombre coincide, se actualiza la lista con los nuevos datos
 		if (SavesList[i].SaveName == SaveName)
 		{
-			// Se actualiza la fecha y hora
-			SavesList[Index].SaveDate = FDateTime::Now();
-
-			// Se actualiza el indice y se finaliza el bucle
+			// Se actualiza el indice
 			Index = i;
+
+			if (CreateSave)
+			{
+				// Se actualiza la fecha y hora
+				SavesList[Index].SaveDate = FDateTime::Now();
+			}
+			else
+			{
+				// Se elimina la entrada
+				SavesList.RemoveAt(Index);
+			}
 		}
 	}
 
 	// Si no se ha encontrado el archivo de guardado, se crea la nueva entrada
-	if (Index == -1) SavesList.Add(FSaveData(SaveName, FDateTime::Now(), CustomName));
+	if (Index == -1 && CreateSave) SavesList.Add(FSaveData(SaveName, FDateTime::Now(), CustomName));
 
 	// Se crea el nuevo archivo de guardado 'master' con los datos actualizados
 	if (USaveList* SaveListInstance = Cast<USaveList>(
@@ -97,5 +106,28 @@ void ULibrarySaves::UpdateSaveList(const FString SaveName, const ESaveType SaveT
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("Guardado correcto"))
+	}
+}
+
+void ULibrarySaves::ClearSaveList(const ESaveType SaveType)
+{
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("SavesList"), 0))
+	{
+		if (USaveList* SaveListInstance = Cast<USaveList>(
+			UGameplayStatics::LoadGameFromSlot(TEXT("SavesList"), 0)))
+		{
+			// Se limpia la lista de entradas correspondiente
+			if (SaveType == ESaveType::MapSave) SaveListInstance->MapSaves.Empty();
+			else SaveListInstance->GameSaves.Empty();
+
+			// Se almacena en el equipo el archivo de guardado actualizado
+			if (!UGameplayStatics::SaveGameToSlot(SaveListInstance, TEXT("SavesList"), 0))
+			{
+				UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar actualizar el archivo 'master'"))
+				return;
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("Actualizacion correcta"))
+		}
 	}
 }

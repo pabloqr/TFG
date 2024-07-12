@@ -617,7 +617,7 @@ void AActorTileMap::SaveMap(const FString CustomName) const
 		UE_LOG(LogTemp, Log, TEXT("Guardado correcto del mapa"))
 
 		// Se actualiza el archivo de guardado 'master'
-		ULibrarySaves::UpdateSaveList(SaveFileName, ESaveType::MapSave,
+		ULibrarySaves::UpdateSaveList(true, SaveFileName, ESaveType::MapSave,
 		                              CustomName.IsEmpty() ? SaveFileName : CustomName);
 	}
 }
@@ -650,6 +650,23 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 		}
 	}
 }
+
+void AActorTileMap::DeleteMap(const FSaveData& MapSaveData)
+{
+	// Se comprueba si existe el archivo de guardado
+	if (UGameplayStatics::DoesSaveGameExist(MapSaveData.SaveName, 0))
+	{
+		// Se intenta eliminar el archivo de guardado
+		if (UGameplayStatics::DeleteGameInSlot(MapSaveData.SaveName, 0))
+		{
+			// Se actualiza el archivo de guardado 'master'
+			ULibrarySaves::UpdateSaveList(false, MapSaveData.SaveName, ESaveType::MapSave,
+			                              MapSaveData.CustomName);
+		}
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 /*
 void AActorTileMap::MapToJson()

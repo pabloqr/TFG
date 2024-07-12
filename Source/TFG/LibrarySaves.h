@@ -20,7 +20,7 @@ public:
 	static FString FormatNumber(const int32 Number, const int32 DesiredLen);
 
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	UFUNCTION(BlueprintCallable)
 	static FString GetSaveName(const ESaveType SaveType);
 
@@ -30,5 +30,9 @@ public:
 	static TArray<FSaveData> GetSavesList(const ESaveType SaveType);
 
 	UFUNCTION(BlueprintCallable)
-	static void UpdateSaveList(const FString SaveName, const ESaveType SaveType, const FString CustomName);
+	static void UpdateSaveList(const bool CreateSave, const FString SaveName, const ESaveType SaveType,
+	                           const FString CustomName);
+
+	UFUNCTION(BlueprintCallable)
+	static void ClearSaveList(const ESaveType SaveType);
 };
