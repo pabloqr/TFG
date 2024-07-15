@@ -10,6 +10,8 @@
 class AActorSettlement;
 class AActorUnit;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedUnitUpdated, AActorUnit*, Unit);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedSettlementUpdated, AActorSettlement*, Settlement);
 
 /**
@@ -31,6 +33,9 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnSelectedUnitUpdated OnSelectedUnitUpdated;
+
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnSelectedSettlementUpdated OnSelectedSettlementUpdated;
 };
