@@ -153,14 +153,20 @@ struct FUnitData : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FAttackStats Stats;
 
+	/**
+	 * Informacion sobre el icono que representa la unidad
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FIconData Icon;
+
 	FUnitData(): FUnitData(TEXT(""), EUnitType::None, 0, 0, 0.0, 0.0,
-	                       0.0, FAttackStats())
+	                       0.0, FAttackStats(), FIconData())
 	{
 	}
 
 	FUnitData(const FString& Name, const EUnitType Type, const int32 MovementPoints, const int32 VisibilityPoints,
-	          const float ProductionCost, const float MaintenanceCost, const float HealthPoints,
-	          const FAttackStats& Stats)
+		const float ProductionCost, const float MaintenanceCost, const float HealthPoints, const FAttackStats& Stats,
+		const FIconData& Icon)
 		: Name(Name),
 		  Type(Type),
 		  MovementPoints(MovementPoints),
@@ -168,7 +174,8 @@ struct FUnitData : public FTableRowBase
 		  ProductionCost(ProductionCost),
 		  MaintenanceCost(MaintenanceCost),
 		  HealthPoints(HealthPoints),
-		  Stats(Stats)
+		  Stats(Stats),
+		  Icon(Icon)
 	{
 	}
 };

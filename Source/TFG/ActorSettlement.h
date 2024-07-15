@@ -6,13 +6,14 @@
 #include "ActorDamageableElement.h"
 #include "FProductionElement.h"
 #include "FSettlementInfo.h"
+#include "Engine/DataTable.h"
 #include "ActorSettlement.generated.h"
 
 class AActorUnit;
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, TSubclassOf<AActorUnit>, Unit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, const FProductionElement&, Unit);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
                                              const ESettlementState&, State);
@@ -44,10 +45,11 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable, Category="Settlement")
-	void AddToProductionQueue(const TSubclassOf<AActorUnit> UnitToProduce);
+	void AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
+	                          const EUnitType UnitType);
 
 	UFUNCTION(BlueprintCallable, Category="Settlement")
-	void RemoveFromProduction(const int32 Index);
+	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

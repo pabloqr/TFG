@@ -5,6 +5,7 @@
 
 #include "FProductionElement.h"
 #include "GInstance.h"
+#include "LibraryDataTables.h"
 #include "LibraryTileMap.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -35,10 +36,25 @@ void AActorSettlement::SetInitialOwnedTiles()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorSettlement::AddToProductionQueue(const TSubclassOf<AActorUnit> UnitToProduce)
+void AActorSettlement::AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
+                                            const EUnitType UnitType)
 {
-	// Se anade el elemento a la cola de produccion
-	Info.ProductionQueue.Add(FProductionElement(UnitToProduce, EUnitType::None, 5));
+	// Se comprueba si existe una entrada en la lista de elementos comenzados para continuar su produccion
+	const int32 Index = Info.StartedProduction.IndexOfByPredicate([&](const FProductionElement& Element)
+	{
+		return UnitType == Element.UnitType;
+	});
+
+	// Si existe una entrada, se anade a la cola
+	if (Index != INDEX_NONE) Info.ProductionQueue.Add(Info.StartedProduction[Index]);
+	else
+	{
+		// Si no existe una entrada, se obtiene la informacion de la unidad
+		const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(DataTable, UnitType);
+
+		// Se anade el elemento a la cola de produccion
+		Info.ProductionQueue.Add(FProductionElement(UnitClass, UnitData.Type, UnitData.ProductionCost / 10.0));
+	}
 
 	// Se actualiza el estado
 	Info.State = ESettlementState::Producing;
@@ -47,11 +63,20 @@ void AActorSettlement::AddToProductionQueue(const TSubclassOf<AActorUnit> UnitTo
 	OnSettlementStateChanged.Broadcast(this, Info.State);
 }
 
-void AActorSettlement::RemoveFromProduction(const int32 Index)
+void AActorSettlement::RemoveFromProduction(const UDataTable* DataTable, const int32 Index)
 {
 	// Se verifica que el indice sea valido
 	if (0 <= Index && Index < Info.ProductionQueue.Num())
 	{
+		// Se obtiene la informacion de la unidad y se comprueba si ya se ha trabajado en ella algun turno
+		const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(
+			DataTable, Info.ProductionQueue[Index].UnitType);
+		if (Info.ProductionQueue[Index].ProductionCost < UnitData.ProductionCost)
+		{
+			// Si ya se ha trabajado en la unidad algun turno, se anade la entrada a la listaZ
+			Info.StartedProduction.Add(Info.ProductionQueue[Index]);
+		}
+
 		// Se elimina el elemento de la lista
 		Info.ProductionQueue.RemoveAt(Index);
 
@@ -84,7 +109,7 @@ void AActorSettlement::TurnStarted()
 		if (Info.ProductionQueue[0].ProductionCost <= 0)
 		{
 			// Se obtiene la unidad a generar
-			const TSubclassOf<AActorUnit> UnitToSpawn = Info.ProductionQueue[0].Unit;
+			const FProductionElement UnitToSpawn = Info.ProductionQueue[0];
 
 			// Se elimina la unidad de la cola de produccion
 			Info.ProductionQueue.RemoveAt(0);

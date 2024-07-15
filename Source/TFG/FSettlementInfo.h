@@ -31,23 +31,28 @@ struct FSettlementInfo
 	TArray<FProductionElement> ProductionQueue;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	TArray<FProductionElement> StartedProduction;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	float MoneyYield;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	ESettlementState State;
 
 	FSettlementInfo(): FSettlementInfo(FIntPoint(-1), TArray<FIntPoint>(), TArray<FProductionElement>(),
-	                                   0.0, ESettlementState::None)
+	                                   TArray<FProductionElement>(), 0.0, ESettlementState::None)
 	{
 	}
 
-	FSettlementInfo(const FIntPoint& Pos, const TArray<FIntPoint>& Tiles, const TArray<FProductionElement>& Queue,
-	                const float Yield, const ESettlementState SettlementState)
+	FSettlementInfo(const FIntPoint& Pos2D, const TArray<FIntPoint>& OwnedTiles,
+		const TArray<FProductionElement>& ProductionQueue, const TArray<FProductionElement>& StartedProduction,
+		const float MoneyYield, const ESettlementState State)
+		: Pos2D(Pos2D),
+		  OwnedTiles(OwnedTiles),
+		  ProductionQueue(ProductionQueue),
+		  StartedProduction(StartedProduction),
+		  MoneyYield(MoneyYield),
+		  State(State)
 	{
-		Pos2D = Pos;
-		OwnedTiles = Tiles;
-		ProductionQueue = Queue;
-		MoneyYield = Yield;
-		State = SettlementState;
 	}
 };

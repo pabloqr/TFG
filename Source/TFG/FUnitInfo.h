@@ -13,9 +13,10 @@ UENUM(BlueprintType)
 enum class EUnitType : uint8
 {
 	None = 0 UMETA(DisplayName="None"),
-	Infantry = 1 UMETA(DisplayName="Infantry unit"),
-	Armoured = 2 UMETA(DisplayName="Armoured unit"),
-	AntiTank = 3 UMETA(DisplayName="Anti-tank unit")
+	Civil = 1 UMETA(DisplayName"Civil unit"),
+	Infantry = 2 UMETA(DisplayName="Infantry unit"),
+	Armoured = 3 UMETA(DisplayName="Armoured unit"),
+	AntiTank = 4 UMETA(DisplayName="Anti-tank unit")
 };
 
 /**
@@ -58,7 +59,7 @@ struct FUnitInfo
 	/**
 	 * Puntos de movimiento base
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Info")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	int32 BaseMovementPoints;
 	/**
 	 * Puntos de movimiento en un instante concreto
@@ -88,11 +89,6 @@ struct FUnitInfo
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
-	 * Coste de produccion
-	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
-	float ProductionCost;
-	/**
 	 * Coste de mantenimiento
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
@@ -112,7 +108,7 @@ struct FUnitInfo
 	 * Constructor por defecto
 	 */
 	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, 2, TArray<FMovement>(), 2,
-	                       100.0, 2.0, EUnitState::None)
+	                       2.0, EUnitState::None)
 	{
 	}
 
@@ -124,12 +120,11 @@ struct FUnitInfo
 	 * @param UnitBaseMovP Movimiento base de la unidad
 	 * @param UnitPath Camino asignado
 	 * @param UnitVisP Puntos de visibilidad
-	 * @param UnitProdC Coste de produccion
 	 * @param UnitMaintC Coste de mantenimiento
 	 * @param UnitState Estado de la unidad
 	 */
 	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const int32 UnitBaseMovP,
-	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitProdC, const float UnitMaintC,
+	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitMaintC,
 	          const EUnitState UnitState)
 	{
 		Pos2D = Pos;
@@ -140,7 +135,6 @@ struct FUnitInfo
 		PathCompleted = TArray<FMovement>();
 
 		VisibilityPoints = UnitVisP;
-		ProductionCost = UnitProdC;
 		MaintenanceCost = UnitMaintC;
 
 		State = UnitState;

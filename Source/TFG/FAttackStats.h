@@ -16,13 +16,13 @@ struct FAttackStats
 	/**
 	 * Puntos de ataque
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GameElement|Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameElement|Attack")
 	float AttackPoints;
 
 	/**
 	 * Puntos de defensa
 	 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category="GameElement|Attack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="GameElement|Attack")
 	float DefensePoints;
 
 	//----------------------------------------------------------------------------------------------------------------//
