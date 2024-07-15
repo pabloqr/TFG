@@ -20,17 +20,16 @@ struct FProductionElement
 	EUnitType UnitType;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ProductionElement")
-	int32 ProductionCost;
+	float ProductionCost;
 
 	FProductionElement(): FProductionElement(TSubclassOf<AActorUnit>(), EUnitType::None, 0)
 	{
 	}
 
-	FProductionElement(const TSubclassOf<AActorUnit> UnitToProduce, const EUnitType Type, const int32 Cost)
+	FProductionElement(const TSubclassOf<AActorUnit>& Unit, const EUnitType UnitType, const float ProductionCost)
+		: Unit(Unit),
+		  UnitType(UnitType),
+		  ProductionCost(ProductionCost)
 	{
-		Unit = UnitToProduce;
-		UnitType = Type;
-
-		ProductionCost = Cost;
 	}
 };

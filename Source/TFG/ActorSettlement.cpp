@@ -45,8 +45,14 @@ void AActorSettlement::AddToProductionQueue(const UDataTable* DataTable, const T
 		return UnitType == Element.UnitType;
 	});
 
-	// Si existe una entrada, se anade a la cola
-	if (Index != INDEX_NONE) Info.ProductionQueue.Add(Info.StartedProduction[Index]);
+	if (Index != INDEX_NONE)
+	{
+		// Si existe una entrada, se anade a la cola
+		Info.ProductionQueue.Add(Info.StartedProduction[Index]);
+
+		// Se elimina de la lista la entrada correspondiente
+		Info.StartedProduction.RemoveAt(Index);
+	}
 	else
 	{
 		// Si no existe una entrada, se obtiene la informacion de la unidad
@@ -71,7 +77,8 @@ void AActorSettlement::RemoveFromProduction(const UDataTable* DataTable, const i
 		// Se obtiene la informacion de la unidad y se comprueba si ya se ha trabajado en ella algun turno
 		const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(
 			DataTable, Info.ProductionQueue[Index].UnitType);
-		if (Info.ProductionQueue[Index].ProductionCost < UnitData.ProductionCost)
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("%f - %f"), Info.ProductionQueue[Index].ProductionCost, UnitData.ProductionCost))
+		if (Info.ProductionQueue[Index].ProductionCost < UnitData.ProductionCost / 10.0)
 		{
 			// Si ya se ha trabajado en la unidad algun turno, se anade la entrada a la listaZ
 			Info.StartedProduction.Add(Info.ProductionQueue[Index]);
