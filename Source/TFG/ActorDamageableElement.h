@@ -9,7 +9,7 @@
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttackTriggered, const FAttackStats&, AggressorStats);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackTriggered);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
