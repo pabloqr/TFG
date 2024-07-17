@@ -15,6 +15,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, Pre
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState&, State);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDestroyed, AActorUnit*, Unit);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS(Abstract)
@@ -55,13 +57,6 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Unit|Movement")
 	void UpdatePosition(const FMovement& Move);
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
-	 */
-	virtual void BeginPlay() override;
 
 public:
 	/**
@@ -105,6 +100,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AssignPath(const TArray<FMovement>& NewPath);
 
+	/**
+	 * Metodo que actualiza el camino actual
+	 */
 	UFUNCTION(BlueprintCallable)
 	void UpdatePath();
 
@@ -123,6 +121,12 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que salta el turno de la unidad aunque le queden puntos de movimiento
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SkipTurn();
+
+	/**
 	 * Metodo que realiza, si es posible, el siguiente movimiento del camino asignado
 	 * 
 	 * @return Si se ha apilcado el movimiento
@@ -135,6 +139,15 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void RestoreMovement();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que aplica un dano a la unidad
+	 * 
+	 * @param Damage Dano a aplicar
+	 */
+	virtual void ApplyDamage(const float Damage) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -154,17 +167,12 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	/**
-	 * Metodo ejecutado en cada frame
-	 * 
-	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
-	 */
-	virtual void Tick(float DeltaTime) override;
-
-	//----------------------------------------------------------------------------------------------------------------//
-
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;
-	UPROPERTY(BlueprintAssignable)
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnUnitStateChanged OnUnitStateChanged;
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnUnitDestroyed OnUnitDestroyed;
 };

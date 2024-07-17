@@ -22,8 +22,17 @@ void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 {
 	const float HealthPercentage = 1.0 - DamageableInfo.HealthPoints / DamageableInfo.BaseHealthPoints;
 
+	// Se actualizan los puntos de ataque y se verifica que no sean negativos
 	DamageableInfo.Stats.AttackPoints -= DamageableInfo.Stats.AttackPoints * HealthPercentage;
+	DamageableInfo.Stats.AttackPoints = DamageableInfo.Stats.AttackPoints <= 0.0
+		                                    ? 2.0
+		                                    : DamageableInfo.Stats.AttackPoints;
+
+	// Se actualizan los puntos de defensa y se verifica que no sean negativos
 	DamageableInfo.Stats.DefensePoints -= DamageableInfo.Stats.DefensePoints * HealthPercentage;
+	DamageableInfo.Stats.DefensePoints = DamageableInfo.Stats.DefensePoints <= 0.0
+		                                     ? 2.0
+		                                     : DamageableInfo.Stats.DefensePoints;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -52,27 +61,36 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 	const float RandomModifier = FMath::RandRange(-0.5f, 0.5f);
 
 	// Se calculan las nuevas estadisticas
-	const float ModAttackPoints = DamageableInfo.Stats.AttackPoints + DamageableInfo.Stats.AttackPoints *
-		RandomModifier;
-	const float ModDefensePoints = DamageableInfo.Stats.DefensePoints + DamageableInfo.Stats.DefensePoints *
-		RandomModifier;
+	const float ModAttackPoints = DamageableInfo.Stats.AttackPoints +
+		DamageableInfo.Stats.AttackPoints * RandomModifier;
+	const float ModDefensePoints = DamageableInfo.Stats.DefensePoints +
+		DamageableInfo.Stats.DefensePoints * RandomModifier;
 
 	// No cambiar el orden, esta bien se mire como se mire
-	return IsAttacking ? Stats.AttackPoints - ModDefensePoints * 0.5 : ModAttackPoints - Stats.DefensePoints * 0.5;
+	const float Damage = IsAttacking
+		                     ? Stats.AttackPoints - ModDefensePoints * 0.5
+		                     : ModAttackPoints - Stats.DefensePoints * 0.5;
+
+	// Dado que se puede obtener un valor negativo, se verifica y se aplica el valor correcto
+	return Damage <= 0.0 ? 2.0 : Damage;
 }
 
 void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttackStats& Stats)
 {
-	// Se calcula el dano a aplicar y se hace efectivo
+	// Se calcula el dano a aplicar
 	const float Damage = CalculateAttack(IsAttacking, Stats);
+
+	// Se hace efectivo el dano
 	ApplyDamage(Damage);
+
+	// Se llama al evento para procesar el ataque
+	OnAttackTriggered.Broadcast();
 }
 
 void AActorDamageableElement::ApplyDamage(const float Damage)
 {
 	// Se restan los puntos de vida correspondientes
-	DamageableInfo.HealthPoints = FMath::Clamp(DamageableInfo.HealthPoints - Damage, 0.0f,
-	                                           DamageableInfo.BaseHealthPoints);
+	DamageableInfo.HealthPoints = FMath::Max(0.0f, DamageableInfo.HealthPoints - Damage);
 
 	// Se actualizan los atributos de la unidad de acuerdo a la vida restante
 	UpdateAttackAndDefenseParameters();

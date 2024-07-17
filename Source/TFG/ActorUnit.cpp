@@ -60,13 +60,6 @@ void AActorUnit::UpdatePosition(const FMovement& Move)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorUnit::BeginPlay()
-{
-	Super::BeginPlay();
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
 	// Se limpian los valores almacenados del camino previo
@@ -97,6 +90,8 @@ void AActorUnit::UpdatePath()
 		// Se recalcula el camino
 		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D,
 		                                                    Info.BaseMovementPoints, Info.MovementPoints);
+
+		// Se asigna al camino de la unidad
 		AssignPath(NewPath);
 	}
 }
@@ -128,6 +123,17 @@ void AActorUnit::ContinuePath()
 
 	// Se llama al evento para que se actualicen los datos en el resto de actores
 	OnUnitMoved.Broadcast(PrevPos, Info.PathCompleted);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorUnit::SkipTurn()
+{
+	// Se actualiza el estado
+	Info.State = EUnitState::WaitingForNextTurn;
+
+	// Se llama al evento tras actualizar el estado
+	OnUnitStateChanged.Broadcast(this, Info.State);
 }
 
 void AActorUnit::MoveUnit()
@@ -166,6 +172,16 @@ void AActorUnit::RestoreMovement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorUnit::ApplyDamage(const float Damage)
+{
+	Super::ApplyDamage(Damage);
+
+	// Si no quedan puntos de vida, se llama al evento que gestiona la destruccion de la unidad
+	if (DamageableInfo.HealthPoints <= 0.0) OnUnitDestroyed.Broadcast(this);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void AActorUnit::TurnStarted()
 {
 	// Se restablecen los puntos de movimiento al comienzo del turno
@@ -193,12 +209,4 @@ void AActorUnit::TurnEnded()
 
 	// Se continua el camino si tiene uno asignado
 	ContinuePath();
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-// Called every frame
-void AActorUnit::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }

@@ -88,7 +88,7 @@ public:
 	 * @param Damage Dano a aplicar sobre un elemento
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
-	void ApplyDamage(const float Damage);
+	virtual void ApplyDamage(const float Damage);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

@@ -128,6 +128,20 @@ public:
 	void SetResource(AActorResource* Resource);
 
 	/**
+	 * Setter del atributo Unit
+	 * 
+	 * @param Unit Unidad situado sobre la casilla
+	 */
+	void SetUnit(AActorUnit* Unit);
+
+	/**
+	 * Setter del atributo Settlement
+	 * 
+	 * @param Settlement Asentamiento situado sobre la casilla
+	 */
+	void SetSettlement(AActorSettlement* Settlement);
+
+	/**
 	 * Setter del atributo TileStatess
 	 * 
 	 * @param TileStates Estados de la casilla
@@ -186,6 +200,14 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	bool HasElement() const;
+
+	/**
+	 * Metodo que verifica si la casilla ya contiene un recurso
+	 * 
+	 * @return Si la casilla contiene un recurso
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool HasResource() const;
 
 	/**
 	 * Metodo que verifica si la casilla ya contiene una unidad

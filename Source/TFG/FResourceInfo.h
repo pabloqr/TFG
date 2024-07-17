@@ -63,14 +63,18 @@ struct FResourceInfo
 	FIntPoint Pos2D;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
+	int32 Owner;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Resource")
 	FResource Resource;
 
-	FResourceInfo(): FResourceInfo(FIntPoint(-1), FResource())
+	FResourceInfo(): FResourceInfo(FIntPoint(-1), -1, FResource())
 	{
 	}
 
-	FResourceInfo(const FIntPoint& Pos2D, const FResource& Resource)
+	FResourceInfo(const FIntPoint& Pos2D, const int32 Owner, const FResource& Resource)
 		: Pos2D(Pos2D),
+		  Owner(Owner),
 		  Resource(Resource)
 	{
 	}

@@ -189,8 +189,6 @@ public:
 		else
 			for (int32 i = 0; i < Elements.Num(); ++i)
 			{
-				// UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) P(%d) - PQ(%d)"), i, Element.Priority, Elements[i].Priority))
-
 				// Si el elemento tiene menos prioridad se inserta y se finaliza
 				if (Elements[i] >= Element)
 				{
@@ -572,6 +570,18 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveResourceFromTile(const FIntPoint& Pos);
+
+	UFUNCTION(BlueprintCallable)
+	void AddUnitToTile(const FIntPoint& Pos, AActorUnit* Unit);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveUnitFromTile(const FIntPoint& Pos);
+
+	UFUNCTION(BlueprintCallable)
+	void AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* Settlement);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveSettlementFromTile(const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

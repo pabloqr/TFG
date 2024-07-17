@@ -541,7 +541,7 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 	if (NewResource)
 	{
 		// Se actualizan los atributos del recurso
-		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), Resource));
+		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), -1, Resource));
 
 		// Se actualiza el contador de recursos si la casilla ya contiene uno
 		const AActorResource* ResourceInTile;
@@ -577,6 +577,58 @@ void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
 		Tile->SetResource(nullptr);
 		if (TilesInfo.Contains(Pos)) TilesInfo[Pos].Elements.Resource = nullptr;
 	}
+}
+
+void AActorTileMap::AddUnitToTile(const FIntPoint& Pos, AActorUnit* Unit)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se actualiza la casilla
+	Tiles[Index]->SetUnit(Unit);
+
+	// Se actualiza la informacion de la casilla
+	TilesInfo[Pos].Elements.Unit = Unit;
+}
+
+void AActorTileMap::RemoveUnitFromTile(const FIntPoint& Pos)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se actualiza la casilla
+	Tiles[Index]->SetUnit(nullptr);
+
+	// Se actualiza la informacion de la casilla
+	TilesInfo[Pos].Elements.Unit = nullptr;
+}
+
+void AActorTileMap::AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* Settlement)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se actualiza la casilla
+	Tiles[Index]->SetSettlement(Settlement);
+
+	// Se actualiza la informacion de la casilla
+	TilesInfo[Pos].Elements.Settlement = Settlement;
+}
+
+void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return;
+
+	// Se actualiza la casilla
+	Tiles[Index]->SetSettlement(nullptr);
+
+	// Se actualiza la informacion de la casilla
+	TilesInfo[Pos].Elements.Settlement = nullptr;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

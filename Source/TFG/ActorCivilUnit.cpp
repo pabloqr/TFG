@@ -18,23 +18,33 @@ AActorCivilUnit::AActorCivilUnit()
 
 void AActorCivilUnit::GatherResource()
 {
+	// Si no tiene puntos de movimiento suficientes no se hace nada
+	if (!Info.MovementPoints) return;
+
+	// Se actualizan los puntos de movimiento de la unidad
+	Info.MovementPoints = 0;
+
 	// Se realiza la llamada al evento para que se gestione la recoleccion del recurso
 	OnResourceGathered.Broadcast(Info.Pos2D);
 
-	// Si no quedan acciones, se destruye el actor
-	if (--NumActions <= 0) Destroy();
+	// Se verifica si quedan acciones
+	if (--NumActions <= 0)
+	{
+		// Se llama al evento para gestionar la destruccion de la unidad
+		OnUnitDestroyed.Broadcast(this);
+	}
 }
 
 void AActorCivilUnit::CreateSettlement()
 {
-	// Solo se crea el asentamiento si la unidad posee todas las acciones
-	if (NumActions == 2)
+	// Solo se crea el asentamiento si la unidad posee todas las acciones y tiene puntos de movimiento disponibles
+	if (Info.MovementPoints && NumActions == 2)
 	{
 		// Se llama al evento para gestionar la creacion del asentamiento
 		OnSettlementCreated.Broadcast(Info.Pos2D);
 
-		// Se destruye el actor
-		Destroy();
+		// Se llama al evento para gestionar la destruccion de la unidad
+		OnUnitDestroyed.Broadcast(this);
 	}
 }
 

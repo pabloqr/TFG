@@ -77,7 +77,7 @@ int32 ULibraryTileMap::GetTileCostFromType(const ETileType TileType)
 	case ETileType::Mountains:
 	case ETileType::Water: MovementCost = -1;
 		break;
-	default: MovementCost = 1;
+	default: MovementCost = -1;
 		break;
 	}
 

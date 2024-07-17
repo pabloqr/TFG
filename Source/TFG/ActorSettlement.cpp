@@ -77,7 +77,6 @@ void AActorSettlement::RemoveFromProduction(const UDataTable* DataTable, const i
 		// Se obtiene la informacion de la unidad y se comprueba si ya se ha trabajado en ella algun turno
 		const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(
 			DataTable, Info.ProductionQueue[Index].UnitType);
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("%f - %f"), Info.ProductionQueue[Index].ProductionCost, UnitData.ProductionCost))
 		if (Info.ProductionQueue[Index].ProductionCost < UnitData.ProductionCost / 10.0)
 		{
 			// Si ya se ha trabajado en la unidad algun turno, se anade la entrada a la listaZ

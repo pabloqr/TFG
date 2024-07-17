@@ -59,8 +59,18 @@ void AActorTile::SetResource(AActorResource* Resource)
 {
 	// Si la casilla tiene un recurso, se elimina
 	if (Info.Elements.Resource) Info.Elements.Resource->Destroy();
-	
+
 	Info.Elements.Resource = Resource;
+}
+
+void AActorTile::SetUnit(AActorUnit* Unit)
+{
+	Info.Elements.Unit = Unit;
+}
+
+void AActorTile::SetSettlement(AActorSettlement* Settlement)
+{
+	Info.Elements.Settlement = Settlement;
 }
 
 void AActorTile::SetState(const TArray<ETileState>& TileStates)
@@ -109,6 +119,11 @@ bool AActorTile::IsAccesible() const
 bool AActorTile::HasElement() const
 {
 	return HasUnit() || HasSettlement();
+}
+
+bool AActorTile::HasResource() const
+{
+	return Info.Elements.Resource != nullptr;
 }
 
 bool AActorTile::HasUnit() const
