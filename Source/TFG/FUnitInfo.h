@@ -107,8 +107,8 @@ struct FUnitInfo
 	/**
 	 * Constructor por defecto
 	 */
-	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, 2, TArray<FMovement>(), 2,
-	                       2.0, EUnitState::None)
+	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, 2, TArray<FMovement>(),
+	                       2, 2.0, EUnitState::None)
 	{
 	}
 

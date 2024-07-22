@@ -3,10 +3,6 @@
 
 #include "ActorDamageableElement.h"
 
-#include "PawnFaction.h"
-#include "Kismet/GameplayStatics.h"
-
-
 // Sets default values
 AActorDamageableElement::AActorDamageableElement()
 {
@@ -46,11 +42,7 @@ void AActorDamageableElement::BeginPlay()
 
 bool AActorDamageableElement::IsMine() const
 {
-	// Se obtiene la faccion actual y se comprueba si el elemento pertenece a dicha faccion
-	const APawnFaction* CurrentFaction = Cast<APawnFaction>(UGameplayStatics::GetPlayerPawn(GetWorld(), 1));
-	if (CurrentFaction) return CurrentFaction->HasElement(this);
-
-	return false;
+	return DamageableInfo.Owner == 1;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

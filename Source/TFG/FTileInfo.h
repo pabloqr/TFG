@@ -113,6 +113,12 @@ struct FTileInfo
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Indice de la faccion propietaria de la casilla
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
+	int32 Owner;
+
+	/**
 	 * Tipo de casilla
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
@@ -135,7 +141,7 @@ struct FTileInfo
 	/**
 	 * Constructor por defecto
 	 */
-	FTileInfo(): FTileInfo(FIntPoint(-1), FVector2D(0.0), ETileType::None, FTileElements(),
+	FTileInfo(): FTileInfo(FIntPoint(-1), FVector2D(0.0), -1, ETileType::None, FTileElements(),
 	                       {ETileState::None})
 	{
 	}
@@ -143,19 +149,21 @@ struct FTileInfo
 	/**
 	 * Constructor con parametros
 	 * 
-	 * @param Pos Posicion en el Array2D de casillas
-	 * @param MapPos Posicion en coordenadas de la escena
-	 * @param TileType Tipo de casilla
-	 * @param TileElements Elementos del juego presentes en la casilla
-	 * @param TileStates Estado de la casilla
+	 * @param Pos2D Posicion en el Array2D de casillas
+	 * @param MapPos2D Posicion en coordenadas de la escena
+	 * @param Owner Faccion propietaria de la casilla
+	 * @param Type Tipo de casilla
+	 * @param Elements Elementos del juego presentes en la casilla
+	 * @param States Estado de la casilla
 	 */
-	FTileInfo(const FIntPoint& Pos, const FVector2D& MapPos, const ETileType TileType,
-	          const FTileElements& TileElements, const TArray<ETileState>& TileStates)
+	FTileInfo(const FIntPoint& Pos2D, const FVector2D& MapPos2D, const int32 Owner, const ETileType Type,
+	          const FTileElements& Elements, const TArray<ETileState>& States)
+		: Pos2D(Pos2D),
+		  MapPos2D(MapPos2D),
+		  Owner(Owner),
+		  Type(Type),
+		  Elements(Elements),
+		  States(States)
 	{
-		Pos2D = Pos;
-		MapPos2D = MapPos;
-		Type = TileType;
-		Elements = TileElements;
-		States = TileStates;
 	}
 };

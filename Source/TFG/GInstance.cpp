@@ -4,7 +4,6 @@
 #include "GInstance.h"
 
 #include "GameFramework/GameUserSettings.h"
-#include "Kismet/GameplayStatics.h"
 
 void UGInstance::Init()
 {
@@ -23,7 +22,10 @@ void UGInstance::Init()
 		}
 	}
 
-	// Se inicializan los parametros de la instancia
+	// Se inicializan los parametros correspondientes a la partida
+	NumFactions = 2;
+
+	// Se inicializan los parametros correspondientes al mapa
 	Size2D = FIntPoint(32, 64);
 
 	MapTemperature = EMapTemperature::Temperate;

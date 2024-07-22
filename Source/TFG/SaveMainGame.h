@@ -17,8 +17,11 @@ class TFG_API USaveMainGame : public USaveMap
 
 public:
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
+	FString MapSaveName;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FUnitSaveData> Units;
-	
+
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Map")
 	TArray<FSettlementSaveData> Settlements;
 };

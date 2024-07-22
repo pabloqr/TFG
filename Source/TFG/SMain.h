@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FElementIdentifier.h"
 #include "GameFramework/GameStateBase.h"
 #include "SMain.generated.h"
 
@@ -17,10 +16,45 @@ class TFG_API ASMain : public AGameStateBase
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	TArray<FElementIdentifier> FactionsAlive;
+	int32 NumFactions;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	int32 CurrentFaction;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	int64 Turn;
+	TArray<int32> FactionsAlive = TArray<int32>();
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	int64 CurrentTurn;
+
+public:
+	int32 GetNumFactions() const { return NumFactions; }
+	int32 GetCurrentFaction() const { return CurrentFaction; }
+	const TArray<int32>& GetFactionsAlive() const { return FactionsAlive; }
+	int64 GetCurrentTurn() const { return CurrentTurn; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void SetNumFactions(const int32 NFactions) { NumFactions = NFactions; }
+	void SetCurrentFaction(const int32 Faction) { CurrentFaction = Faction; }
+	void SetFactionsAlive(const TArray<int32>& FAlive) { FactionsAlive = FAlive; }
+	void SetCurrentTurn(const int64 Turn) { CurrentTurn = Turn; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void AddFaction(const int32 Index);
+	int32 RemoveFaction(const int32 Index);
+
+	/**
+	 * Metodo que actualiza y devuelve el indice de la faccion que debe jugar su turno
+	 * 
+	 * @return Numero de la faccion actual
+	 */
+	int32 NextFaction();
+
+	/**
+	 * Metodo que actualiza y devuelve el numero del turno que se va a comenzar
+	 * 
+	 * @return Numero del turno actual
+	 */
+	int32 AddTurn();
 };

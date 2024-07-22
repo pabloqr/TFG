@@ -11,6 +11,11 @@ struct FDamageableInfo
 {
 	GENERATED_BODY()
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	int32 Owner;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Puntos de vida base del elemento
 	 */
@@ -39,12 +44,13 @@ struct FDamageableInfo
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	FDamageableInfo(): FDamageableInfo(100.0, FAttackStats(10.0, 10.0))
+	FDamageableInfo(): FDamageableInfo(-1, 100.0, FAttackStats(10.0, 10.0))
 	{
 	}
 
-	FDamageableInfo(const float BaseHealthP, const FAttackStats& BaseS)
+	FDamageableInfo(const int32 Own, const float BaseHealthP, const FAttackStats& BaseS)
 	{
+		Owner = Own;
 		BaseHealthPoints = HealthPoints = BaseHealthP;
 		BaseStats = Stats = BaseS;
 	}

@@ -97,6 +97,7 @@ float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 	{
 		IceRow += Row <= NumIceRows ? 1 : Row >= Rows - NumIceRows ? -1 : 0;
 	}
+
 	// Si la casilla esta fuera del rango de casillas que pueden contener Hielo, la probabilidad es 0
 	// En caso contrario, se verifica el numero de filas que pueden contener Hielo para aplicar ajustes
 	if (IceRow >= NumIceRows) CurrentProbability = 0.0;
@@ -267,7 +268,7 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	GridSize.Y = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
 	// Se anade la informacion de la casilla al diccionario que la almacena
-	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, TileType, FTileElements(), {ETileState::None}));
+	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, -1, TileType, FTileElements(), {ETileState::None}));
 	// Se actualiza el diccionaro que almacena el conteo de casillas por tipo
 	TileTypeCount[TileType] += 1;
 

@@ -136,7 +136,7 @@ void APawnFaction::TurnStarted()
 		Settlement->TurnStarted();
 
 		// Se actualiza el balance de dinero con el rendimiento del asentamiento
-		MoneyBalance -= Settlement->GetMoneyYield();
+		MoneyBalance += Settlement->GetMoneyYield();
 	}
 
 	// Se actualiza el balance de dinero teniendo en cuenta el rendimiento de los recursos

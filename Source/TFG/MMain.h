@@ -17,7 +17,16 @@ class TFG_API AMMain : public AGameModeBase
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
 	int32 MaxNumFactions;
-	
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="MainMode")
 	int32 MaxTurns;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
+	void NextTurn() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	virtual void BeginPlay() override;
 };
