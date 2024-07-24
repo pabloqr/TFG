@@ -34,10 +34,10 @@ int32 ASMain::RemoveFaction(const int32 Index)
 	return FactionsAlive.Num();
 }
 
-int32 ASMain::NextFaction()
+APawnFaction* ASMain::NextFaction()
 {
 	// Si el array esta vacio, no se hace nada
-	if (FactionsAlive.Num() == 0) return -1;
+	if (FactionsAlive.Num() == 0) return nullptr;
 
 	// Se obtiene la posicion de la faccion actual
 	int32 Pos = FactionsAlive.Find(CurrentFaction);
@@ -62,7 +62,7 @@ int32 ASMain::NextFaction()
 		}
 	}
 
-	return CurrentFaction;
+	return Factions[CurrentFaction];
 }
 
 int32 ASMain::AddTurn()

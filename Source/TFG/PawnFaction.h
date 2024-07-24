@@ -14,6 +14,8 @@ class AActorDamageableElement;
 class AActorUnit;
 class AActorSettlement;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);
+
 UCLASS()
 class TFG_API APawnFaction : public APawn
 {
@@ -23,23 +25,23 @@ protected:
 	// UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction")
 	// FElementIdentifier ElementIdentifier;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
 	float Money;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Stats")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
 	float MoneyBalance;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorSettlement*> Settlements;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorUnit*> Units;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorResource*> Resources;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> IdleSettlements;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> ManualUnits;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction|Elements")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> AutomaticUnits;
 
 public:
@@ -54,9 +56,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Faction")
 	void OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState& State);
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -66,17 +68,17 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	bool HasElement(const AActorDamageableElement* Element) const;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	UFUNCTION(BlueprintCallable)
 	void TurnStarted();
 
 	UFUNCTION(BlueprintCallable)
 	void TurnEnded();
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
-	
+
 	/**
 	 * Metodo ejecutado en cada frame
 	 * 
@@ -90,4 +92,9 @@ public:
 	 * @param PlayerInputComponent Entrada del jugador
 	 */
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTurnStarted OnTurnStarted;
 };

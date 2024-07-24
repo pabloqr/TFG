@@ -545,6 +545,14 @@ protected:
 	                 const float WaterChance);
 
 	/**
+	 * Metodo que calcula y devuelve posiciones validas para las unidades iniciales de las facciones
+	 * 
+	 * @return Posiciones iniciales para las facciones
+	 */
+	UFUNCTION(BlueprintCallable)
+	TMap<int32, FTilesArray> GenerateStartingPositions(const int32 NumFactions);
+
+	/**
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
 	 * 
 	 * @param Pos Coordenadas en el Array2D

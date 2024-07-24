@@ -3,6 +3,7 @@
 
 #include "MMain.h"
 
+#include "CMainAI.h"
 #include "GInstance.h"
 #include "PawnFaction.h"
 #include "SMain.h"
@@ -10,21 +11,28 @@
 
 void AMMain::NextTurn() const
 {
-	// Se actualiza la faccion actual
-	if (ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	// Se da paso al turno de la siguiente faccion
+	if (ASMain* State = Cast<ASMain>(GameState))
 	{
-		// Se actualiza el indice de la faccion actual
-		const int32 NumFaction = (State->GetCurrentFaction() + 1) % State->GetNumFactions();
-		State->SetCurrentFaction(NumFaction);
-
-		// Se inicia el turno de la faccion actual
-		if (APawnFaction* CurrentFaction = Cast<APawnFaction>(UGameplayStatics::GetPlayerPawn(GetWorld(), NumFaction)))
+		// Se obtiene la faccion
+		if (APawnFaction* CurrentFaction = State->NextFaction())
 		{
-			CurrentFaction->TurnStarted();
-		}
+			// Se actualiza el turno si es la primera faccion
+			if (State->GetCurrentFaction() == 0) State->AddTurn();
 
-		// Se actualiza el turno
-		State->AddTurn();
+			UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) NextFaction - %d"), State->GetCurrentTurn(), State->GetCurrentFaction()))
+
+			// Se inicia el turno de la faccion actual
+			CurrentFaction->TurnStarted();
+
+			// Si es un agente, se procesa el turno internamente
+			if (ACMainAI* AIController = Cast<ACMainAI>(CurrentFaction->GetController()))
+			{
+				UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Is AI")))
+
+				AIController->TurnStarted();
+			}
+		}
 	}
 }
 
@@ -39,12 +47,12 @@ void AMMain::BeginPlay()
 	MaxTurns = 200;
 
 	// Se inicializa el numero de facciones en juego
-	if (ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	if (ASMain* State = Cast<ASMain>(GameState))
 	{
 		// Se obtiene la instancia del juego para inicializar el numero de facciones
 		if (const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
 		{
-			State->SetNumFactions(GameInstance->NumFactions);
+			State->SetNumFactions(FMath::Clamp(GameInstance->NumFactions, 1, MaxNumFactions));
 			State->SetCurrentFaction(GameInstance->NumFactions - 1);
 		}
 
@@ -55,4 +63,7 @@ void AMMain::BeginPlay()
 		// Se establece en el array de facciones en juego
 		State->SetFactionsAlive(Factions);
 	}
+
+	// Se llama al evento tras la inicializacion de los parametros
+	OnInitFinished.Broadcast();
 }

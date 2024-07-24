@@ -6,6 +6,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "MMain.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInitFinished);
+
 /**
  * 
  */
@@ -23,10 +25,13 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	virtual void BeginPlay() override;
+
+public:
 	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	void NextTurn() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	virtual void BeginPlay() override;
+	UPROPERTY(BlueprintAssignable)
+	FOnInitFinished OnInitFinished;
 };

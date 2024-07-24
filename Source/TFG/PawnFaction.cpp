@@ -4,7 +4,6 @@
 
 #include "ActorSettlement.h"
 #include "ActorUnit.h"
-#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 APawnFaction::APawnFaction()
@@ -61,7 +60,7 @@ void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, 
 
 	// Si no se encuentra el asentamiento, no se ejecuta nada mas
 	if (Index == -1) return;
-	
+
 	// Se actualiza la lista de acuerdo al estado del asentamiento
 	if (State == ESettlementState::SelectProduction)
 	{
@@ -111,7 +110,7 @@ void APawnFaction::TurnStarted()
 	// Se vacian los arrays para actualizarlos
 	AutomaticUnits.Empty();
 	ManualUnits.Empty();
-	
+
 	// Se procesan todas las unidades
 	for (int32 i = 0; i < Units.Num(); ++i)
 	{
@@ -150,6 +149,9 @@ void APawnFaction::TurnStarted()
 	//		* El rendimiento de los asentamientos
 	//		* El rendimiento de los recursos
 	Money += MoneyBalance;
+
+	// Se llama al evento para actualizar todos los parametros del juego
+	OnTurnStarted.Broadcast();
 }
 
 void APawnFaction::TurnEnded()
@@ -159,7 +161,7 @@ void APawnFaction::TurnEnded()
 	{
 		// Se obtiene la unidad
 		AActorUnit* Unit = Units[i];
-		
+
 		// Se finaliza el turno de la unidad
 		Unit->TurnEnded();
 	}
@@ -178,4 +180,3 @@ void APawnFaction::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
-

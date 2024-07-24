@@ -9,6 +9,7 @@
 #include "GInstance.h"
 #include "LibrarySaves.h"
 #include "LibraryTileMap.h"
+#include "SMain.h"
 #include "Kismet/GameplayStatics.h"
 
 AActorTileMap::AActorTileMap()
@@ -456,6 +457,45 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 		GameInstance->MapSize2D = FVector2D(GridSize.X, GridSize.Y - RowOffset);
 		GameInstance->Size2D = FIntPoint(Rows, Cols);
 	}
+}
+
+TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 NumFactions)
+{
+	// Array de posiciones para cada una de las facciones
+	TMap<int32, FTilesArray> Positions;
+
+	// Se calcula una aproximacion del numero de filas por porcion del mapa
+	const int32 RowsPerPortion = FMath::Sqrt(NumFactions * Rows / Cols);
+	// Se calcula una aproximacion del numero de columnas por porcion del mapa
+	int32 ColsPerPortion = NumFactions / RowsPerPortion;
+
+	// Se anaden columnas hasta que se alcance el numero de porciones necesarias, es decir, el numero de facciones
+	while (RowsPerPortion * ColsPerPortion < NumFactions) ++ColsPerPortion;
+
+	// Se calcula el tamano de las porciones
+	const int32 PortionHeight = Rows / RowsPerPortion;
+	const int32 PortionWidth = Cols / ColsPerPortion;
+
+	// Se procesan todas las porciones
+	int32 Faction = 0;
+	for (int32 i = 0; i < RowsPerPortion; ++i)
+	{
+		for (int32 j = 0; j < ColsPerPortion; ++j)
+		{
+			// Se calculan los limites para poder obtener la posicion central
+			const FIntPoint Lim1 = FIntPoint(i * PortionHeight, j * PortionWidth);
+			const FIntPoint Lim2 = FIntPoint(i == RowsPerPortion - 1 ? Rows - 1 : (i + 1) * PortionHeight - 1,
+			                                 j == ColsPerPortion - 1 ? Cols - 1 : (j + 1) * PortionWidth - 1);
+
+			// Se calcula la posicion central de la porcion
+			const FIntPoint CenterPos = FIntPoint((Lim1.X + Lim2.X) / 2, (Lim1.Y + Lim2.Y) / 2);
+
+			// Se anade al diccionario
+			Positions.Add(Faction++, FTilesArray({CenterPos}));
+		}
+	}
+
+	return Positions;
 }
 
 void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileType)

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "PawnFaction.h"
 #include "GameFramework/GameStateBase.h"
 #include "SMain.generated.h"
 
@@ -21,23 +22,26 @@ protected:
 	int32 CurrentFaction;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	TArray<APawnFaction*> Factions = TArray<APawnFaction*>();
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	TArray<int32> FactionsAlive = TArray<int32>();
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	int64 CurrentTurn;
+	int32 CurrentTurn;
 
 public:
 	int32 GetNumFactions() const { return NumFactions; }
 	int32 GetCurrentFaction() const { return CurrentFaction; }
 	const TArray<int32>& GetFactionsAlive() const { return FactionsAlive; }
-	int64 GetCurrentTurn() const { return CurrentTurn; }
+	int32 GetCurrentTurn() const { return CurrentTurn; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	void SetNumFactions(const int32 NFactions) { NumFactions = NFactions; }
 	void SetCurrentFaction(const int32 Faction) { CurrentFaction = Faction; }
 	void SetFactionsAlive(const TArray<int32>& FAlive) { FactionsAlive = FAlive; }
-	void SetCurrentTurn(const int64 Turn) { CurrentTurn = Turn; }
+	void SetCurrentTurn(const int32 Turn) { CurrentTurn = Turn; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -49,7 +53,7 @@ public:
 	 * 
 	 * @return Numero de la faccion actual
 	 */
-	int32 NextFaction();
+	APawnFaction* NextFaction();
 
 	/**
 	 * Metodo que actualiza y devuelve el numero del turno que se va a comenzar

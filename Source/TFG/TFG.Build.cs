@@ -14,6 +14,7 @@ public class TFG : ModuleRules
 			"CoreUObject",
 			"Engine",
 			"InputCore",
+			"AIModule",
 			"UMG",
 			"Json",
 			"JsonUtilities"
