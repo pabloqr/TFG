@@ -9,7 +9,6 @@
 #include "GInstance.h"
 #include "LibrarySaves.h"
 #include "LibraryTileMap.h"
-#include "SMain.h"
 #include "Kismet/GameplayStatics.h"
 
 AActorTileMap::AActorTileMap()
@@ -459,7 +458,7 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 	}
 }
 
-TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 NumFactions)
+TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 NumFactions) const
 {
 	// Array de posiciones para cada una de las facciones
 	TMap<int32, FTilesArray> Positions;
@@ -478,20 +477,78 @@ TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 Nu
 
 	// Se procesan todas las porciones
 	int32 Faction = 0;
-	for (int32 i = 0; i < RowsPerPortion; ++i)
+	for (int32 Row = 0; Row < RowsPerPortion; ++Row)
 	{
-		for (int32 j = 0; j < ColsPerPortion; ++j)
+		for (int32 Col = 0; Col < ColsPerPortion; ++Col)
 		{
 			// Se calculan los limites para poder obtener la posicion central
-			const FIntPoint Lim1 = FIntPoint(i * PortionHeight, j * PortionWidth);
-			const FIntPoint Lim2 = FIntPoint(i == RowsPerPortion - 1 ? Rows - 1 : (i + 1) * PortionHeight - 1,
-			                                 j == ColsPerPortion - 1 ? Cols - 1 : (j + 1) * PortionWidth - 1);
+			const FIntPoint Lim1 = FIntPoint(Row * PortionHeight, Col * PortionWidth);
+			const FIntPoint Lim2 = FIntPoint(Row == RowsPerPortion - 1 ? Rows - 1 : (Row + 1) * PortionHeight - 1,
+			                                 Col == ColsPerPortion - 1 ? Cols - 1 : (Col + 1) * PortionWidth - 1);
 
 			// Se calcula la posicion central de la porcion
 			const FIntPoint CenterPos = FIntPoint((Lim1.X + Lim2.X) / 2, (Lim1.Y + Lim2.Y) / 2);
 
+			// Si la posicion no es correcta, se omite
+			if (GetPositionInArray(CenterPos) == -1) continue;
+
+			TArray<FIntPoint> CurrentPositions = TArray<FIntPoint>();
+
+			// Se calcula el numero de posiciones necesarias
+			int32 NeededPositions = 2;
+			if (IsTileAccesible(CenterPos))
+			{
+				--NeededPositions;
+
+				// Se anade la posicion al array de posiciones actuales
+				CurrentPositions.Add(CenterPos);
+			}
+
+			// Se actualiza la posicion actual
+			FIntPoint CurrentPos = CenterPos;
+
+			// Se crean las variables para gestionar las casillas vecinas
+			TArray<FIntPoint> CurrentNeighbors;
+			FIntPoint FirstNeighbor = CenterPos;
+
+			// Se procesa por cada casilla que sea necesaria
+			while (NeededPositions > 0)
+			{
+				// Si no hay casillas, se generan
+				if (CurrentNeighbors.Num() == 0)
+				{
+					CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
+					FirstNeighbor = CurrentNeighbors[0];
+				}
+
+				// Se actualiza la posicion actual y se elimina de la lista
+				CurrentPos = CurrentNeighbors[0];
+				CurrentNeighbors.RemoveAt(0);
+
+				// Se actualiza la casilla hasta que se encuentre una accesible
+				while (!IsTileAccesible(CurrentPos))
+				{
+					// Si no hay casillas, se vuelven a generar
+					if (CurrentNeighbors.Num() == 0)
+					{
+						CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
+						FirstNeighbor = CurrentNeighbors[0];
+					}
+
+					// Se actualiza la posicion actual y se elimina de la lista
+					CurrentPos = CurrentNeighbors[0];
+					CurrentNeighbors.RemoveAt(0);
+				}
+
+				// Se anade la posicion al array de posiciones actuales
+				CurrentPositions.Add(CurrentPos);
+
+				// Se resta el numero de casillas que son necesarias
+				--NeededPositions;
+			}
+
 			// Se anade al diccionario
-			Positions.Add(Faction++, FTilesArray({CenterPos}));
+			Positions.Add(Faction++, FTilesArray(CurrentPositions));
 		}
 	}
 
@@ -670,13 +727,6 @@ void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
 
 	// Se actualiza la informacion de la casilla
 	TilesInfo[Pos].Elements.Settlement = nullptr;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-void AActorTileMap::BeginPlay()
-{
-	Super::BeginPlay();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

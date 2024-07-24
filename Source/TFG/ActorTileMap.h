@@ -550,7 +550,7 @@ protected:
 	 * @return Posiciones iniciales para las facciones
 	 */
 	UFUNCTION(BlueprintCallable)
-	TMap<int32, FTilesArray> GenerateStartingPositions(const int32 NumFactions);
+	TMap<int32, FTilesArray> GenerateStartingPositions(const int32 NumFactions) const;
 
 	/**
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
@@ -628,13 +628,6 @@ protected:
 	 */
 	// UFUNCTION(BlueprintCallable, Category="Map|Json")
 	// void JsonToMap();
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
-	 */
-	virtual void BeginPlay() override;
 
 public:
 	/**
