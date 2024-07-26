@@ -12,7 +12,8 @@ AActorDamageableElement::AActorDamageableElement()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	DamageableInfo = FDamageableInfo();
+	// Se inicializan los atributos con los datos por defecto del asentamiento
+	DamageableInfo = FDamageableInfo(-1, 400, FAttackStats(150.0, 200.0));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -32,13 +33,6 @@ void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 	DamageableInfo.Stats.DefensePoints = DamageableInfo.Stats.DefensePoints <= 0.0
 		                                     ? 2.0
 		                                     : DamageableInfo.Stats.DefensePoints;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-void AActorDamageableElement::BeginPlay()
-{
-	Super::BeginPlay();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -95,9 +89,4 @@ void AActorDamageableElement::ApplyDamage(const float Damage)
 
 	// Se actualizan los atributos de la unidad de acuerdo a la vida restante
 	UpdateAttackAndDefenseParameters();
-}
-
-void AActorDamageableElement::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }

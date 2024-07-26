@@ -34,12 +34,6 @@ private:
 	 */
 	void UpdateAttackAndDefenseParameters();
 
-protected:
-	/**
-	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
-	 */
-	virtual void BeginPlay() override;
-
 public:
 	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
 	float GetAttackPoints() const { return DamageableInfo.Stats.AttackPoints; }
@@ -47,6 +41,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
 	void SetFactionOwner(const int32 OwnerFaction) { DamageableInfo.Owner = OwnerFaction; }
 	void SetHealthPoints(const float Points) { DamageableInfo.HealthPoints = Points; }
 	void SetAttackPoints(const float Points) { DamageableInfo.Stats.AttackPoints = Points; }
@@ -90,15 +85,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
 	virtual void ApplyDamage(const float Damage);
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado en cada frame
-	 * 
-	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
-	 */
-	virtual void Tick(float DeltaTime) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

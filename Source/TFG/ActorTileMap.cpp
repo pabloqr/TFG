@@ -56,36 +56,6 @@ AActorTileMap::AActorTileMap()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::ResetInfoStructures()
-{
-	TilesInfo.Empty();
-	TilesWithState.Empty();
-
-	TileTypeCount.Empty();
-	TileTypeCount.Append(TMap<ETileType, int32>({
-		{ETileType::Plains, 0},
-		{ETileType::Hills, 0},
-		{ETileType::Forest, 0},
-		{ETileType::SnowPlains, 0},
-		{ETileType::SnowHills, 0},
-		{ETileType::Ice, 0},
-		{ETileType::Mountains, 0},
-		{ETileType::Water, 0}
-	}));
-
-	ResourceCount.Empty();
-	ResourceCount.Append(TMap<EResource, int32>({
-		{EResource::Diamond, 0},
-		{EResource::Gold, 0},
-		{EResource::Copper, 0},
-		{EResource::Aluminium, 0},
-		{EResource::Coal, 0},
-		{EResource::Oil, 0},
-	}));
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 float AActorTileMap::ProbabilityOfIce(const int32 Pos1D, int32& IceRow) const
 {
 	float CurrentProbability = 0.8;
@@ -318,6 +288,70 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+TArray<FIntPoint> AActorTileMap::GetClosestTilesFromPos(int32 NeededPositions, const FIntPoint& CenterPos) const
+{
+	TArray<FIntPoint> Positions = TArray<FIntPoint>();
+
+	// Se verifica si la posicion central es valida
+	if (IsTileAccesible(CenterPos))
+	{
+		--NeededPositions;
+
+		// Se anade la posicion al array de posiciones actuales
+		Positions.Add(CenterPos);
+	}
+
+	// Se actualiza la posicion actual
+	FIntPoint CurrentPos = CenterPos;
+
+	// Se crean las variables para gestionar las casillas vecinas
+	TArray<FIntPoint> CurrentNeighbors;
+	FIntPoint FirstNeighbor = CenterPos;
+
+	// Se procesa por cada casilla que sea necesaria
+	while (NeededPositions > 0)
+	{
+		// Si no hay casillas, se generan
+		if (CurrentNeighbors.Num() == 0)
+		{
+			CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
+			FirstNeighbor = CurrentNeighbors[0];
+		}
+
+		// Se actualiza la posicion actual y se elimina de la lista
+		CurrentPos = CurrentNeighbors[0];
+		CurrentNeighbors.RemoveAt(0);
+
+		// Se actualiza la casilla hasta que se encuentre una accesible
+		while (!IsTileAccesible(CurrentPos))
+		{
+			// Si no hay casillas, se vuelven a generar
+			if (CurrentNeighbors.Num() == 0)
+			{
+				CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
+				FirstNeighbor = CurrentNeighbors[0];
+			}
+
+			// Se actualiza la posicion actual y se elimina de la lista
+			CurrentPos = CurrentNeighbors[0];
+			CurrentNeighbors.RemoveAt(0);
+		}
+
+		// Si la posicion no es correcta, se omite
+		if (GetPositionInArray(CurrentPos) == -1) continue;
+
+		// Se anade la posicion al array de posiciones actuales
+		Positions.Add(CurrentPos);
+
+		// Se resta el numero de casillas que son necesarias
+		--NeededPositions;
+	}
+
+	return Positions;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 int32 AActorTileMap::GetPositionInArray(const int32 Row, const int32 Col) const
 {
 	const bool IsValid = ULibraryTileMap::CheckValidPosition(FIntPoint(Row, Col), FIntPoint(Rows, Cols));
@@ -503,60 +537,8 @@ TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 Nu
 			// Si la posicion no es correcta, se omite
 			if (GetPositionInArray(CenterPos) == -1) continue;
 
-			TArray<FIntPoint> CurrentPositions = TArray<FIntPoint>();
-
-			// Se calcula el numero de posiciones necesarias
-			int32 NeededPositions = 2;
-			if (IsTileAccesible(CenterPos))
-			{
-				--NeededPositions;
-
-				// Se anade la posicion al array de posiciones actuales
-				CurrentPositions.Add(CenterPos);
-			}
-
-			// Se actualiza la posicion actual
-			FIntPoint CurrentPos = CenterPos;
-
-			// Se crean las variables para gestionar las casillas vecinas
-			TArray<FIntPoint> CurrentNeighbors;
-			FIntPoint FirstNeighbor = CenterPos;
-
-			// Se procesa por cada casilla que sea necesaria
-			while (NeededPositions > 0)
-			{
-				// Si no hay casillas, se generan
-				if (CurrentNeighbors.Num() == 0)
-				{
-					CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
-					FirstNeighbor = CurrentNeighbors[0];
-				}
-
-				// Se actualiza la posicion actual y se elimina de la lista
-				CurrentPos = CurrentNeighbors[0];
-				CurrentNeighbors.RemoveAt(0);
-
-				// Se actualiza la casilla hasta que se encuentre una accesible
-				while (!IsTileAccesible(CurrentPos))
-				{
-					// Si no hay casillas, se vuelven a generar
-					if (CurrentNeighbors.Num() == 0)
-					{
-						CurrentNeighbors = ULibraryTileMap::GetNeighbors(FirstNeighbor, FIntPoint(Rows, Cols));
-						FirstNeighbor = CurrentNeighbors[0];
-					}
-
-					// Se actualiza la posicion actual y se elimina de la lista
-					CurrentPos = CurrentNeighbors[0];
-					CurrentNeighbors.RemoveAt(0);
-				}
-
-				// Se anade la posicion al array de posiciones actuales
-				CurrentPositions.Add(CurrentPos);
-
-				// Se resta el numero de casillas que son necesarias
-				--NeededPositions;
-			}
+			// Se calculan las casillas mas cercanas a la central para posicionar las unidades
+			TArray<FIntPoint> CurrentPositions = GetClosestTilesFromPos(2, CenterPos);
 
 			// Se anade al diccionario
 			Positions.Add(Indexes[0], FTilesArray(CurrentPositions));
@@ -885,13 +867,8 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 		return Path;
 	}
 
-	// Se comprueba que la unidad seleccionada no sea una unidad civil
-	if (Cast<AActorCivilUnit>(Tiles[GetPositionInArray(PosIni)]->GetElement()))
-	{
-		// Si la unidad seleccionada es civil y en la casilla de destino hay una unidad civil propia,
-		// se devuelve un array vacio
-		if (Tiles[GetPositionInArray(PosEnd)]->GetElement()) return Path;
-	}
+	// Se comprueba que no haya una unidad en la casilla de destino, si la hay se devuelve un array vacio
+	if (Tiles[GetPositionInArray(PosEnd)]->HasUnit()) return Path;
 
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste

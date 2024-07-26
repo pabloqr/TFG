@@ -367,10 +367,6 @@ public:
 	AActorTileMap();
 
 private:
-	void ResetInfoStructures();
-
-	//----------------------------------------------------------------------------------------------------------------//
-
 	/**
 	 * Metodo privado que obtiene las coordenadas dentro del Array2D dada su posicion en el Array1D
 	 * 
@@ -456,6 +452,17 @@ private:
 	 * @param ResourcesData
 	 */
 	void SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceInfo>& ResourcesData);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo privado que obtiene las casillas validas y accesibles mas cercanas a la posicion central dada
+	 * 
+	 * @param NeededPositions Numero de casillas necesarias
+	 * @param CenterPos Posicion central desde la que obtener el resto
+	 * @return Casillas seleccionadas por el algoritmo
+	 */
+	TArray<FIntPoint> GetClosestTilesFromPos(int32 NeededPositions, const FIntPoint& CenterPos) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -572,22 +579,56 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Metodo que anade una instancia de un recurso a la casilla dada
+	 * 
+	 * @param Pos Posicion en la que anadir el recurso
+	 * @param ResourceClass Clase del actor a generar
+	 * @param Resource Informacion sobre el recurso
+	 */
 	UFUNCTION(BlueprintCallable)
 	void AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AActorResource> ResourceClass,
 	                       const FResource& Resource);
 
+	/**
+	 * Metodo que elimina una instancia de un recurso de la casilla dada
+	 * 
+	 * @param Pos Posicion de la que eliminar el recurso
+	 */
 	UFUNCTION(BlueprintCallable)
 	void RemoveResourceFromTile(const FIntPoint& Pos);
 
+	/**
+	 * Metodo que anade una instancia de una unidad a la casilla dada
+	 * 
+	 * @param Pos Posicion a la que anadir una unidad
+	 * @param Unit Actor generado
+	 */
 	UFUNCTION(BlueprintCallable)
 	void AddUnitToTile(const FIntPoint& Pos, AActorUnit* Unit);
 
+	/**
+	 * Metodo que elimina una instancia de una unidad de la casilla dada
+	 * 
+	 * @param Pos Posicion de la que eliminar la unidad
+	 */
 	UFUNCTION(BlueprintCallable)
 	void RemoveUnitFromTile(const FIntPoint& Pos);
 
+	/**
+	 * Metodo que anade una instancia de un asentamiento a la casilla dada
+	 * 
+	 * @param Pos Posicion a la que anadir un asentamiento
+	 * @param Settlement Actor generado
+	 */
 	UFUNCTION(BlueprintCallable)
 	void AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* Settlement);
 
+	/**
+	 * Metodo que elimina una instancia de un asentamiento de la casilla dada
+	 * 
+	 * @param Pos Posicion de la que eliminar el asentamiento
+	 */
 	UFUNCTION(BlueprintCallable)
 	void RemoveSettlementFromTile(const FIntPoint& Pos);
 
