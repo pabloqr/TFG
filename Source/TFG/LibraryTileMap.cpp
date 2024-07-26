@@ -84,7 +84,7 @@ int32 ULibraryTileMap::GetTileCostFromType(const ETileType TileType)
 	return MovementCost;
 }
 
-bool ULibraryTileMap::IsTileTypeAccesible(const ETileType& TileType)
+bool ULibraryTileMap::IsTileTypeAccesible(const ETileType TileType)
 {
 	return GetTileCostFromType(TileType) != -1;
 }

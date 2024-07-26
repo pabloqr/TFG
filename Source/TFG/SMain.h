@@ -16,37 +16,119 @@ class TFG_API ASMain : public AGameStateBase
 	GENERATED_BODY()
 
 protected:
+	/**
+	 * Numero de facciones en juego al inicio de la partida
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	int32 NumFactions;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	int32 CurrentFaction;
 
+	/**
+	 * Indice de la faccion en juego
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	TArray<APawnFaction*> Factions = TArray<APawnFaction*>();
-
+	int32 CurrentIndex;
+	/**
+	 * Faccion en juego
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	TArray<int32> FactionsAlive = TArray<int32>();
+	APawnFaction* CurrentFaction;
 
+	/**
+	 * Diccionario de facciones clasificadas por su indice
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	TMap<int32, APawnFaction*> Factions = TMap<int32, APawnFaction*>();
+
+	/**
+	 * Contenedor de facciones aun en juego
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	TSet<int32> FactionsAlive = TSet<int32>();
+
+	/**
+	 * Numero del turno actual
+	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	int32 CurrentTurn;
 
 public:
+	/**
+	 * Getter del atributo NumFactions
+	 * 
+	 * @return Numero de facciones creadas al inicio de la partida
+	 */
 	int32 GetNumFactions() const { return NumFactions; }
-	int32 GetCurrentFaction() const { return CurrentFaction; }
-	const TArray<int32>& GetFactionsAlive() const { return FactionsAlive; }
+
+	/**
+	 * Getter del atributo CurrentIndex
+	 * 
+	 * @return Indice de la faccion en juego actualmente
+	 */
+	int32 GetCurrentIndex() const { return CurrentIndex; }
+
+	/**
+	 * Getter del atributo CurrentFaction
+	 * 
+	 * @return Faccion en juego
+	 */
+	APawnFaction* GetCurrentFaction() const { return CurrentFaction; }
+
+	/**
+	 * Getter del atributo Factions
+	 * 
+	 * @return Diccionario de facciones creadas
+	 */
+	const TMap<int32, APawnFaction*>& GetFactions() const { return Factions; }
+
+	/**
+	 * Getter del atributo FactionsAlive
+	 * 
+	 * @return Indices de las facciones en juego
+	 */
+	const TSet<int32>& GetFactionsAlive() const { return FactionsAlive; }
+
+	/**
+	 * Getter del atributo CurrentTurn
+	 * 
+	 * @return Numero del turno actual
+	 */
 	int32 GetCurrentTurn() const { return CurrentTurn; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Setter del atributo NumFactions
+	 * 
+	 * @param NFactions Numero de facciones creadas
+	 */
 	void SetNumFactions(const int32 NFactions) { NumFactions = NFactions; }
-	void SetCurrentFaction(const int32 Faction) { CurrentFaction = Faction; }
-	void SetFactionsAlive(const TArray<int32>& FAlive) { FactionsAlive = FAlive; }
-	void SetCurrentTurn(const int32 Turn) { CurrentTurn = Turn; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void AddFaction(const int32 Index);
-	int32 RemoveFaction(const int32 Index);
+	/**
+	 * Metodo que anade una faccion a la coleccion de facciones
+	 * 
+	 * @param Faction Faccion a anadir
+	 */
+	UFUNCTION(BlueprintCallable)
+	void AddFaction(APawnFaction* Faction);
+
+	/**
+	 * Metodo que actualiza la coleccion de facciones para reflejar la eliminacion de una de ellas en la partida
+	 * 
+	 * @param Index Indice de la faccion eliminada
+	 * @return Numero de facciones aun en juego
+	 */
+	UFUNCTION(BlueprintCallable)
+	int32 SetFactionDead(const int32 Index);
+
+	/**
+	 * Metodo que elimina una faccion de las colecciones
+	 * 
+	 * @param Index Indice de la faccion a eliminar
+	 */
+	UFUNCTION(BlueprintCallable)
+	void RemoveFaction(const int32 Index);
 
 	/**
 	 * Metodo que actualiza y devuelve el indice de la faccion que debe jugar su turno
@@ -54,6 +136,8 @@ public:
 	 * @return Numero de la faccion actual
 	 */
 	APawnFaction* NextFaction();
+
+	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
 	 * Metodo que actualiza y devuelve el numero del turno que se va a comenzar

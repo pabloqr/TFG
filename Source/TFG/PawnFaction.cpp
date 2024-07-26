@@ -2,6 +2,7 @@
 
 #include "PawnFaction.h"
 
+#include "ActorResource.h"
 #include "ActorSettlement.h"
 #include "ActorUnit.h"
 
@@ -11,62 +12,66 @@ APawnFaction::APawnFaction()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Se inicializa el indice de la faccion
+	Index = 0;
+
+	// Se inicializa el dinero y el balance
 	Money = MoneyBalance = 0.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void APawnFaction::OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState& State)
+void APawnFaction::OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState State)
 {
 	// Se busca la unidad en el array de unidades de la faccion
-	int32 Index = -1;
-	for (int32 i = 0; i < Units.Num() && Index == -1; ++i)
+	int32 UnitIndex = -1;
+	for (int32 i = 0; i < Units.Num() && UnitIndex == -1; ++i)
 	{
-		if (Units[i] == Unit) Index = i;
+		if (Units[i] == Unit) UnitIndex = i;
 	}
 
 	// Si no se encuentra la unidad, no se ejecuta nada mas
-	if (Index == -1) return;
+	if (UnitIndex == -1) return;
 
 	// Se comprueba si la unidad esta siguiendo un camino o espera ordenes
-	if (State == EUnitState::FollowingPath && !AutomaticUnits.Contains(Index))
+	if (State == EUnitState::FollowingPath && !AutomaticUnits.Contains(UnitIndex))
 	{
 		// Se comprueba que no este en la otra lista y se anade a la correcta
-		if (ManualUnits.Contains(Index)) ManualUnits.Remove(Index);
-		AutomaticUnits.AddUnique(Index);
+		if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
+		AutomaticUnits.AddUnique(UnitIndex);
 	}
-	else if (State == EUnitState::WaitingForOrders && !ManualUnits.Contains(Index))
+	else if (State == EUnitState::WaitingForOrders && !ManualUnits.Contains(UnitIndex))
 	{
 		// Se comprueba que no este en la otra lista y se anade a la correcta
-		if (AutomaticUnits.Contains(Index)) ManualUnits.Remove(Index);
-		AutomaticUnits.AddUnique(Index);
+		if (AutomaticUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
+		AutomaticUnits.AddUnique(UnitIndex);
 	}
 	else
 	{
 		// Si no tiene ninguno de los estados anteriores, se elimina de cualquiera de las dos listas
-		if (AutomaticUnits.Contains(Index)) AutomaticUnits.Remove(Index);
-		else if (ManualUnits.Contains(Index)) ManualUnits.Remove(Index);
+		if (AutomaticUnits.Contains(UnitIndex)) AutomaticUnits.Remove(UnitIndex);
+		else if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
 	}
 }
 
-void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState& State)
+void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState State)
 {
 	// Se busca el asentamiento en el array de asentamientos de la faccion
-	int32 Index = -1;
-	for (int32 i = 0; i < Settlements.Num() && Index == -1; ++i)
+	int32 SettlementIndex = -1;
+	for (int32 i = 0; i < Settlements.Num() && SettlementIndex == -1; ++i)
 	{
-		if (Settlements[i] == Settlement) Index = i;
+		if (Settlements[i] == Settlement) SettlementIndex = i;
 	}
 
 	// Si no se encuentra el asentamiento, no se ejecuta nada mas
-	if (Index == -1) return;
+	if (SettlementIndex == -1) return;
 
 	// Se actualiza la lista de acuerdo al estado del asentamiento
 	if (State == ESettlementState::SelectProduction)
 	{
-		if (!IdleSettlements.Contains(Index)) IdleSettlements.AddUnique(Index);
+		if (!IdleSettlements.Contains(SettlementIndex)) IdleSettlements.AddUnique(SettlementIndex);
 	}
-	else if (IdleSettlements.Contains(Index)) IdleSettlements.Remove(Index);
+	else if (IdleSettlements.Contains(SettlementIndex)) IdleSettlements.Remove(SettlementIndex);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -89,6 +94,55 @@ bool APawnFaction::HasElement(const AActorDamageableElement* Element) const
 	if (Settlement) return Settlements.Contains(Settlement);
 
 	return false;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void APawnFaction::AddSettlement(AActorSettlement* Settlement)
+{
+	// Se establece la faccion actual como propietaria del asentamiento
+	Settlement->SetFactionOwner(Index);
+
+	// Se anade el asentamiento a la lista
+	Settlements.AddUnique(Settlement);
+
+	// Se actualiza su estado
+	OnSettlementStateUpdated(Settlement, ESettlementState::SelectProduction);
+}
+
+void APawnFaction::RemoveSettlement(AActorSettlement* Settlement)
+{
+	// Se elimina el asentamiento de la lista
+	if (Settlements.Contains(Settlement)) Settlements.Remove(Settlement);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void APawnFaction::AddUnit(AActorUnit* Unit)
+{
+	// Se establece la faccion actual como propietaria de la unidad
+	Unit->SetFactionOwner(Index);
+
+	// Se anade la unidad a la lista
+	Units.AddUnique(Unit);
+
+	// Se actualiza su estado
+	OnUnitStateUpdated(Unit, EUnitState::WaitingForOrders);
+}
+
+void APawnFaction::RemoveUnit(AActorUnit* Unit)
+{
+	// Se verifica que la unidad sea de esta faccion
+	const int32 UnitIndex = Units.Find(Unit);
+	if (UnitIndex != INDEX_NONE)
+	{
+		// Se elimina el indice de las listas de unidades
+		if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
+		if (AutomaticUnits.Contains(UnitIndex)) AutomaticUnits.Remove(UnitIndex);
+
+		// Se elimina la unidad de la lista
+		Units.Remove(Unit);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -169,13 +223,6 @@ void APawnFaction::TurnEnded()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-// Called every frame
-void APawnFaction::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-// Called to bind functionality to input
 void APawnFaction::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);

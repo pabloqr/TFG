@@ -517,7 +517,7 @@ protected:
 	 * @return Array con la Pos2D de las casillas que tienen el estado pedido
 	 */
 	UFUNCTION(BlueprintCallable, BlueprintPure=false)
-	TArray<FIntPoint> GetTilesWithState(const ETileState& State) const;
+	TArray<FIntPoint> GetTilesWithState(const ETileState State) const;
 
 	/**
 	 * Metodo que obtiene la lista de casillas que se encuentran al alcance desde cierta posicion

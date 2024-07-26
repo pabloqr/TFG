@@ -342,7 +342,7 @@ AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos) const
 	return Index != -1 ? Tiles[Index] : nullptr;
 }
 
-TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState& State) const
+TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState State) const
 {
 	return TilesWithState.Contains(State) ? TilesWithState[State].TilesArray : TArray<FIntPoint>();
 }
@@ -460,6 +460,18 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 
 TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 NumFactions) const
 {
+	// Array de posiciones iniciales
+	TArray<int32> Indexes = TArray<int32>();
+	// Se anaden los indices de todas las facciones
+	for (int32 i = 0; i < NumFactions; ++i) Indexes.Add(i);
+
+	// Se desordenan los indices
+	for (int32 i = 0; i < Indexes.Num(); ++i)
+	{
+		const int32 Index = FMath::RandRange(i, Indexes.Num() - 1);
+		if (i != Index) Indexes.Swap(i, Index);
+	}
+
 	// Array de posiciones para cada una de las facciones
 	TMap<int32, FTilesArray> Positions;
 
@@ -476,7 +488,6 @@ TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 Nu
 	const int32 PortionWidth = Cols / ColsPerPortion;
 
 	// Se procesan todas las porciones
-	int32 Faction = 0;
 	for (int32 Row = 0; Row < RowsPerPortion; ++Row)
 	{
 		for (int32 Col = 0; Col < ColsPerPortion; ++Col)
@@ -548,7 +559,8 @@ TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 Nu
 			}
 
 			// Se anade al diccionario
-			Positions.Add(Faction++, FTilesArray(CurrentPositions));
+			Positions.Add(Indexes[0], FTilesArray(CurrentPositions));
+			Indexes.RemoveAt(0);
 		}
 	}
 

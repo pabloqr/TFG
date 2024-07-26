@@ -13,10 +13,12 @@ class AActorUnit;
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileOwned, const FIntPoint&, Pos2D);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, const FProductionElement&, Unit);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
-                                             const ESettlementState&, State);
+                                             ESettlementState, State);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -129,6 +131,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTileOwned OnTileOwned;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitProduced OnUnitProduced;

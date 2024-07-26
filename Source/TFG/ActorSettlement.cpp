@@ -30,8 +30,18 @@ void AActorSettlement::SetInitialOwnedTiles()
 		MapSize = GameInstance->Size2D;
 	}
 
-	Info.OwnedTiles = ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize);
+	for (const FIntPoint Pos : ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize))
+	{
+		// Se anade la casilla a la lista
+		Info.OwnedTiles.Add(Pos);
+
+		// Se llama al evento para actualizar el propietario de la casilla
+		OnTileOwned.Broadcast(Pos);
+	}
+
+	// Se realiza el mismo proceso para la casilla en la que se situa el asentamiento
 	Info.OwnedTiles.AddUnique(Info.Pos2D);
+	OnTileOwned.Broadcast(Info.Pos2D);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

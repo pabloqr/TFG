@@ -3,28 +3,20 @@
 
 #include "SMain.h"
 
-void ASMain::AddFaction(const int32 Index)
+void ASMain::AddFaction(APawnFaction* Faction)
 {
-	// Si la faccion ya se encuentra en la lista, se omite
-	if (FactionsAlive.Contains(Index)) return;
+	// Se obtiene el indice de la faccion
+	const int32 Index = Faction->GetIndex();
 
-	// Se comprueba si es mayor que la ultima faccion para insertarlo
-	if (FactionsAlive.Num() == 0 || Index > FactionsAlive.Last()) FactionsAlive.Add(Index);
-	else
-	{
-		// En caso contrario, se busca la posicion correcta de la faccion
-		for (int32 i = 0; i < FactionsAlive.Num(); ++i)
-		{
-			// Si no se trata de la posicion correcta, se continua
-			if (Index < FactionsAlive[i]) continue;
+	// Se anade la entrada o se actualiza si existe
+	if (Factions.Contains(Index)) Factions[Index] = Faction;
+	else Factions.Add(Index, Faction);
 
-			// En caso contrario, se inserta en la posicion actual
-			FactionsAlive.Insert(Index, i);
-		}
-	}
+	// Solo se anade a la lista si no esta en ella
+	if (!FactionsAlive.Contains(Index)) FactionsAlive.Add(Index);
 }
 
-int32 ASMain::RemoveFaction(const int32 Index)
+int32 ASMain::SetFactionDead(const int32 Index)
 {
 	// Si el array esta vacio, no se hace nada
 	if (FactionsAlive.Num() == 0) return 0;
@@ -34,36 +26,46 @@ int32 ASMain::RemoveFaction(const int32 Index)
 	return FactionsAlive.Num();
 }
 
+void ASMain::RemoveFaction(const int32 Index)
+{
+	// Si el array esta vacio, no se hace nada
+	if (FactionsAlive.Num() == 0) return;
+
+	// Se elimina la faccion de ambas listas
+	if (FactionsAlive.Contains(Index))
+	{
+		FactionsAlive.Remove(Index);
+		Factions.Remove(Index);
+	}
+}
+
 APawnFaction* ASMain::NextFaction()
 {
 	// Si el array esta vacio, no se hace nada
 	if (FactionsAlive.Num() == 0) return nullptr;
 
-	// Se obtiene la posicion de la faccion actual
-	int32 Pos = FactionsAlive.Find(CurrentFaction);
-	if (Pos != INDEX_NONE)
-	{
-		// Se obtiene la siguiente posicion y se actualiza el indice de la faccion
-		Pos = (Pos + 1) % FactionsAlive.Num();
-		CurrentFaction = FactionsAlive[Pos];
-	}
-	else
-	{
-		// Si no se ha podido encontrar la faccion, se busca la siguiente faccion
-		for (int32 i = 0; i < FactionsAlive.Num(); ++i)
-		{
-			// Si el valor de la faccion es mayor, se trata de la correcta
-			if (FactionsAlive[i] > CurrentFaction)
-			{
-				// Se actualiza el indice y se finaliza el bucle
-				CurrentFaction = FactionsAlive[i];
-				break;
-			}
-		}
-	}
+	// Si no hay una faccion seleccionada, se inicializa el indice de la faccion actual
+	if (!CurrentFaction) CurrentIndex = NumFactions - 1;
 
-	return Factions[CurrentFaction];
+	// Se invalida la faccion y se realiza la busqueda
+	CurrentFaction = nullptr;
+	do
+	{
+		// Se actualiza el indice
+		CurrentIndex = (CurrentIndex + 1) % NumFactions;
+
+		// Si se ha dado una vuelta a todas las facciones, se actualiza el numero de turno
+		if (CurrentIndex == 0) AddTurn();
+
+		// Si se ha encontrado la faccion, se actualiza y se finaliza
+		if (FactionsAlive.Contains(CurrentIndex)) CurrentFaction = Factions[CurrentIndex];
+	}
+	while (!CurrentFaction);
+
+	return CurrentFaction;
 }
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 int32 ASMain::AddTurn()
 {

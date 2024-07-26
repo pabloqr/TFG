@@ -43,7 +43,7 @@ public:
 	static int32 GetTileCostFromType(const ETileType TileType);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	static bool IsTileTypeAccesible(const ETileType& TileType);
+	static bool IsTileTypeAccesible(const ETileType TileType);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

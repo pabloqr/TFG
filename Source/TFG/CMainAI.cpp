@@ -19,9 +19,9 @@ ACMainAI::ACMainAI()
 
 void ACMainAI::TurnStarted()
 {
-	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	if (const APawnFaction* P = Cast<APawnFaction>(this->GetPawn()))
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Started"), State->GetCurrentFaction()))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Started"), P->GetIndex()))
 	}
 	
 	// Se finaliza el turno actual
@@ -30,9 +30,9 @@ void ACMainAI::TurnStarted()
 
 void ACMainAI::TurnFinished()
 {
-	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	if (const APawnFaction* P = Cast<APawnFaction>(this->GetPawn()))
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Finished"), State->GetCurrentFaction()))
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Finished"), P->GetIndex()))
 	}
 
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))

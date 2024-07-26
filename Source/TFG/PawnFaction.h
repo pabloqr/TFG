@@ -3,16 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "ActorResource.h"
-#include "FElementIdentifier.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
 
+class AActorSettlement;
 enum class ESettlementState : uint8;
 enum class EUnitState : uint8;
 class AActorDamageableElement;
 class AActorUnit;
-class AActorSettlement;
+class AActorResource;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);
 
@@ -22,8 +21,8 @@ class TFG_API APawnFaction : public APawn
 	GENERATED_BODY()
 
 protected:
-	// UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Faction")
-	// FElementIdentifier ElementIdentifier;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	int32 Index;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
 	float Money;
@@ -52,10 +51,10 @@ public:
 
 protected:
 	UFUNCTION(BlueprintCallable, Category="Faction")
-	void OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState& State);
+	void OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState State);
 
 	UFUNCTION(BlueprintCallable, Category="Faction")
-	void OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState& State);
+	void OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState State);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -67,7 +66,31 @@ protected:
 public:
 	//----------------------------------------------------------------------------------------------------------------//
 
+	int32 GetIndex() const { return Index; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void SetIndex(const int32 I) { Index = I; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	bool HasElement(const AActorDamageableElement* Element) const;
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AddSettlement(AActorSettlement* Settlement);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveSettlement(AActorSettlement* Settlement);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AddUnit(AActorUnit* Unit);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveUnit(AActorUnit* Unit);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -78,13 +101,6 @@ public:
 	void TurnEnded();
 
 	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado en cada frame
-	 * 
-	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
-	 */
-	virtual void Tick(float DeltaTime) override;
 
 	/**
 	 * Metodo que asocia un metodo de entrada para la interaccion entre el jugador y el juego

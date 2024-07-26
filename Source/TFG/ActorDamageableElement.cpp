@@ -3,6 +3,9 @@
 
 #include "ActorDamageableElement.h"
 
+#include "SMain.h"
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 AActorDamageableElement::AActorDamageableElement()
 {
@@ -42,7 +45,13 @@ void AActorDamageableElement::BeginPlay()
 
 bool AActorDamageableElement::IsMine() const
 {
-	return DamageableInfo.Owner == 1;
+	// Se verifica si la unidad pertenece a la faccion en juego
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		return DamageableInfo.Owner == State->GetCurrentIndex();
+	}
+
+	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

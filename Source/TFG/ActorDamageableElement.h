@@ -47,6 +47,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	void SetFactionOwner(const int32 OwnerFaction) { DamageableInfo.Owner = OwnerFaction; }
 	void SetHealthPoints(const float Points) { DamageableInfo.HealthPoints = Points; }
 	void SetAttackPoints(const float Points) { DamageableInfo.Stats.AttackPoints = Points; }
 	void SetDefensePoints(const float Points) { DamageableInfo.Stats.DefensePoints = Points; }
