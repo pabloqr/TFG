@@ -37,7 +37,7 @@ FUnitData ULibraryDataTables::GetUnitDataFromType(const UDataTable* DataTable, c
 {
 	// Si es no es un tipo valido, se devuelve una estructura nula
 	if (Unit == EUnitType::None) return FUnitData();
-	
+
 	// Se obtiene el nombre del tipo enumerado seleccionado
 	TArray<FString> ParsedEnum;
 	UEnum::GetValueAsString(Unit).ParseIntoArray(ParsedEnum, TEXT(":"), false);
@@ -45,8 +45,8 @@ FUnitData ULibraryDataTables::GetUnitDataFromType(const UDataTable* DataTable, c
 	// Se obtiene la fila usando el nombre del tipo enumerado
 	const auto UnitData = DataTable->FindRow<FUnitData>(*ParsedEnum.Last(), TEXT(""));
 	return UnitData
-		       ? FUnitData(UnitData->Name, UnitData->Type, UnitData->MovementPoints, UnitData->VisibilityPoints,
-		                   UnitData->ProductionCost, UnitData->MaintenanceCost, UnitData->HealthPoints, UnitData->Stats,
-		                   UnitData->Icon)
+		       ? FUnitData(UnitData->Name, UnitData->Type, UnitData->RequiredResource, UnitData->MovementPoints,
+		                   UnitData->VisibilityPoints, UnitData->ProductionCost, UnitData->MaintenanceCost,
+		                   UnitData->HealthPoints, UnitData->Stats, UnitData->Icon)
 		       : FUnitData();
 }

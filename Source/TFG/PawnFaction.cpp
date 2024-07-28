@@ -2,9 +2,8 @@
 
 #include "PawnFaction.h"
 
-#include "ActorResource.h"
 #include "ActorSettlement.h"
-#include "ActorUnit.h"
+#include "LibraryDataTables.h"
 
 // Sets default values
 APawnFaction::APawnFaction()
@@ -17,6 +16,18 @@ APawnFaction::APawnFaction()
 
 	// Se inicializa el dinero y el balance
 	Money = MoneyBalance = 0.0;
+
+	// Se inicializan los diccionarios de recursos
+	MonetaryResources = TMap<EResource, FResource>({
+		{EResource::Diamond, FResource(EResource::Diamond, EResourceType::Monetary, 0)},
+		{EResource::Gold, FResource(EResource::Gold, EResourceType::Monetary, 0)},
+		{EResource::Copper, FResource(EResource::Copper, EResourceType::Monetary, 0)}
+	});
+	StrategicResources = TMap<EResource, FResource>({
+		{EResource::Aluminium, FResource(EResource::Aluminium, EResourceType::Strategic, 0)},
+		{EResource::Coal, FResource(EResource::Coal, EResourceType::Strategic, 0)},
+		{EResource::Oil, FResource(EResource::Oil, EResourceType::Strategic, 0)}
+	});
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -96,6 +107,19 @@ bool APawnFaction::HasElement(const AActorDamageableElement* Element) const
 	return false;
 }
 
+bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const
+{
+	// Se obtiene la informacion de la unidad
+	const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(DataTable, UnitType);
+	if (StrategicResources.Contains(UnitData.RequiredResource.Resource))
+	{
+		// Se devuelve si hay recursos suficientes
+		return StrategicResources[UnitData.RequiredResource.Resource].Quantity >= UnitData.RequiredResource.Quantity;
+	}
+
+	return true;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 void APawnFaction::AddSettlement(AActorSettlement* Settlement)
@@ -147,6 +171,37 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void APawnFaction::AddResource(const FResource& Resource)
+{
+	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
+	TMap<EResource, FResource>& Resources = Resource.Type == EResourceType::Monetary
+		                                        ? MonetaryResources
+		                                        : StrategicResources;
+
+	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
+	// no se hace nada, ya que no es un tipo de recurso valido
+	if (Resources.Contains(Resource.Resource)) Resources[Resource.Resource].Quantity += Resource.Quantity;
+}
+
+void APawnFaction::RemoveResource(const FResource& Resource)
+{
+	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
+	TMap<EResource, FResource>& Resources = Resource.Type == EResourceType::Monetary
+		                                        ? MonetaryResources
+		                                        : StrategicResources;
+
+	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
+	// no se hace nada, ya que no es un tipo de recurso valido
+	if (Resources.Contains(Resource.Resource))
+	{
+		// Se hace que la cantidad siempre sea mayor o igual a 0
+		Resources[Resource.Resource].Quantity =
+			FMath::Max(Resources[Resource.Resource].Quantity - Resource.Quantity, 0);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void APawnFaction::TurnStarted()
 {
 	// Se inicia el turno de las unidades de la faccion y se realiza su clasificacion para que puedan ser
@@ -193,9 +248,9 @@ void APawnFaction::TurnStarted()
 	}
 
 	// Se actualiza el balance de dinero teniendo en cuenta el rendimiento de los recursos
-	for (const AActorResource* Resource : Resources)
+	for (const auto Resource : MonetaryResources)
 	{
-		if (Resource->GetType() == EResourceType::Monetary) MoneyBalance += Resource->GetQuantity();
+		MoneyBalance += Resource.Value.Quantity;
 	}
 
 	// Se actualiza el dinero de la faccion teniendo en cuenta:

@@ -31,7 +31,7 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
-	
+
 	/**
 	 * Getter del atributo Info
 	 * 
@@ -52,12 +52,20 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Setter del atributo Owner
+	 * 
+	 * @param OwnerFaction Faccion propietaria del recurso
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetFactionOwner(const int32 OwnerFaction) { Info.Owner = OwnerFaction; }
+
+	/**
 	 * Setter del atributo Info
 	 * 
 	 * @param ResourceInfo Informacion del recurso
 	 */
 	void SetInfo(const FResourceInfo& ResourceInfo) { Info = ResourceInfo; }
-	
+
 	/**
 	 * Setter del atributo Pos2D
 	 * 

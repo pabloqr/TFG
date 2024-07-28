@@ -118,6 +118,12 @@ struct FUnitData : public FTableRowBase
 	EUnitType Type;
 
 	/**
+	 * Recurso necesario para producir la unidad. 'None' si es una unidad civil
+	 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FResource RequiredResource;
+
+	/**
 	 * Puntos de movimiento
 	 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -159,16 +165,19 @@ struct FUnitData : public FTableRowBase
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	FIconData Icon;
 
-	FUnitData(): FUnitData(TEXT(""), EUnitType::None, 0, 0, 0.0, 0.0,
-	                       0.0, FAttackStats(), FIconData())
+	FUnitData(): FUnitData(TEXT(""), EUnitType::None, FResource(EResource::None, EResourceType::None, 0),
+	                       0, 0, 0.0, 0.0, 0.0, FAttackStats(),
+	                       FIconData())
 	{
 	}
 
-	FUnitData(const FString& Name, const EUnitType Type, const int32 MovementPoints, const int32 VisibilityPoints,
-		const float ProductionCost, const float MaintenanceCost, const float HealthPoints, const FAttackStats& Stats,
-		const FIconData& Icon)
+	FUnitData(const FString& Name, const EUnitType Type, const FResource& RequiredResource, const int32 MovementPoints,
+	          const int32 VisibilityPoints, const float ProductionCost, const float MaintenanceCost,
+	          const float HealthPoints,
+	          const FAttackStats& Stats, const FIconData& Icon)
 		: Name(Name),
 		  Type(Type),
+		  RequiredResource(RequiredResource),
 		  MovementPoints(MovementPoints),
 		  VisibilityPoints(VisibilityPoints),
 		  ProductionCost(ProductionCost),

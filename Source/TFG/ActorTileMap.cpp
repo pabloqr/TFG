@@ -725,7 +725,7 @@ void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorTileMap::SaveMap(const FString CustomName) const
+FString AActorTileMap::SaveMap(const FString CustomName) const
 {
 	// Se crea el archivo de guardado para el mapa
 	if (USaveMap* MapSaveInstance = Cast<USaveMap>(UGameplayStatics::CreateSaveGameObject(USaveMap::StaticClass())))
@@ -753,7 +753,7 @@ void AActorTileMap::SaveMap(const FString CustomName) const
 		if (!UGameplayStatics::SaveGameToSlot(MapSaveInstance, SaveFileName, 0))
 		{
 			UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
-			return;
+			return TEXT("");
 		}
 
 		UE_LOG(LogTemp, Log, TEXT("Guardado correcto del mapa"))
@@ -761,7 +761,11 @@ void AActorTileMap::SaveMap(const FString CustomName) const
 		// Se actualiza el archivo de guardado 'master'
 		ULibrarySaves::UpdateSaveList(true, SaveFileName, ESaveType::MapSave,
 		                              CustomName.IsEmpty() ? SaveFileName : CustomName);
+
+		return SaveFileName;
 	}
+
+	return TEXT("");
 }
 
 void AActorTileMap::LoadMap(const FSaveData& MapSaveData)

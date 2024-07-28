@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FMovement.h"
+#include "FResourceInfo.h"
 #include "FUnitInfo.generated.h"
 
 /**
@@ -53,6 +54,9 @@ struct FUnitInfo
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
 	EUnitType Type;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
+	FResource RequiredResource;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -107,8 +111,8 @@ struct FUnitInfo
 	/**
 	 * Constructor por defecto
 	 */
-	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, 2, TArray<FMovement>(),
-	                       2, 2.0, EUnitState::None)
+	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, FResource(EResource::None, EResourceType::None, 0),
+	                       2, TArray<FMovement>(), 2, 2.0, EUnitState::None)
 	{
 	}
 
@@ -117,18 +121,20 @@ struct FUnitInfo
 	 * 
 	 * @param Pos Posicion en el Array2D de casillas
 	 * @param UnitType Tipo de unidad. 'None' si es una unidad civil
+	 * @param ReqResource Recurso necesario para producir la unidad
 	 * @param UnitBaseMovP Movimiento base de la unidad
 	 * @param UnitPath Camino asignado
 	 * @param UnitVisP Puntos de visibilidad
 	 * @param UnitMaintC Coste de mantenimiento
 	 * @param UnitState Estado de la unidad
 	 */
-	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const int32 UnitBaseMovP,
+	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const FResource& ReqResource, const int32 UnitBaseMovP,
 	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitMaintC,
 	          const EUnitState UnitState)
 	{
 		Pos2D = Pos;
 		Type = UnitType;
+		RequiredResource = ReqResource;
 		BaseMovementPoints = MovementPoints = UnitBaseMovP;
 
 		Path = UnitPath;

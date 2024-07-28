@@ -3,6 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FResourceInfo.h"
+#include "FUnitInfo.h"
+#include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
 
@@ -10,8 +13,6 @@ class AActorSettlement;
 enum class ESettlementState : uint8;
 enum class EUnitState : uint8;
 class AActorDamageableElement;
-class AActorUnit;
-class AActorResource;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);
 
@@ -34,7 +35,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorUnit*> Units;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<AActorResource*> Resources;
+	TMap<EResource, FResource> MonetaryResources;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
+	TMap<EResource, FResource> StrategicResources;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> IdleSettlements;
@@ -75,7 +78,10 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	bool HasElement(const AActorDamageableElement* Element) const;
-	
+
+	UFUNCTION(BlueprintCallable)
+	bool CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
@@ -91,6 +97,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveUnit(AActorUnit* Unit);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AddResource(const FResource& Resource);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveResource(const FResource& Resource);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

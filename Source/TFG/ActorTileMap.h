@@ -637,8 +637,8 @@ protected:
 	/**
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
 	 */
-	UFUNCTION(BlueprintCallable, Category="Map|Save")
-	void SaveMap(const FString CustomName = TEXT("")) const;
+	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category="Map|Save")
+	FString SaveMap(const FString CustomName = TEXT("")) const;
 
 	/**
 	 * Metodo que lee la informacion de las casillas de un archivo de guardado para actualizar el mapa
