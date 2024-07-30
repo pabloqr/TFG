@@ -73,39 +73,50 @@ void AActorTile::SetSettlement(AActorSettlement* Settlement)
 	Info.Elements.Settlement = Settlement;
 }
 
-void AActorTile::SetState(const TArray<ETileState>& TileStates)
+void AActorTile::SetState(const TSet<ETileState>& TileStates)
 {
+	// Se eliminan los estados actuales y se anaden los nuevos
 	Info.States.Empty();
 	AddState(TileStates);
 }
 
 void AActorTile::SetState(const ETileState State)
 {
+	// Se eliminan los estados actuales y se anade el nuevo
 	Info.States.Empty();
 	AddState(State);
 }
 
-void AActorTile::AddState(const TArray<ETileState>& TileStates)
+void AActorTile::AddState(const TSet<ETileState>& TileStates)
 {
+	// Se procesan todos los estados dados
 	for (const ETileState State : TileStates) AddState(State);
 }
 
 void AActorTile::AddState(const ETileState State)
 {
-	if (State != ETileState::None) Info.States.Remove(ETileState::None);
+	// Si el estado no es 'None', se elimina en caso de estar contenido, en caso contrario, se vacia la lista
+	if (State != ETileState::None && Info.States.Contains(ETileState::None))
+	{
+		Info.States.Remove(ETileState::None);
+	}
 	else Info.States.Empty();
 
-	Info.States.AddUnique(State);
+	// Se anade el estado
+	Info.States.Add(State);
 }
 
-void AActorTile::RemoveState(const TArray<ETileState>& TileStates)
+void AActorTile::RemoveState(const TSet<ETileState>& TileStates)
 {
+	// Se procesan todos los estados dados
 	for (const ETileState State : TileStates) RemoveState(State);
 }
 
 void AActorTile::RemoveState(const ETileState State)
 {
+	// Se elimina el estado
 	Info.States.Remove(State);
+	// Si no hay mas estados, se anade el estado 'None'
 	if (Info.States.Num() == 0) Info.States.Add(ETileState::None);
 }
 

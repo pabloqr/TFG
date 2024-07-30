@@ -134,7 +134,7 @@ struct FTileInfo
 	 * Estados de la casilla
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Tile|Info")
-	TArray<ETileState> States;
+	TSet<ETileState> States;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

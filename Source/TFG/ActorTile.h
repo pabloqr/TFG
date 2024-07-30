@@ -86,7 +86,7 @@ public:
 	 * 
 	 * @return Estado de la casilla
 	 */
-	const TArray<ETileState>& GetState() const { return Info.States; }
+	const TSet<ETileState>& GetState() const { return Info.States; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -147,7 +147,7 @@ public:
 	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void SetState(const TArray<ETileState>& TileStates);
+	void SetState(const TSet<ETileState>& TileStates);
 	/**
 	 * Setter del atributo TileStatess
 	 * 
@@ -161,7 +161,7 @@ public:
 	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void AddState(const TArray<ETileState>& TileStates);
+	void AddState(const TSet<ETileState>& TileStates);
 	/**
 	 * Anade el estado dado a los actuales
 	 * 
@@ -175,7 +175,7 @@ public:
 	 * @param TileStates Estados de la casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void RemoveState(const TArray<ETileState>& TileStates);
+	void RemoveState(const TSet<ETileState>& TileStates);
 	/**
 	 * Elimina el estado dado de los actuales
 	 * 

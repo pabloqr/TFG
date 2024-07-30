@@ -32,14 +32,14 @@ TArray<FIntPoint> ULibraryTileMap::GetNeighbors(const FIntPoint& Pos, const FInt
 {
 	// Se preasigna el desplazamiento en funcion de si la columna es par o impar
 	TArray<FIntPoint> AllNeighbors = Pos.Y % 2 == 0
-		? TArray<FIntPoint>{
-			 FIntPoint(-1, -1), FIntPoint(-1, 0), FIntPoint(-1, 1), FIntPoint(0, 1),
-			 FIntPoint(1, 0), FIntPoint(0, -1)
-		}
-		: TArray<FIntPoint>{
-			 FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(0, 1), FIntPoint(1, 1),
-			 FIntPoint(1, 0), FIntPoint(1, -1)
-		};
+		                                 ? TArray<FIntPoint>{
+			                                 FIntPoint(-1, -1), FIntPoint(-1, 0), FIntPoint(-1, 1),
+			                                 FIntPoint(0, 1), FIntPoint(1, 0), FIntPoint(0, -1)
+		                                 }
+		                                 : TArray<FIntPoint>{
+			                                 FIntPoint(0, -1), FIntPoint(-1, 0), FIntPoint(0, 1),
+			                                 FIntPoint(1, 1), FIntPoint(1, 0), FIntPoint(1, -1)
+		                                 };
 
 	// Se actualizan las posiciones de los vecinos y se comprueba si son correctas
 	TArray<FIntPoint> Neighbors;
