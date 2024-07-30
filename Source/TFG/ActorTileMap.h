@@ -270,14 +270,25 @@ protected:
 	/**
 	 * Diccionario que almacena, para cada estado, las casillas que lo tienen
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Info")
 	TMap<ETileState, FTilesArray> TilesWithState;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
+	/**
+	 * Diccionario que almacena un conteo de las casillas por tipo
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Info")
 	TMap<ETileType, int32> TileTypeCount;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Grid")
+	/**
+	 * Diccionario que almacena un conteo de los recursos por tipo
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Info")
 	TMap<EResource, int32> ResourceCount;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Info")
+	TSet<FIntPoint> SettlementPositions;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -535,6 +546,16 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
+
+	/**
+	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas
+	 * de 3 casillas de cualquier otro asentamiento
+	 * 
+	 * @param Pos Posicion en la que se quiere establecer el asentamiento
+	 * @return Si la posicion es valida
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool CanSetSettlementAtPos(const FIntPoint& Pos) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

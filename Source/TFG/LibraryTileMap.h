@@ -16,8 +16,8 @@ class TFG_API ULibraryTileMap : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 
-	static FIntVector OffsetCoordsToCubeCoords(const FIntPoint& OffsetCoords);
-	static FIntPoint CubeCoordsToOffsetCoords(const FIntVector& CubeCoords);
+	static FVector OffsetCoordsToCubeCoords(const FIntPoint& OffsetCoords);
+	static FVector2D CubeCoordsToOffsetCoords(const FIntVector& CubeCoords);
 
 public:
 	/**

@@ -5,16 +5,18 @@
 
 #include "ActorTileMap.h"
 
-FIntVector ULibraryTileMap::OffsetCoordsToCubeCoords(const FIntPoint& OffsetCoords)
+FVector ULibraryTileMap::OffsetCoordsToCubeCoords(const FIntPoint& OffsetCoords)
 {
 	const int32 X = OffsetCoords.Y;
-	const int32 Y = OffsetCoords.X - (OffsetCoords.Y - FMath::Abs(OffsetCoords.Y));
-	return FIntVector(X, Y, -X - Y);
+	const int32 Y = OffsetCoords.X - (OffsetCoords.Y - (OffsetCoords.Y & 1)) / 2;
+	return FVector(X, Y, -X - Y);
 }
 
-FIntPoint ULibraryTileMap::CubeCoordsToOffsetCoords(const FIntVector& CubeCoords)
+FVector2D ULibraryTileMap::CubeCoordsToOffsetCoords(const FIntVector& CubeCoords)
 {
-	return FIntPoint(CubeCoords.Y + (CubeCoords.X - FMath::Abs(CubeCoords.X) / 2), CubeCoords.X);
+	const int32 Row = CubeCoords.Y + (CubeCoords.X - (CubeCoords.X & 1)) / 2;
+	const int32 Col = CubeCoords.X;
+	return FVector2D(Row, Col);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -52,8 +54,8 @@ TArray<FIntPoint> ULibraryTileMap::GetNeighbors(const FIntPoint& Pos, const FInt
 
 int32 ULibraryTileMap::GetDistanceToElement(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
-	const FIntVector Distance = OffsetCoordsToCubeCoords(PosEnd) - OffsetCoordsToCubeCoords(PosIni);
-	return FMath::Max3(Distance.X, Distance.Y, Distance.Z);
+	const FVector Distance = OffsetCoordsToCubeCoords(PosEnd) - OffsetCoordsToCubeCoords(PosIni);
+	return FMath::Max3(FMath::Abs(Distance.X), FMath::Abs(Distance.Y), FMath::Abs(Distance.Z));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

@@ -419,6 +419,21 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 	return InRange;
 }
 
+bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
+{
+	// Si la casilla no es accesible o no es valida, no se puede establecer un asentamiento
+	if (!IsTileAccesible(Pos)) return false;
+
+	// Se procesan todos los asentamientos
+	for (auto SettlementPos : SettlementPositions)
+	{
+		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
+		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;
+	}
+
+	return true;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
@@ -708,6 +723,9 @@ void AActorTileMap::AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* 
 
 	// Se actualiza la informacion de la casilla
 	TilesInfo[Pos].Elements.Settlement = Settlement;
+
+	// Se actualiza el contenedor de posiciones de asentamientos
+	SettlementPositions.Add(Pos);
 }
 
 void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
@@ -721,6 +739,9 @@ void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
 
 	// Se actualiza la informacion de la casilla
 	TilesInfo[Pos].Elements.Settlement = nullptr;
+
+	// Se actualiza el contenedor de posiciones de asentamientos
+	if (SettlementPositions.Contains(Pos)) SettlementPositions.Remove(Pos);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
