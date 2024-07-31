@@ -114,6 +114,14 @@ public:
 	void SetMapPos(const FVector2D& Pos) { Info.MapPos2D = Pos; }
 
 	/**
+	 * Setter del atributo Owner
+	 * 
+	 * @param OwnerFaction Faccion propietaria del recurso
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetFactionOwner(const int32 OwnerFaction) { Info.Owner = OwnerFaction; }
+
+	/**
 	 * Setter del atributo Type
 	 * 
 	 * @param TileType Tipo de casilla
