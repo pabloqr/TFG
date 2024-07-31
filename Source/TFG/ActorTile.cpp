@@ -96,10 +96,7 @@ void AActorTile::AddState(const TSet<ETileState>& TileStates)
 void AActorTile::AddState(const ETileState State)
 {
 	// Si el estado no es 'None', se elimina en caso de estar contenido, en caso contrario, se vacia la lista
-	if (State != ETileState::None && Info.States.Contains(ETileState::None))
-	{
-		Info.States.Remove(ETileState::None);
-	}
+	if (State != ETileState::None) Info.States.Remove(ETileState::None);
 	else Info.States.Empty();
 
 	// Se anade el estado
