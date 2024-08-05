@@ -868,7 +868,8 @@ void AActorTileMap::JsonToMap()
 //--------------------------------------------------------------------------------------------------------------------//
 
 const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd,
-                                                 const int32 BaseMovementPoints, int32 MovementPoints)
+                                                 const EUnitType UnitType, const int32 BaseMovementPoints,
+                                                 int32 MovementPoints)
 {
 	// Se limpian los datos anteriores
 	Path.Empty();
@@ -893,7 +894,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	}
 
 	// Se comprueba que no haya una unidad en la casilla de destino, si la hay se devuelve un array vacio
-	if (Tiles[GetPositionInArray(PosEnd)]->HasUnit()) return Path;
+	if (UnitType == EUnitType::Civil && Tiles[GetPositionInArray(PosEnd)]->HasUnit()) return Path;
 
 	// Se crea una lista con prioridad para almacenar los nodos por visitar ordenados de mayor a menor prioridad
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste

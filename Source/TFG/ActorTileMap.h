@@ -697,13 +697,14 @@ public:
 	 * 
 	 * @param PosIni Posicion inicial del elemento
 	 * @param PosEnd Posicion de destino del elemento
+	 * @param UnitType Tipo de unidad que se mueve
 	 * @param BaseMovementPoints
 	 * @param MovementPoints
 	 * @return El mejor camino a seguir
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Pathfinding")
-	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const int32 BaseMovementPoints,
-	                                  const int32 MovementPoints);
+	const TArray<FMovement>& FindPath(const FIntPoint& PosIni, const FIntPoint& PosEnd, const EUnitType UnitType,
+	                                  const int32 BaseMovementPoints, const int32 MovementPoints);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

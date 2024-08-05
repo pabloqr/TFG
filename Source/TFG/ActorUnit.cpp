@@ -64,7 +64,6 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
 	// Se limpian los valores almacenados del camino previo
 	Info.Path.Empty();
-	Info.PathCompleted.Empty();
 
 	if (NewPath.Num() > 0)
 	{
@@ -88,7 +87,7 @@ void AActorUnit::UpdatePath()
 	if (Info.Path.Num() > 0 && TileMap)
 	{
 		// Se recalcula el camino
-		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D,
+		const TArray<FMovement> NewPath = TileMap->FindPath(Info.Pos2D, Info.Path.Last().Pos2D, Info.Type,
 		                                                    Info.BaseMovementPoints, Info.MovementPoints);
 
 		// Se asigna al camino de la unidad
@@ -122,7 +121,7 @@ void AActorUnit::ContinuePath()
 	while (Info.State == EUnitState::FollowingPath) MoveUnit();
 
 	// Se llama al evento para que se actualicen los datos en el resto de actores
-	OnUnitMoved.Broadcast(PrevPos, Info.PathCompleted);
+	OnUnitMoved.Broadcast(PrevPos);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -194,6 +193,7 @@ void AActorUnit::TurnStarted()
 		if (Info.Path.Num() > 0) UpdatePath();
 		else
 		{
+			// Se actualiza el estado
 			Info.State = EUnitState::WaitingForOrders;
 
 			// Se llama al evento tras actualizar el estado

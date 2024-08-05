@@ -11,7 +11,7 @@
 
 class AActorTileMap;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitMoved, const FIntPoint&, PrevPos, const TArray<FMovement>&, Moves);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitMoved, const FIntPoint&, PrevPos);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState, State);
 
@@ -50,6 +50,14 @@ private:
 	void UpdatePathTurns();
 
 protected:
+	UFUNCTION(BlueprintCallable)
+	const TArray<FMovement>& GetPath() const { return Info.Path; }
+
+	UFUNCTION(BlueprintCallable)
+	const TArray<FMovement>& GetPathCompleted() const { return Info.PathCompleted; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Metodo que aplica el movimiento dado actualizando los puntos de movimiento y el estado
 	 * 
