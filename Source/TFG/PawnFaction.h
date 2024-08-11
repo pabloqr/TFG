@@ -3,15 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ActorUnit.h"
 #include "FResourceInfo.h"
-#include "FUnitInfo.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
 
 class AActorSettlement;
 enum class ESettlementState : uint8;
-enum class EUnitState : uint8;
 class AActorDamageableElement;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);

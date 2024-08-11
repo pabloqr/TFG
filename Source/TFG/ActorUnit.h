@@ -98,6 +98,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
 
+	/**
+	 * Setter del atributo State
+	 * 
+	 * @param State Estado de la unidad
+	 */
+	void SetState(const EUnitState State);
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -127,6 +134,12 @@ public:
 	void ContinuePath();
 
 	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que hace que la unidad este inactiva hasta que se cure completamente
+	 */
+	UFUNCTION(BlueprintCallable)
+	void Heal();
 
 	/**
 	 * Metodo que salta el turno de la unidad aunque le queden puntos de movimiento

@@ -31,7 +31,8 @@ enum class EUnitState : uint8
 	Sleeping = 2 UMETA(DisplayName="Sleeping"),
 	FollowingPath = 3 UMETA(DisplayName="FollowingPath"),
 	NoMovementPoints = 4 UMETA(DisplayName="NoMovementPoints"),
-	WaitingForNextTurn = 5 UMETA(DisplayName="WaitingForNextTurn")
+	WaitingForNextTurn = 5 UMETA(DisplayName="WaitingForNextTurn"),
+	Healing = 6 UMETA(DisplayName="Healing")
 };
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -106,6 +107,12 @@ struct FUnitInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	EUnitState State;
 
+	/**
+	 * Estado de la curacion
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	bool IsHealing;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -127,10 +134,11 @@ struct FUnitInfo
 	 * @param UnitVisP Puntos de visibilidad
 	 * @param UnitMaintC Coste de mantenimiento
 	 * @param UnitState Estado de la unidad
+	 * @param Healing Si la unidad se esta curando
 	 */
 	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const FResource& ReqResource, const int32 UnitBaseMovP,
 	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitMaintC,
-	          const EUnitState UnitState)
+	          const EUnitState UnitState, const bool Healing = false)
 	{
 		Pos2D = Pos;
 		Type = UnitType;
@@ -144,5 +152,6 @@ struct FUnitInfo
 		MaintenanceCost = UnitMaintC;
 
 		State = UnitState;
+		IsHealing = Healing;
 	}
 };

@@ -49,13 +49,21 @@ void AActorUnit::UpdatePosition(const FMovement& Move)
 		Info.MovementPoints -= Move.MovementCost;
 
 		// Se actualiza el estado de la unidad
-		if (Info.MovementPoints == 0) Info.State = EUnitState::NoMovementPoints;
-		else if (Info.Path.Num() == 0) Info.State = EUnitState::WaitingForOrders;
-		else Info.State = EUnitState::FollowingPath;
-
-		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, Info.State);
+		if (Info.MovementPoints == 0) SetState(EUnitState::NoMovementPoints);
+		else if (Info.Path.Num() == 0) SetState(EUnitState::WaitingForOrders);
+		else SetState(EUnitState::FollowingPath);
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AActorUnit::SetState(const EUnitState State)
+{
+	// Se actualiza el estado
+	Info.State = State;
+
+	// Se llama al evento tras actualizar el estado
+	OnUnitStateChanged.Broadcast(this, Info.State);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -72,10 +80,7 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 		if (Info.Path[0].Pos2D == Info.Pos2D) Info.Path.RemoveAt(0);
 
 		// Se establece el estado de la unidad
-		if (Info.MovementPoints > 0) Info.State = EUnitState::FollowingPath;
-
-		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, Info.State);
+		if (Info.MovementPoints > 0) SetState(EUnitState::FollowingPath);
 
 		// Se actualiza el numero de turnos para alcanzar las casillas del camino
 		UpdatePathTurns();
@@ -102,11 +107,8 @@ void AActorUnit::RemovePath()
 	Info.PathCompleted.Empty();
 
 	// Se establece el estado de la unidad
-	if (Info.MovementPoints > 0) Info.State = EUnitState::WaitingForOrders;
-	else Info.State = EUnitState::NoMovementPoints;
-
-	// Se llama al evento tras actualizar el estado
-	OnUnitStateChanged.Broadcast(this, Info.State);
+	if (Info.MovementPoints > 0) SetState(EUnitState::WaitingForOrders);
+	else SetState(EUnitState::NoMovementPoints);
 }
 
 void AActorUnit::ContinuePath()
@@ -126,13 +128,16 @@ void AActorUnit::ContinuePath()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorUnit::Heal()
+{
+	// Se actualiza el estado
+	SetState(EUnitState::Healing);
+}
+
 void AActorUnit::SkipTurn()
 {
 	// Se actualiza el estado
-	Info.State = EUnitState::WaitingForNextTurn;
-
-	// Se llama al evento tras actualizar el estado
-	OnUnitStateChanged.Broadcast(this, Info.State);
+	SetState(EUnitState::WaitingForNextTurn);
 }
 
 void AActorUnit::MoveUnit()
@@ -157,10 +162,7 @@ void AActorUnit::MoveUnit()
 		}
 
 		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
-		Info.State = EUnitState::WaitingForNextTurn;
-
-		// Se llama al evento tras actualizar el estado
-		OnUnitStateChanged.Broadcast(this, Info.State);
+		SetState(EUnitState::WaitingForNextTurn);
 	}
 }
 
@@ -183,22 +185,34 @@ void AActorUnit::ApplyDamage(const float Damage)
 
 void AActorUnit::TurnStarted()
 {
+	// Se cura la unidad si es posible
+	if (Info.IsHealing)
+	{
+		// Se actualizan los puntos de vida
+		DamageableInfo.HealthPoints += 10.0f;
+
+		// Se actualiza el estado de curacion
+		Info.IsHealing = false;
+
+		if (DamageableInfo.HealthPoints >= DamageableInfo.BaseHealthPoints)
+		{
+			// Si la unidad tiene todos los puntos de vida, se obliga a que no superen a los base
+			DamageableInfo.HealthPoints = DamageableInfo.BaseHealthPoints;
+
+			// Si se estaba curando, se cambia el estado de la unidad
+			if (Info.State == EUnitState::Healing) SetState(EUnitState::WaitingForOrders);
+		}
+	}
+
 	// Se restablecen los puntos de movimiento al comienzo del turno
 	RestoreMovement();
 
 	// Se actualiza el estado de la unidad
-	if (Info.State != EUnitState::Sleeping)
+	if (Info.State != EUnitState::Sleeping && Info.State != EUnitState::Healing)
 	{
 		// Se recalcula el camino para tener en cuenta cualquier unidad ajena que haya podido interponerse
 		if (Info.Path.Num() > 0) UpdatePath();
-		else
-		{
-			// Se actualiza el estado
-			Info.State = EUnitState::WaitingForOrders;
-
-			// Se llama al evento tras actualizar el estado
-			OnUnitStateChanged.Broadcast(this, Info.State);
-		}
+		else if (Info.State != EUnitState::WaitingForOrders) SetState(EUnitState::WaitingForOrders);
 	}
 }
 
@@ -209,4 +223,11 @@ void AActorUnit::TurnEnded()
 
 	// Se continua el camino si tiene uno asignado
 	ContinuePath();
+
+	// Si la unidad no ha efectuado ninguna accion en este turno y no tiene su salud completa, se cura
+	if (Info.MovementPoints == Info.BaseMovementPoints && DamageableInfo.HealthPoints < DamageableInfo.BaseHealthPoints)
+	{
+		// Se actualiza el estado de curacion
+		Info.IsHealing = true;
+	}
 }
