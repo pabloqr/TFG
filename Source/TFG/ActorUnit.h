@@ -68,6 +68,13 @@ protected:
 
 public:
 	/**
+	 * Getter del atributo Info
+	 * 
+	 * @return Informacion de la unidad
+	 */
+	const FUnitInfo& GetInfo() const { return Info; }
+
+	/**
 	 * Getter del atributo Pos2D
 	 * 
 	 * @return Posicion en el Array2D de casillas
@@ -76,17 +83,39 @@ public:
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
 
 	/**
+	 * Getter del atributo Type
+	 * 
+	 * @return Tipo de unidad
+	 */
+	EUnitType GetType() const { return Info.Type; }
+
+	/**
 	 * Getter del atributo State
 	 * 
 	 * @return Estado de la unidad
 	 */
 	EUnitState GetState() const { return Info.State; }
+
 	/**
 	 * Getter del atributo MaintenanceCost
 	 * 
 	 * @return Coste de mantenimiento de la unidad
 	 */
 	float GetMaintenanceCost() const { return Info.MaintenanceCost; }
+
+	/**
+	 * Getter del atributo BaseMovementPoints
+	 * 
+	 * @return Puntos de movimiento base
+	 */
+	int32 GetBaseMovementPoints() const { return Info.BaseMovementPoints; }
+
+	/**
+	 * Getter del atributo MovementPoints
+	 * 
+	 * @return Puntos de movimiento actuales
+	 */
+	int32 GetMovementPoints() const { return Info.MovementPoints; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

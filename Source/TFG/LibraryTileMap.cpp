@@ -52,6 +52,28 @@ TArray<FIntPoint> ULibraryTileMap::GetNeighbors(const FIntPoint& Pos, const FInt
 	return Neighbors;
 }
 
+FIntPoint ULibraryTileMap::GetClosestElementFromPos(const FIntPoint& Pos, const TSet<FIntPoint>& ElementsLocation)
+{
+	FIntPoint ElementPos = FIntPoint(-1);
+
+	// Si no hay elementos en la coleccion, se devuelve un valor invalido
+	if (ElementsLocation.Num() == 0) return ElementPos;
+
+	// Se procesan todos los elementos y se calcula el elemento mas cercano
+	int32 MinDistance = 999;
+	for (auto ElementLocation : ElementsLocation)
+	{
+		const int32 Distance = GetDistanceToElement(Pos, ElementLocation);
+		if (Distance < MinDistance)
+		{
+			ElementPos = ElementLocation;
+			MinDistance = Distance;
+		}
+	}
+
+	return ElementPos;
+}
+
 int32 ULibraryTileMap::GetDistanceToElement(const FIntPoint& PosIni, const FIntPoint& PosEnd)
 {
 	const FVector Distance = OffsetCoordsToCubeCoords(PosEnd) - OffsetCoordsToCubeCoords(PosIni);

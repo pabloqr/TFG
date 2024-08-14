@@ -194,6 +194,14 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que verifica si una casilla es propiedad de la faccion actual
+	 * 
+	 * @return Si la casilla es propiedad de la faccion actual
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool IsMine() const;
+
+	/**
 	 * Metodo que verifica si una casilla es accesible
 	 * 
 	 * @return Si la casilla es de un tipo accesible

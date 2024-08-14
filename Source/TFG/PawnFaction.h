@@ -66,9 +66,16 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	//----------------------------------------------------------------------------------------------------------------//
-
 	int32 GetIndex() const { return Index; }
+	float GetMoney() const { return Money; }
+	float GetMoneyBalance() const { return MoneyBalance; }
+	const TArray<AActorSettlement*>& GetSettlements() const { return Settlements; }
+	const TMap<EResource, FResource>& GetMonetaryResources() const { return MonetaryResources; }
+	const TMap<EResource, FResource>& GetStrategicResources() const { return StrategicResources; }
+	const TArray<AActorUnit*>& GetUnits() const { return Units; }
+	const TArray<int32>& GetIdleSettlements() const { return IdleSettlements; }
+	const TArray<int32>& GetManualUnits() const { return ManualUnits; }
+	const TArray<int32>& GetAutomaticUnits() const { return AutomaticUnits; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

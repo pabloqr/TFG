@@ -538,16 +538,6 @@ protected:
 	TArray<FIntPoint> GetTilesWithState(const ETileState State) const;
 
 	/**
-	 * Metodo que obtiene la lista de casillas que se encuentran al alcance desde cierta posicion
-	 * 
-	 * @param Pos2D Coordenadas en el Array2D
-	 * @param Range Alcance desde la posicion dada
-	 * @return Coordenadas de las casillas que se encuentran dentro del rango desde la posicion dada
-	 */
-	UFUNCTION(BlueprintCallable)
-	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range);
-
-	/**
 	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas
 	 * de 3 casillas de cualquier otro asentamiento
 	 * 
@@ -692,6 +682,53 @@ protected:
 	// void JsonToMap();
 
 public:
+	/**
+	 * Getter de los atributos Rows y Cols
+	 * 
+	 * @return Numero de filas y columnas del mapa
+	 */
+	FIntPoint GetSize() const { return FIntPoint(Rows, Cols); }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que verifica si la casilla dada es la faccion actual
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si la casilla dada es de la faccion actual
+	 */
+	bool IsTileMine(const FIntPoint& Pos2D) const;
+
+	/**
+	 * Metodo que verifica si una casilla esta ocupada
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si la casilla esta ocupada
+	 */
+	bool TileHasElement(const FIntPoint& Pos2D) const;
+
+	/**
+	 * Metodo que verifica si una casilla dada contiene un elemento de una faccion enemiga o aliada
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @param CheckEnemy Flag para determinar si se comprueba para enemigos o aliados
+	 * @return Si la casilla pedida contiene un elemento de una faccion enemiga o aliada
+	 */
+	bool TileHasEnemyOrAlly(const FIntPoint& Pos2D, const bool CheckEnemy) const;
+
+	/**
+	 * Metodo que obtiene la lista de casillas que se encuentran al alcance desde cierta posicion
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D
+	 * @param Range Alcance desde la posicion dada
+	 * @param CheckTileCost
+	 * @return Coordenadas de las casillas que se encuentran dentro del rango desde la posicion dada
+	 */
+	UFUNCTION(BlueprintCallable)
+	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Metodo que calcula el mejor camino a seguir a lo largo del mapa para alcanzar una casilla del mismo
 	 * 

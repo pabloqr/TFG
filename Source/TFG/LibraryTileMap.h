@@ -35,6 +35,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static TArray<FIntPoint> GetNeighbors(const FIntPoint& Pos, const FIntPoint& MapSize);
 
+	UFUNCTION(BlueprintCallable)
+	static FIntPoint GetClosestElementFromPos(const FIntPoint& Pos, const TSet<FIntPoint>& ElementsLocation);
+
 	static int32 GetDistanceToElement(const FIntPoint& PosIni, const FIntPoint& PosEnd);
 
 	//----------------------------------------------------------------------------------------------------------------//

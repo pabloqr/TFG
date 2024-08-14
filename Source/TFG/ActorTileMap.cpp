@@ -381,44 +381,6 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState State) const
 	return TilesWithState.Contains(State) ? TilesWithState[State].TilesArray : TArray<FIntPoint>();
 }
 
-TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range)
-{
-	// Se inicializa la lista de casillas alcanzables
-	TArray<FIntPoint> InRange = TArray<FIntPoint>();
-
-	// Si no se tiene alcance, no se realiza ningun procesamiento
-	if (Range > 0)
-	{
-		// Se obtienen los vecinos de la casilla actual y se procesan
-		TArray<FIntPoint> Neighbors = ULibraryTileMap::GetNeighbors(Pos2D, FIntPoint(Rows, Cols));
-		for (const FIntPoint Neighbor : Neighbors)
-		{
-			// Se obtiene el indice y se verifica que es valido, en caso contrario, se omite el vecino
-			const int32 Index = GetPositionInArray(Neighbor);
-			if (Index == -1) continue;
-
-			// Se obtiene la casilla
-			const AActorTile* Tile = Tiles[Index];
-
-			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
-			const int32 Cost = Tile->GetMovementCost();
-			if (Cost <= Range && Tile->IsAccesible())
-			{
-				// Se trata de obtener el elemento de la casilla y se comprueba si es propiedad de la faccion actual
-				const AActorDamageableElement* Element = Tile->GetElement();
-				if (!Element || !Element->IsMine())
-				{
-					// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
-					InRange.Add(Neighbor);
-					InRange.Append(GetTilesWithinRange(Neighbor, Range - Cost));
-				}
-			}
-		}
-	}
-
-	return InRange;
-}
-
 bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
 {
 	// Si la casilla no es accesible o no es valida, no se puede establecer un asentamiento
@@ -864,6 +826,81 @@ void AActorTileMap::JsonToMap()
 	else UE_LOG(LogTemp, Error, TEXT("%s"), *ResultMessage)
 }
 */
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool AActorTileMap::IsTileMine(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	return Tiles[Index]->IsMine();
+}
+
+bool AActorTileMap::TileHasElement(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	return Tiles[Index]->GetElement() != nullptr;
+}
+
+bool AActorTileMap::TileHasEnemyOrAlly(const FIntPoint& Pos2D, const bool CheckEnemy) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	// Se obtiene el elemento que contiene la casilla
+	const AActorDamageableElement* Element = Tiles[Index]->GetElement();
+
+	// Se comprueba si el elemento es propiedad de la faccion actual
+	const bool IsMine = Element && Element->IsMine();
+
+	// Se verifica si el elemento es propio o no
+	return Element && CheckEnemy ? !IsMine : IsMine;
+}
+
+TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range,
+                                                     const bool CheckTileCost)
+{
+	// Se inicializa la lista de casillas alcanzables
+	TArray<FIntPoint> InRange = TArray<FIntPoint>();
+
+	// Si no se tiene alcance, no se realiza ningun procesamiento
+	if (Range > 0)
+	{
+		// Se obtienen los vecinos de la casilla actual y se procesan
+		TArray<FIntPoint> Neighbors = ULibraryTileMap::GetNeighbors(Pos2D, FIntPoint(Rows, Cols));
+		for (const FIntPoint Neighbor : Neighbors)
+		{
+			// Se obtiene el indice y se verifica que es valido, en caso contrario, se omite el vecino
+			const int32 Index = GetPositionInArray(Neighbor);
+			if (Index == -1) continue;
+
+			// Se obtiene la casilla
+			const AActorTile* Tile = Tiles[Index];
+
+			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
+			const int32 Cost = CheckTileCost ? Tile->GetMovementCost() : 1;
+			if (Cost <= Range && Tile->IsAccesible())
+			{
+				// Se trata de obtener el elemento de la casilla y se comprueba si es propiedad de la faccion actual
+				const AActorDamageableElement* Element = Tile->GetElement();
+				if (!Element || !Element->IsMine())
+				{
+					// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
+					InRange.Add(Neighbor);
+					InRange.Append(GetTilesWithinRange(Neighbor, Range - Cost, CheckTileCost));
+				}
+			}
+		}
+	}
+
+	return InRange;
+}
 
 //--------------------------------------------------------------------------------------------------------------------//
 

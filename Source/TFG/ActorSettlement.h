@@ -70,6 +70,13 @@ public:
 	const FIntPoint& GetPos() const { return Info.Pos2D; }
 
 	/**
+	 * Getter del atributo OwnedTiles
+	 * 
+	 * @return Posiciones de las casillas en posesion del asentamiento
+	 */
+	const TArray<FIntPoint>& GetOwnedTiles() const { return Info.OwnedTiles; }
+
+	/**
 	 * Getter del atributo State
 	 * 
 	 * @return Estado del asentamiento

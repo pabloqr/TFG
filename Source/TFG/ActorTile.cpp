@@ -9,6 +9,8 @@
 #include "ActorUnit.h"
 #include "ActorSettlement.h"
 #include "LibraryTileMap.h"
+#include "SMain.h"
+#include "Kismet/GameplayStatics.h"
 
 AActorTile::AActorTile()
 {
@@ -118,6 +120,17 @@ void AActorTile::RemoveState(const ETileState State)
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
+
+bool AActorTile::IsMine() const
+{
+	// Se verifica si la unidad pertenece a la faccion en juego
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		return Info.Owner == State->GetCurrentIndex();
+	}
+
+	return false;
+}
 
 bool AActorTile::IsAccesible() const
 {

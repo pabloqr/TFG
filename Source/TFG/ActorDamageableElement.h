@@ -35,6 +35,7 @@ private:
 	void UpdateAttackAndDefenseParameters();
 
 public:
+	float GetBaseHealthPoints() const { return DamageableInfo.BaseHealthPoints; }
 	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
 	float GetAttackPoints() const { return DamageableInfo.Stats.AttackPoints; }
 	float GetDefensePoints() const { return DamageableInfo.Stats.DefensePoints; }
