@@ -672,7 +672,7 @@ void AActorTileMap::AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* 
 	TilesInfo[Pos].Elements.Settlement = Settlement;
 
 	// Se actualiza el contenedor de posiciones de asentamientos
-	SettlementPositions.Add(Pos);
+	SettlementsPos.Add(Pos);
 }
 
 void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
@@ -688,7 +688,7 @@ void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
 	TilesInfo[Pos].Elements.Settlement = nullptr;
 
 	// Se actualiza el contenedor de posiciones de asentamientos
-	if (SettlementPositions.Contains(Pos)) SettlementPositions.Remove(Pos);
+	if (SettlementsPos.Contains(Pos)) SettlementsPos.Remove(Pos);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -823,6 +823,17 @@ bool AActorTileMap::IsTileMine(const FIntPoint& Pos2D) const
 	return Tiles[Index]->IsMine();
 }
 
+bool AActorTileMap::IsResourceGathered(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	const AActorResource* Resource = Tiles[Index]->GetResource();
+
+	return Resource && Resource->IsGathered();
+}
+
 bool AActorTileMap::TileHasElement(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
@@ -900,7 +911,7 @@ bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
 	if (Tiles[Index]->HasResource()) return false;
 
 	// Se procesan todos los asentamientos
-	for (auto SettlementPos : SettlementPositions)
+	for (auto SettlementPos : SettlementsPos)
 	{
 		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
 		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;

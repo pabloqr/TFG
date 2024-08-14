@@ -47,12 +47,9 @@ const AActorSettlement* ACMainAI::GetClosestSettlementFromPos(const FIntPoint& P
 	return SettlementPos;
 }
 
-FIntPoint ACMainAI::GetClosestTilePosition(const FIntPoint& Pos, TArray<FIntPoint>& SettlementOwnedTiles) const
+FIntPoint ACMainAI::GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& SettlementOwnedTiles) const
 {
 	FIntPoint ClosestPos = Pos;
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return ClosestPos;
 
 	// Variable que almacena la casilla mas cercana
 	for (int i = 0; i < SettlementOwnedTiles.Num(); ++i)
@@ -80,14 +77,75 @@ FIntPoint ACMainAI::GetClosestTilePosition(const FIntPoint& Pos, TArray<FIntPoin
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+bool ACMainAI::IsSettlementNeeded() const
+{
+	// Se obtiene el numero de asentamientos propios
+	const int32 NumSettlements = PawnFaction->GetNumSettlements();
+
+	// Si no hay asentamientos, se obliga a establecerlo
+	if (NumSettlements == 0) return true;
+
+	// Se obtiene el estado para acceder a las facciones
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		// Se procesan todas las facciones
+		for (const auto Faction : State->GetFactions())
+		{
+			// Si es la faccion actual, se omite
+			if (Faction.Key == PawnFaction->GetIndex()) continue;
+
+			// Se verifica el numero de asentamientos para determinar si es necesario establecer uno nuevo
+			if (NumSettlements <= Faction.Value->GetNumSettlements()) return true;
+		}
+	}
+
+	return false;
+}
+
+FIntPoint ACMainAI::CalculateBestPosForSettlement() const
+{
+	return FIntPoint(-1);
+}
+
+FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
+{
+	FIntPoint ClosestResource = Pos;
+
+	// Variable que almacena la distancia al recurso mas cercano
+	int32 MinDistance = 999;
+
+	// Se obtienen todos los recursos y se procesan
+	TMap<EResource, FResourceCollection> Resources = PawnFaction->GetMonetaryResources();
+	Resources.Append(PawnFaction->GetStrategicResources());
+
+	for (const auto Resource : Resources)
+	{
+		// Se procesan todos los recursos en posesion
+		for (const auto ResourcePos : Resource.Value.Tiles)
+		{
+			// Si el recurso ha sido recolectado, se omite
+			if (TileMap->IsResourceGathered(ResourcePos)) continue;
+
+			// Se obtiene la distancia y, si es menor, se actualiza las variables
+			const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, ResourcePos);
+			if (Distance < MinDistance)
+			{
+				MinDistance = Distance;
+				ClosestResource = ResourcePos;
+			}
+		}
+	}
+
+	return ClosestResource;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 TSet<FIntPoint> ACMainAI::GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range,
                                                         const bool GetEnemy) const
 {
 	// Coleccion de casillas con enemigos
 	TSet<FIntPoint> ElementsLocation = TSet<FIntPoint>();
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return ElementsLocation;
 
 	// Se obtienen las casillas al alcance de la unidad y se procesan
 	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, false);
@@ -136,19 +194,13 @@ const AActorSettlement* ACMainAI::GetClosestEnemySettlementFromPos(const FIntPoi
 
 const AActorSettlement* ACMainAI::GetClosestOwnedSettlementFromPos(const FIntPoint& Pos) const
 {
-	// Si la referencia no es valida, se devuelve un valor nulo
-	if (!PawnFaction) return nullptr;
-
 	// Se obtiene el asentamiento mas cercano
 	return GetClosestSettlementFromPos(Pos, PawnFaction->GetSettlements());
 }
 
-FIntPoint ACMainAI::GetFarthestPositionFromEnemies(const FIntPoint& Pos, const int32 Range) const
+FIntPoint ACMainAI::GetFarthestPosFromEnemies(const FIntPoint& Pos, const int32 Range) const
 {
 	FIntPoint FarthestPos = Pos;
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return FarthestPos;
 
 	// Se obtienen las casillas al alcance de la unidad y se procesan
 	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, true);
@@ -178,12 +230,9 @@ FIntPoint ACMainAI::GetFarthestPositionFromEnemies(const FIntPoint& Pos, const i
 	return FarthestPos;
 }
 
-FIntPoint ACMainAI::GetClosestPositionToAlly(const FIntPoint& Pos) const
+FIntPoint ACMainAI::GetClosestPosToAlly(const FIntPoint& Pos) const
 {
 	FIntPoint ClosestPos = Pos;
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return ClosestPos;
 
 	// Se obtiene la posicion del aliado mas cercano
 	const FIntPoint AllyPos = ULibraryTileMap::GetClosestElementFromPos(Pos, AlliesLocation);
@@ -231,66 +280,60 @@ FIntPoint ACMainAI::GetClosestPositionToAlly(const FIntPoint& Pos) const
 	return ClosestPos;
 }
 
-FIntPoint ACMainAI::GetClosestEnemyTilePosition(const FIntPoint& Pos) const
+FIntPoint ACMainAI::GetClosestEnemyTilePos(const FIntPoint& Pos) const
 {
 	FIntPoint ClosestPos = Pos;
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return ClosestPos;
 
 	// Se obtienen las casillas en posesion del asentamiento enemigo mas cercano
 	TArray<FIntPoint> SettlementOwnedTiles = GetClosestEnemySettlementFromPos(Pos)->GetOwnedTiles();
 
 	// Se obtiene la casilla mas cercana sin ocupar y se devuelve
-	return GetClosestTilePosition(Pos, SettlementOwnedTiles);
+	return GetClosestTilePos(Pos, SettlementOwnedTiles);
 }
 
-FIntPoint ACMainAI::GetClosestAllyTilePosition(const FIntPoint& Pos) const
+FIntPoint ACMainAI::GetClosestAllyTilePos(const FIntPoint& Pos) const
 {
 	FIntPoint ClosestPos = Pos;
-
-	// Se verifica que la instancia del mapa sea valida
-	if (!TileMap) return ClosestPos;
 
 	// Se obtienen las casillas en posesion del asentamiento propio mas cercano
 	TArray<FIntPoint> SettlementOwnedTiles = GetClosestOwnedSettlementFromPos(Pos)->GetOwnedTiles();
 
 	// Se obtiene la casilla mas cercana sin ocupar y se devuelve
-	return GetClosestTilePosition(Pos, SettlementOwnedTiles);
+	return GetClosestTilePos(Pos, SettlementOwnedTiles);
 }
 
-FIntPoint ACMainAI::CalculateBestPositionForUnit(const AActorUnit* Unit, const EUnitAction UnitAction) const
+FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUnitAction UnitAction) const
 {
 	// Si se debe mover hacia un enemigo, se obtiene el mas cercano
 	if (UnitAction == EUnitAction::MoveTowardsEnemy)
 	{
-		return ULibraryTileMap::GetClosestElementFromPos(Unit->GetPos(), EnemiesLocation);
+		return ULibraryTileMap::GetClosestElementFromPos(UnitInfo.Pos2D, EnemiesLocation);
 	}
 	// Si debe huir de un enemigo, se obtiene la posicion mas alejada en conjunto de todos los enemigos
 	if (UnitAction == EUnitAction::MoveAwayFromEnemy)
 	{
-		return GetFarthestPositionFromEnemies(Unit->GetPos(), Unit->GetMovementPoints());
+		return GetFarthestPosFromEnemies(UnitInfo.Pos2D, UnitInfo.MovementPoints);
 	}
 	// Si se debe mover hacia un aliado, se obtiene el mas cercano y la posicion mas cercana a este que no este ocupada
 	if (UnitAction == EUnitAction::MoveTowardsAlly)
 	{
-		return GetClosestPositionToAlly(Unit->GetPos());
+		return GetClosestPosToAlly(UnitInfo.Pos2D);
 	}
 	// Si se debe mover hacia una casilla enemiga, se obtiene la mas cercana que no este ocupada
 	if (UnitAction == EUnitAction::MoveTowardsEnemyTiles)
 	{
-		return GetClosestEnemyTilePosition(Unit->GetPos());
+		return GetClosestEnemyTilePos(UnitInfo.Pos2D);
 	}
 	// Si se debe mover hacia una casilla aliada, se obtiene la mas cercana que no este ocupada
 	if (UnitAction == EUnitAction::MoveTowardsAllyTiles)
 	{
-		return GetClosestAllyTilePosition(Unit->GetPos());
+		return GetClosestAllyTilePos(UnitInfo.Pos2D);
 	}
 	// Si debe explorar, se obtiene aleatoriamente una casilla dentro del alcance de movimiento
 	if (UnitAction == EUnitAction::MoveAround)
 	{
 		// Se obtienen las casillas al alcance de la unidad y se procesan para eliminar las ocupadas
-		TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Unit->GetPos(), Unit->GetMovementPoints(), true);
+		TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(UnitInfo.Pos2D, UnitInfo.MovementPoints, true);
 		for (int32 i = 0; i < TilesInRange.Num(); ++i)
 		{
 			if (EnemiesLocation.Contains(TilesInRange[i]) || AlliesLocation.Contains(TilesInRange[i]))
@@ -314,12 +357,12 @@ FIntPoint ACMainAI::CalculateBestPositionForUnit(const AActorUnit* Unit, const E
 	}
 
 	// Si la accion no es correcta, se devuelve la posicion actual
-	return Unit->GetPos();
+	return UnitInfo.Pos2D;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void ACMainAI::ManageCivilUnit(const AActorUnit* Unit)
+void ACMainAI::ManageCivilUnit(AActorUnit* Unit) const
 {
 	// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
 	const FUnitInfo UnitInfo = Unit->GetInfo();
@@ -327,7 +370,7 @@ void ACMainAI::ManageCivilUnit(const AActorUnit* Unit)
 
 	// Se calcula el porcentaje de salud
 	// const float HealthPercentage = Health.Y / Health.X;
-	
+
 	// SEGUNDO:
 	//		(1) Si tiene un camino asignado: no se hace nada, debe llegar a su destino
 	//		(2) Si no tiene un camino:
@@ -335,7 +378,22 @@ void ACMainAI::ManageCivilUnit(const AActorUnit* Unit)
 	//				(2.2) Se mueve la unidad a la casilla
 	if (UnitInfo.Path.Num() == 0)
 	{
-		
+		FIntPoint NewPos;
+
+		// Se determina si se debe crear un nuevo asentamiento
+		if (IsSettlementNeeded()) NewPos = CalculateBestPosForSettlement();
+		else NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+
+		// Si no se ha calculado ninguna posicion y la unidad se encuentra sobre un asentamiento, se mueve a otra
+		if (NewPos == UnitInfo.Pos2D && TileMap->GetSettlementsPos().Contains(NewPos))
+		{
+			NewPos = CalculateBestPosForUnit(UnitInfo, EUnitAction::MoveAround);
+		}
+
+		// Se calcula el camino a la nueva posicion y se asigna a la unidad
+		const TArray<FMovement> Path = TileMap->FindPath(UnitInfo.Pos2D, NewPos, UnitInfo.Type,
+		                                                 UnitInfo.BaseMovementPoints, UnitInfo.MovementPoints);
+		Unit->AssignPath(Path);
 	}
 }
 
@@ -347,7 +405,7 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 
 	// Se calcula el porcentaje de salud
 	const float HealthPercentage = Health.Y / Health.X;
-	
+
 	// SEGUNDO:
 	//		(1) Si hay enemigos:
 	//				(1.1) Se comprueba la salud: si esta baja, se cura o se huye. En caso contrario, se verifica para atacar
@@ -394,7 +452,7 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 		break;
 	default: //(c)
 		const TArray<FMovement> Path = TileMap->FindPath(UnitInfo.Pos2D,
-		                                                 CalculateBestPositionForUnit(Unit, UnitAction),
+		                                                 CalculateBestPosForUnit(UnitInfo, UnitAction),
 		                                                 UnitInfo.Type, UnitInfo.BaseMovementPoints,
 		                                                 UnitInfo.MovementPoints);
 		Unit->AssignPath(Path);

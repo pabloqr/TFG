@@ -51,8 +51,15 @@ public:
 private:
 	static const AActorSettlement* GetClosestSettlementFromPos(const FIntPoint& Pos,
 	                                                           const TArray<AActorSettlement*>& Settlements);
-	FIntPoint GetClosestTilePosition(const FIntPoint& Pos, TArray<FIntPoint>& SettlementOwnedTiles) const;
+	FIntPoint GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& SettlementOwnedTiles) const;
 
+	//----------------------------------------------------------------------------------------------------------------//
+
+	bool IsSettlementNeeded() const;
+	FIntPoint CalculateBestPosForSettlement() const;
+
+	FIntPoint GetClosestResourceToGatherPos(const FIntPoint& Pos) const;
+	
 	//----------------------------------------------------------------------------------------------------------------//
 
 	TSet<FIntPoint> GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range, const bool GetEnemy) const;
@@ -60,16 +67,16 @@ private:
 	const AActorSettlement* GetClosestEnemySettlementFromPos(const FIntPoint& Pos) const;
 	const AActorSettlement* GetClosestOwnedSettlementFromPos(const FIntPoint& Pos) const;
 
-	FIntPoint GetFarthestPositionFromEnemies(const FIntPoint& Pos, const int32 Range) const;
-	FIntPoint GetClosestPositionToAlly(const FIntPoint& Pos) const;
-	FIntPoint GetClosestEnemyTilePosition(const FIntPoint& Pos) const;
-	FIntPoint GetClosestAllyTilePosition(const FIntPoint& Pos) const;
+	FIntPoint GetFarthestPosFromEnemies(const FIntPoint& Pos, const int32 Range) const;
+	FIntPoint GetClosestPosToAlly(const FIntPoint& Pos) const;
+	FIntPoint GetClosestEnemyTilePos(const FIntPoint& Pos) const;
+	FIntPoint GetClosestAllyTilePos(const FIntPoint& Pos) const;
 
-	FIntPoint CalculateBestPositionForUnit(const AActorUnit* Unit, const EUnitAction UnitAction) const;
+	FIntPoint CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUnitAction UnitAction) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void ManageCivilUnit(const AActorUnit* Unit);
+	void ManageCivilUnit(AActorUnit* Unit) const;
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
 
 	void ManageUnits();

@@ -288,7 +288,7 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map|Info")
-	TSet<FIntPoint> SettlementPositions;
+	TSet<FIntPoint> SettlementsPos;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -679,6 +679,13 @@ public:
 	 */
 	FIntPoint GetSize() const { return FIntPoint(Rows, Cols); }
 
+	/**
+	 * Getter del atributo SettlementsPos
+	 * 
+	 * @return Posiciones de todos los asentamientos en el mapa
+	 */
+	const TSet<FIntPoint>& GetSettlementsPos() const { return SettlementsPos; }
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -688,6 +695,14 @@ public:
 	 * @return Si la casilla dada es de la faccion actual
 	 */
 	bool IsTileMine(const FIntPoint& Pos2D) const;
+
+	/**
+	 * Metodo que verifica si el recurso situado en la casilla dada ha sido recolectado
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si el recurso contenido en la casilla ha sido recolectado
+	 */
+	bool IsResourceGathered(const FIntPoint& Pos2D) const;
 
 	/**
 	 * Metodo que verifica si una casilla esta ocupada

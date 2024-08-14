@@ -13,11 +13,22 @@ AActorResource::AActorResource()
 	Info = FResourceInfo();
 }
 
+//----------------------------------------------------------------------------------------------------------------//
+
 // Called when the game starts or when spawned
 void AActorResource::BeginPlay()
 {
 	Super::BeginPlay();
 }
+
+//----------------------------------------------------------------------------------------------------------------//
+
+bool AActorResource::IsGathered() const
+{
+	return Info.Owner != -1;
+}
+
+//----------------------------------------------------------------------------------------------------------------//
 
 // Called every frame
 void AActorResource::Tick(float DeltaTime)
