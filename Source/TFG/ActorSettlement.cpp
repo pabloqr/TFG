@@ -20,28 +20,32 @@ AActorSettlement::AActorSettlement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorSettlement::OwnTile(const FIntPoint& Pos)
+{
+	// Se anade la casilla a la lista
+	Info.OwnedTiles.Add(Pos);
+
+	// Se llama al evento para actualizar el propietario de la casilla
+	OnTileOwned.Broadcast(Pos);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void AActorSettlement::SetInitialOwnedTiles()
 {
 	// Se obtiene el tamano del mapa para verificar las posiciones
-	FIntPoint MapSize;
+	FIntPoint MapSize = FIntPoint(0);
 
 	if (const UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
 	{
 		MapSize = GameInstance->Size2D;
 	}
 
-	for (const FIntPoint Pos : ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize))
-	{
-		// Se anade la casilla a la lista
-		Info.OwnedTiles.Add(Pos);
-
-		// Se llama al evento para actualizar el propietario de la casilla
-		OnTileOwned.Broadcast(Pos);
-	}
+	// Se actualizan las casillas para que sean propiedad de la faccion actual
+	for (const FIntPoint Pos : ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize)) OwnTile(Pos);
 
 	// Se realiza el mismo proceso para la casilla en la que se situa el asentamiento
-	Info.OwnedTiles.AddUnique(Info.Pos2D);
-	OnTileOwned.Broadcast(Info.Pos2D);
+	OwnTile(Info.Pos2D);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

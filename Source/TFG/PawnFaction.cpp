@@ -18,15 +18,33 @@ APawnFaction::APawnFaction()
 	Money = MoneyBalance = 0.0;
 
 	// Se inicializan los diccionarios de recursos
-	MonetaryResources = TMap<EResource, FResource>({
-		{EResource::Diamond, FResource(EResource::Diamond, EResourceType::Monetary, 0)},
-		{EResource::Gold, FResource(EResource::Gold, EResourceType::Monetary, 0)},
-		{EResource::Copper, FResource(EResource::Copper, EResourceType::Monetary, 0)}
+	MonetaryResources = TMap<EResource, FResourceCollection>({
+		{
+			EResource::Diamond,
+			FResourceCollection(FResource(EResource::Diamond, EResourceType::Monetary, 0), TArray<FIntPoint>())
+		},
+		{
+			EResource::Gold,
+			FResourceCollection(FResource(EResource::Gold, EResourceType::Monetary, 0), TArray<FIntPoint>())
+		},
+		{
+			EResource::Copper,
+			FResourceCollection(FResource(EResource::Copper, EResourceType::Monetary, 0), TArray<FIntPoint>())
+		}
 	});
-	StrategicResources = TMap<EResource, FResource>({
-		{EResource::Aluminium, FResource(EResource::Aluminium, EResourceType::Strategic, 0)},
-		{EResource::Coal, FResource(EResource::Coal, EResourceType::Strategic, 0)},
-		{EResource::Oil, FResource(EResource::Oil, EResourceType::Strategic, 0)}
+	StrategicResources = TMap<EResource, FResourceCollection>({
+		{
+			EResource::Aluminium,
+			FResourceCollection(FResource(EResource::Aluminium, EResourceType::Strategic, 0), TArray<FIntPoint>())
+		},
+		{
+			EResource::Coal,
+			FResourceCollection(FResource(EResource::Coal, EResourceType::Strategic, 0), TArray<FIntPoint>())
+		},
+		{
+			EResource::Oil,
+			FResourceCollection(FResource(EResource::Oil, EResourceType::Strategic, 0), TArray<FIntPoint>())
+		}
 	});
 }
 
@@ -114,7 +132,8 @@ bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType U
 	if (StrategicResources.Contains(UnitData.RequiredResource.Resource))
 	{
 		// Se devuelve si hay recursos suficientes
-		return StrategicResources[UnitData.RequiredResource.Resource].Quantity >= UnitData.RequiredResource.Quantity;
+		return StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity >=
+			UnitData.RequiredResource.Quantity;
 	}
 
 	return true;
@@ -171,32 +190,49 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void APawnFaction::AddResource(const FResource& Resource)
+void APawnFaction::OwnResource(const EResource Resource, const FIntPoint& Pos)
 {
-	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
-	TMap<EResource, FResource>& Resources = Resource.Type == EResourceType::Monetary
-		                                        ? MonetaryResources
-		                                        : StrategicResources;
-
-	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
-	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource)) Resources[Resource.Resource].Quantity += Resource.Quantity;
+	// Se anade la posicion del recurso a la lista correspondiente para indicar que esta dentro de las fronteras
+	if (MonetaryResources.Contains(Resource)) MonetaryResources[Resource].Tiles.Add(Pos);
+	else if (StrategicResources.Contains(Resource)) StrategicResources[Resource].Tiles.Add(Pos);
 }
 
-void APawnFaction::RemoveResource(const FResource& Resource)
+void APawnFaction::DisownResource(const EResource Resource, const FIntPoint& Pos)
+{
+	// Se elimina la posicion del recurso a la lista correspondiente para indicar que ya no esta dentro de las fronteras
+	if (MonetaryResources.Contains(Resource)) MonetaryResources[Resource].Tiles.Remove(Pos);
+	else if (StrategicResources.Contains(Resource)) StrategicResources[Resource].Tiles.Remove(Pos);
+}
+
+void APawnFaction::AddResource(const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
-	TMap<EResource, FResource>& Resources = Resource.Type == EResourceType::Monetary
-		                                        ? MonetaryResources
-		                                        : StrategicResources;
+	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
+		                                                  ? MonetaryResources
+		                                                  : StrategicResources;
 
 	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource))
+	if (Resources.Contains(Resource.Resource) && Resources[Resource.Resource].Tiles.Contains(Pos))
+	{
+		Resources[Resource.Resource].GatheredResource.Quantity += Resource.Quantity;
+	}
+}
+
+void APawnFaction::RemoveResource(const FResource& Resource, const FIntPoint& Pos)
+{
+	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
+	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
+		                                                  ? MonetaryResources
+		                                                  : StrategicResources;
+
+	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
+	// no se hace nada, ya que no es un tipo de recurso valido
+	if (Resources.Contains(Resource.Resource) && Resources[Resource.Resource].Tiles.Contains(Pos))
 	{
 		// Se hace que la cantidad siempre sea mayor o igual a 0
-		Resources[Resource.Resource].Quantity =
-			FMath::Max(Resources[Resource.Resource].Quantity - Resource.Quantity, 0);
+		Resources[Resource.Resource].GatheredResource.Quantity =
+			FMath::Max(Resources[Resource.Resource].GatheredResource.Quantity - Resource.Quantity, 0);
 	}
 }
 
@@ -250,7 +286,7 @@ void APawnFaction::TurnStarted()
 	// Se actualiza el balance de dinero teniendo en cuenta el rendimiento de los recursos
 	for (const auto Resource : MonetaryResources)
 	{
-		MoneyBalance += Resource.Value.Quantity;
+		MoneyBalance += Resource.Value.GatheredResource.Quantity;
 	}
 
 	// Se actualiza el dinero de la faccion teniendo en cuenta:

@@ -69,6 +69,9 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	void ManageCivilUnit(const AActorUnit* Unit);
+	void ManageMilitaryUnit(AActorUnit* Unit) const;
+
 	void ManageUnits();
 	void ManageSettlementsProduction();
 

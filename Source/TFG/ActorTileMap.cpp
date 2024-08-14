@@ -381,21 +381,6 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState State) const
 	return TilesWithState.Contains(State) ? TilesWithState[State].TilesArray : TArray<FIntPoint>();
 }
 
-bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
-{
-	// Si la casilla no es accesible o no es valida, no se puede establecer un asentamiento
-	if (!IsTileAccesible(Pos)) return false;
-
-	// Se procesan todos los asentamientos
-	for (auto SettlementPos : SettlementPositions)
-	{
-		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
-		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;
-	}
-
-	return true;
-}
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
@@ -900,6 +885,28 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 	}
 
 	return InRange;
+}
+
+bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1) return false;
+
+	// Si la casilla no es accesible o no es valida, no se puede establecer un asentamiento
+	if (!IsTileAccesible(Pos)) return false;
+
+	// Si en la casilla hay un recurso, no se puede establecer un asentamiento
+	if (Tiles[Index]->HasResource()) return false;
+
+	// Se procesan todos los asentamientos
+	for (auto SettlementPos : SettlementPositions)
+	{
+		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
+		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;
+	}
+
+	return true;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

@@ -319,78 +319,111 @@ FIntPoint ACMainAI::CalculateBestPositionForUnit(const AActorUnit* Unit, const E
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void ACMainAI::ManageCivilUnit(const AActorUnit* Unit)
+{
+	// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
+	const FUnitInfo UnitInfo = Unit->GetInfo();
+	// const FVector2D Health = FVector2D(Unit->GetBaseHealthPoints(), Unit->GetHealthPoints());
+
+	// Se calcula el porcentaje de salud
+	// const float HealthPercentage = Health.Y / Health.X;
+	
+	// SEGUNDO:
+	//		(1) Si tiene un camino asignado: no se hace nada, debe llegar a su destino
+	//		(2) Si no tiene un camino:
+	//				(2.1) Se decide si debe crear un asentamiento o recolectar un recurso
+	//				(2.2) Se mueve la unidad a la casilla
+	if (UnitInfo.Path.Num() == 0)
+	{
+		
+	}
+}
+
+void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
+{
+	// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
+	const FUnitInfo UnitInfo = Unit->GetInfo();
+	const FVector2D Health = FVector2D(Unit->GetBaseHealthPoints(), Unit->GetHealthPoints());
+
+	// Se calcula el porcentaje de salud
+	const float HealthPercentage = Health.Y / Health.X;
+	
+	// SEGUNDO:
+	//		(1) Si hay enemigos:
+	//				(1.1) Se comprueba la salud: si esta baja, se cura o se huye. En caso contrario, se verifica para atacar
+	//				(1.2) Se verifica para atacar: se verifican las estadisticas de ataque y se decide si se ataca o no
+	//		(2) Si no hay enemigos:
+	//				(2.1) Se comprueba la salud para curar
+	//				(2.2) O se mueve la unidad
+	//				(2.3) O se defiende en la posicion
+	EUnitAction UnitAction = EUnitAction::None;
+	if (EnemiesLocation.Num() > 0) // (1)
+	{
+		// En caso de que la unidad tenga un camino asignado a una casilla propia, no se hace nada
+		if (UnitInfo.Path.Num() == 0 || !TileMap->IsTileMine(UnitInfo.Path.Last().Pos2D))
+		{
+			// Segun el porcentaje de salud de la unidad:
+			//		* 0.0-0.3: se mueve la unidad a una casilla aliada
+			//		* 0.3-0.5: se desplaza la unidad lejos del enemigo
+			//		* 0.6-1.0: se ataca a la unidad enemiga
+			UnitAction = HealthPercentage < 0.3
+				             ? EUnitAction::MoveTowardsAllyTiles
+				             : 0.3 <= HealthPercentage && HealthPercentage < 0.5
+				             ? EUnitAction::MoveAwayFromEnemy
+				             : EUnitAction::MoveTowardsEnemy;
+		}
+	}
+	else // (2)
+	{
+		// Segun el porcentaje de salud de la unidad:
+		//		* 0.0-0.7: se cura la unidad
+		//		* 0.7-1.0: se explora el mapa
+		UnitAction = HealthPercentage < 0.7 ? EUnitAction::Heal : EUnitAction::MoveAround;
+	}
+
+	// Dependiendo de la accion se aplican las modificaciones necesarias
+	//		(a) Si no se hace nada, no se aplican modificaciones
+	//		(b) Si se debe curar, se aplica la curacion a la unidad
+	//		(c) En caso contrario, se calcula el camino a seguir dada la accion calculada
+	switch (UnitAction)
+	{
+	case EUnitAction::None: // (a)
+		break;
+	case EUnitAction::Heal: // (b)
+		Unit->Heal();
+		break;
+	default: //(c)
+		const TArray<FMovement> Path = TileMap->FindPath(UnitInfo.Pos2D,
+		                                                 CalculateBestPositionForUnit(Unit, UnitAction),
+		                                                 UnitInfo.Type, UnitInfo.BaseMovementPoints,
+		                                                 UnitInfo.MovementPoints);
+		Unit->AssignPath(Path);
+		break;
+	}
+}
+
 void ACMainAI::ManageUnits()
 {
-	// Si la faccion no es valida, no se hace nada
-	if (!PawnFaction) return;
+	// Si la faccion o la instancia del mapa no es valida, no se hace nada
+	if (!PawnFaction || !TileMap) return;
 
 	const TArray<AActorUnit*> Units = PawnFaction->GetUnits();
 	for (const auto Unit : Units)
 	{
 		// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
 		const FUnitInfo UnitInfo = Unit->GetInfo();
-		const FVector2D Health = FVector2D(Unit->GetBaseHealthPoints(), Unit->GetHealthPoints());
 
-		// Se calcula el porcentaje de salud
-		const float HealthPercentage = Health.Y / Health.X;
-
-		// Primero: se comprueba si hay enemigos cerca
+		// PRIMERO: se comprueba si hay enemigos cerca
 		EnemiesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, true);
 
 		// Tambien se obtienen las posiciones de las unidades aliadas cercanas
 		AlliesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, false);
 
-		// Segundo:
-		//		(1) Si hay enemigos:
-		//				(1.1) Se comprueba la salud: si esta baja, se cura o se huye. En caso contrario, se verifica para atacar
-		//				(1.2) Se verifica para atacar: se verifican las estadisticas de ataque y se decide si se ataca o no
-		//		(2) Si no hay enemigos:
-		//				(2.1) Se comprueba la salud para curar
-		//				(2.2) O se mueve la unidad
-		//				(2.3) O se defiende en la posicion
-		EUnitAction UnitAction = EUnitAction::None;
-		if (EnemiesLocation.Num() > 0) // (1)
+		// Segun el tipo de unidad, se realiza una operacion u otra
+		if (UnitInfo.Type != EUnitType::None)
 		{
-			// En caso de que la unidad tenga un camino asignado a una casilla propia, no se hace nada
-			if (UnitInfo.Path.Num() == 0 || !TileMap->IsTileMine(UnitInfo.Path.Last().Pos2D))
-			{
-				// Segun el porcentaje de salud de la unidad:
-				//		* 0.0-0.3: se mueve la unidad a una casilla aliada
-				//		* 0.3-0.5: se desplaza la unidad lejos del enemigo
-				//		* 0.6-1.0: se ataca a la unidad enemiga
-				UnitAction = HealthPercentage < 0.3
-					             ? EUnitAction::MoveTowardsAllyTiles
-					             : 0.3 <= HealthPercentage && HealthPercentage < 0.5
-					             ? EUnitAction::MoveAwayFromEnemy
-					             : EUnitAction::MoveTowardsEnemy;
-			}
-		}
-		else // (2)
-		{
-			// Segun el porcentaje de salud de la unidad:
-			//		* 0.0-0.7: se cura la unidad
-			//		* 0.7-1.0: se explora el mapa
-			UnitAction = HealthPercentage < 0.7 ? EUnitAction::Heal : EUnitAction::MoveAround;
-		}
-
-		// Dependiendo de la accion se aplican las modificaciones necesarias
-		//		(a) Si no se hace nada, no se aplican modificaciones
-		//		(b) Si se debe curar, se aplica la curacion a la unidad
-		//		(c) En caso contrario, se calcula el camino a seguir dada la accion calculada
-		switch (UnitAction)
-		{
-		case EUnitAction::None: // (a)
-			break;
-		case EUnitAction::Heal: // (b)
-			Unit->Heal();
-			break;
-		default: //(c)
-			const TArray<FMovement> Path = TileMap->FindPath(UnitInfo.Pos2D,
-			                                                 CalculateBestPositionForUnit(Unit, UnitAction),
-			                                                 UnitInfo.Type, UnitInfo.BaseMovementPoints,
-			                                                 UnitInfo.MovementPoints);
-			Unit->AssignPath(Path);
-			break;
+			if (UnitInfo.Type == EUnitType::Civil) ManageCivilUnit(Unit);
+			else ManageMilitaryUnit(Unit);
 		}
 	}
 }

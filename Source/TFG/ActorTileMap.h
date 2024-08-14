@@ -537,16 +537,6 @@ protected:
 	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	TArray<FIntPoint> GetTilesWithState(const ETileState State) const;
 
-	/**
-	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas
-	 * de 3 casillas de cualquier otro asentamiento
-	 * 
-	 * @param Pos Posicion en la que se quiere establecer el asentamiento
-	 * @return Si la posicion es valida
-	 */
-	UFUNCTION(BlueprintCallable)
-	bool CanSetSettlementAtPos(const FIntPoint& Pos) const;
-
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -726,6 +716,16 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true);
+
+	/**
+	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas
+	 * de 3 casillas de cualquier otro asentamiento
+	 * 
+	 * @param Pos Posicion en la que se quiere establecer el asentamiento
+	 * @return Si la posicion es valida
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool CanSetSettlementAtPos(const FIntPoint& Pos) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

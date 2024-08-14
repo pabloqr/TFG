@@ -13,6 +13,28 @@ class AActorSettlement;
 enum class ESettlementState : uint8;
 class AActorDamageableElement;
 
+USTRUCT(BlueprintType)
+struct FResourceCollection
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ResourceCollection")
+	FResource GatheredResource;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ResourceCollection")
+	TArray<FIntPoint> Tiles;
+
+	FResourceCollection(): FResourceCollection(FResource(), TArray<FIntPoint>())
+	{
+	}
+
+	FResourceCollection(const FResource& GatheredResource, const TArray<FIntPoint>& Tiles)
+		: GatheredResource(GatheredResource),
+		  Tiles(Tiles)
+	{
+	}
+};
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);
 
 UCLASS()
@@ -32,18 +54,19 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorSettlement*> Settlements;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<AActorUnit*> Units;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TMap<EResource, FResource> MonetaryResources;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TMap<EResource, FResource> StrategicResources;
+	TArray<int32> IdleSettlements;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<int32> IdleSettlements;
+	TArray<AActorUnit*> Units;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> ManualUnits;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> AutomaticUnits;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
+	TMap<EResource, FResourceCollection> MonetaryResources;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
+	TMap<EResource, FResourceCollection> StrategicResources;
 
 public:
 	/**
@@ -70,10 +93,11 @@ public:
 	float GetMoney() const { return Money; }
 	float GetMoneyBalance() const { return MoneyBalance; }
 	const TArray<AActorSettlement*>& GetSettlements() const { return Settlements; }
-	const TMap<EResource, FResource>& GetMonetaryResources() const { return MonetaryResources; }
-	const TMap<EResource, FResource>& GetStrategicResources() const { return StrategicResources; }
-	const TArray<AActorUnit*>& GetUnits() const { return Units; }
+	int32 GetNumSettlements() const { return Settlements.Num(); }
 	const TArray<int32>& GetIdleSettlements() const { return IdleSettlements; }
+	const TMap<EResource, FResourceCollection>& GetMonetaryResources() const { return MonetaryResources; }
+	const TMap<EResource, FResourceCollection>& GetStrategicResources() const { return StrategicResources; }
+	const TArray<AActorUnit*>& GetUnits() const { return Units; }
 	const TArray<int32>& GetManualUnits() const { return ManualUnits; }
 	const TArray<int32>& GetAutomaticUnits() const { return AutomaticUnits; }
 
@@ -107,10 +131,16 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	void AddResource(const FResource& Resource);
+	void OwnResource(const EResource Resource, const FIntPoint& Pos);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveResource(const FResource& Resource);
+	void DisownResource(const EResource Resource, const FIntPoint& Pos);
+
+	UFUNCTION(BlueprintCallable)
+	void AddResource(const FResource& Resource, const FIntPoint& Pos);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveResource(const FResource& Resource, const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

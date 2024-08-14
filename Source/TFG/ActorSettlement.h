@@ -37,6 +37,9 @@ public:
 	 */
 	AActorSettlement();
 
+private:
+	void OwnTile(const FIntPoint& Pos);
+
 protected:
 	/**
 	 * Metodo que establece las casillas que posee inicialmente el asentamiento
