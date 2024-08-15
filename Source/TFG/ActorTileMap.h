@@ -680,6 +680,13 @@ public:
 	FIntPoint GetSize() const { return FIntPoint(Rows, Cols); }
 
 	/**
+	 * Getter del atributo TilesInfo
+	 * 
+	 * @return Diccionario que almacena la informacion sobre las casillas
+	 */
+	const TMap<FIntPoint, FTileInfo>& GetTilesInfo() const { return TilesInfo; }
+
+	/**
 	 * Getter del atributo SettlementsPos
 	 * 
 	 * @return Posiciones de todos los asentamientos en el mapa
@@ -695,6 +702,22 @@ public:
 	 * @return Si la casilla dada es de la faccion actual
 	 */
 	bool IsTileMine(const FIntPoint& Pos2D) const;
+
+	/**
+	 * Metodo que verifica si una casilla tiene un recurso situado sobre ella
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si la casilla contiene un recurso
+	 */
+	bool TileHasResource(const FIntPoint& Pos2D) const;
+
+	/**
+	 * Metodo que verifica si el recurso situado sobre la casilla dada puede ser recolectado
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si el recurso contenido en la casilla puede ser recolectado
+	 */
+	bool CanGatherResourceAtPos(const FIntPoint& Pos2D) const;
 
 	/**
 	 * Metodo que verifica si el recurso situado en la casilla dada ha sido recolectado

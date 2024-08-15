@@ -12,6 +12,15 @@ AActorCivilUnit::AActorCivilUnit()
 
 	// Se inicializan los atributos de la unidad
 	NumActions = 2;
+
+	CivilUnitState = ECivilUnitState::None;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool AActorCivilUnit::CanSetSettlement() const
+{
+	return Info.MovementPoints > 0 && NumActions == 2;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

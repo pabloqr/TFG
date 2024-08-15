@@ -823,12 +823,34 @@ bool AActorTileMap::IsTileMine(const FIntPoint& Pos2D) const
 	return Tiles[Index]->IsMine();
 }
 
+bool AActorTileMap::TileHasResource(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	return Tiles[Index]->HasResource();
+}
+
+bool AActorTileMap::CanGatherResourceAtPos(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+	if (Index == -1) return false;
+
+	// Se obtiene el recurso
+	const AActorResource* Resource = Tiles[Index]->GetResource();
+
+	return Tiles[Index]->IsMine() && Resource && !Resource->IsGathered();
+}
+
 bool AActorTileMap::IsResourceGathered(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
 	if (Index == -1) return false;
 
+	// Se obtiene el recurso
 	const AActorResource* Resource = Tiles[Index]->GetResource();
 
 	return Resource && Resource->IsGathered();

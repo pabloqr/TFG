@@ -38,6 +38,18 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Atributo que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento en cada turno
+	 */
+	TTuple<FIntPoint, float> BestTileForSettlement;
+
+	/**
+	 * Diccionario que almacena los valores de atractivo de las casillas
+	 */
+	TMap<FIntPoint, float> TilesValue;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	TSet<FIntPoint> EnemiesLocation;
 
 	TSet<FIntPoint> AlliesLocation;
@@ -55,11 +67,13 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	void UpdateTilesValue();
+
 	bool IsSettlementNeeded() const;
-	FIntPoint CalculateBestPosForSettlement() const;
+	FIntPoint CalculateBestPosForSettlement();
 
 	FIntPoint GetClosestResourceToGatherPos(const FIntPoint& Pos) const;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	TSet<FIntPoint> GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range, const bool GetEnemy) const;
@@ -76,7 +90,7 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void ManageCivilUnit(AActorUnit* Unit) const;
+	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
 
 	void ManageUnits();
@@ -91,5 +105,5 @@ public:
 	void TurnStarted();
 
 	UFUNCTION(BlueprintCallable)
-	void TurnFinished();
+	void TurnFinished() const;
 };

@@ -80,7 +80,7 @@ public:
 	const TArray<FIntPoint>& GetOwnedTiles() const { return Info.OwnedTiles; }
 
 	/**
-	 * Getter del atributo State
+	 * Getter del atributo CivilUnitState
 	 * 
 	 * @return Estado del asentamiento
 	 */
@@ -104,7 +104,7 @@ public:
 	void SetPos(const FIntPoint& Pos) { Info.Pos2D = Pos; }
 
 	/**
-	 * Setter del atributo State
+	 * Setter del atributo CivilUnitState
 	 * 
 	 * @param SettlementState Estado del asentamiento
 	 */

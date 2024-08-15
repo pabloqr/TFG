@@ -3,6 +3,7 @@
 
 #include "CMainAI.h"
 
+#include "ActorCivilUnit.h"
 #include "ActorSettlement.h"
 #include "ActorTileMap.h"
 #include "LibraryTileMap.h"
@@ -22,6 +23,9 @@ ACMainAI::ACMainAI()
 
 	// Se inicializa el mapa a un valor nulo
 	TileMap = nullptr;
+
+	// Se inicializa la casilla para establecer asentamientos
+	BestTileForSettlement = TTuple<FIntPoint, float>(FIntPoint(0), -1);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -77,6 +81,53 @@ FIntPoint ACMainAI::GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& S
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void ACMainAI::UpdateTilesValue()
+{
+	// Se invalida el valor de atractivo de la mejor casilla actual para actualizarlo
+	BestTileForSettlement.Value = -1;
+
+	// Se recorren todas las casillas del mapa
+	for (int32 Row = 0; Row < TileMap->GetSize().X; ++Row)
+	{
+		for (int32 Col = 0; Col < TileMap->GetSize().Y; ++Col)
+		{
+			// Posicion de la casilla actual
+			const FIntPoint Pos = FIntPoint(Row, Col);
+
+			// Si el diccionario no contiene la casilla, se inserta
+			if (!TilesValue.Contains(Pos)) TilesValue.Add(Pos, 0.0);
+
+			// Si no se puede establecer un asentamiento, se le da un valor invalido
+			if (!TileMap->CanSetSettlementAtPos(Pos)) TilesValue[Pos] = -1.0;
+			else
+			{
+				// Se obtiene una referencia al valor para modificarlo
+				float& TileValue = TilesValue[Pos];
+
+				// Se obtiene el asentamiento mas cercano para que el modificador de mas valor a las casillas mas
+				// cercanas con el objetivo de establecer los asentamientos relativamente cerca unos de otros
+				const AActorSettlement* Settlement = GetClosestOwnedSettlementFromPos(Pos);
+				const FIntPoint SettlementPos = Settlement ? Settlement->GetPos() : FIntPoint(-1);
+
+				// Se hace que el valor sumado sea inversamente proporcional a la distancia que se encuentre
+				// el asentamiento
+				TileValue += SettlementPos != -1
+					             ? 10.0 / (ULibraryTileMap::GetDistanceToElement(Pos, SettlementPos) - 3.0)
+					             : 0.0;
+
+				// Si la casilla tiene un recurso, se aumenta el valor
+				if (TileMap->TileHasResource(Pos)) TileValue += 5.0;
+			}
+
+			// Si el valor de atractivo es mejor que el de la casilla actual, se actualiza
+			if (TilesValue[Pos] > BestTileForSettlement.Value)
+			{
+				BestTileForSettlement = TTuple<FIntPoint, float>(Pos, TilesValue[Pos]);
+			}
+		}
+	}
+}
+
 bool ACMainAI::IsSettlementNeeded() const
 {
 	// Se obtiene el numero de asentamientos propios
@@ -102,9 +153,15 @@ bool ACMainAI::IsSettlementNeeded() const
 	return false;
 }
 
-FIntPoint ACMainAI::CalculateBestPosForSettlement() const
+FIntPoint ACMainAI::CalculateBestPosForSettlement()
 {
-	return FIntPoint(-1);
+	// Si no hay asentamientos, se establece en la posicion actual
+	if (PawnFaction->GetNumSettlements() == 0) return -1;
+
+	// Se actualizan los valores de atractivo de las casillas y se devuelve el mejor
+	UpdateTilesValue();
+
+	return BestTileForSettlement.Key;
 }
 
 FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
@@ -282,8 +339,6 @@ FIntPoint ACMainAI::GetClosestPosToAlly(const FIntPoint& Pos) const
 
 FIntPoint ACMainAI::GetClosestEnemyTilePos(const FIntPoint& Pos) const
 {
-	FIntPoint ClosestPos = Pos;
-
 	// Se obtienen las casillas en posesion del asentamiento enemigo mas cercano
 	TArray<FIntPoint> SettlementOwnedTiles = GetClosestEnemySettlementFromPos(Pos)->GetOwnedTiles();
 
@@ -293,8 +348,6 @@ FIntPoint ACMainAI::GetClosestEnemyTilePos(const FIntPoint& Pos) const
 
 FIntPoint ACMainAI::GetClosestAllyTilePos(const FIntPoint& Pos) const
 {
-	FIntPoint ClosestPos = Pos;
-
 	// Se obtienen las casillas en posesion del asentamiento propio mas cercano
 	TArray<FIntPoint> SettlementOwnedTiles = GetClosestOwnedSettlementFromPos(Pos)->GetOwnedTiles();
 
@@ -362,28 +415,74 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void ACMainAI::ManageCivilUnit(AActorUnit* Unit) const
+void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 {
+	// Se realiza el cast para poder acceder a los metodos de la clase
+	AActorCivilUnit* CivilUnit = Cast<AActorCivilUnit>(Unit);
+
+	// Si no se ha podido realizar el cast, se finaliza
+	if (!CivilUnit) return;
+
 	// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
-	const FUnitInfo UnitInfo = Unit->GetInfo();
+	const FUnitInfo UnitInfo = CivilUnit->GetInfo();
 	// const FVector2D Health = FVector2D(Unit->GetBaseHealthPoints(), Unit->GetHealthPoints());
 
 	// Se calcula el porcentaje de salud
 	// const float HealthPercentage = Health.Y / Health.X;
 
 	// SEGUNDO:
-	//		(1) Si tiene un camino asignado: no se hace nada, debe llegar a su destino
+	//		(1) Si tiene un camino asignado: se verifica que el destino es aun valido
 	//		(2) Si no tiene un camino:
 	//				(2.1) Se decide si debe crear un asentamiento o recolectar un recurso
 	//				(2.2) Se mueve la unidad a la casilla
-	if (UnitInfo.Path.Num() == 0)
+
+	if (UnitInfo.Path.Num() != 0) // (1)
+	{
+		// Se verifica el estado de la unidad civil
+		switch (CivilUnit->GetCivilUnitState())
+		{
+		case ECivilUnitState::GatheringResource:
+			// Se verifica que se pueda recolectar el recurso
+			if (!TileMap->CanGatherResourceAtPos(UnitInfo.Path.Last().Pos2D))
+			{
+				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
+			}
+			break;
+		case ECivilUnitState::SettingSettlement:
+			// Se verifica que se pueda crear el asentamiento
+			if (!TileMap->CanSetSettlementAtPos(UnitInfo.Path.Last().Pos2D))
+			{
+				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
+			}
+			break;
+		default:
+			CivilUnit->SetCivilUnitState(ECivilUnitState::None);
+			break;
+		}
+	}
+
+	if (UnitInfo.Path.Num() == 0 && CivilUnit->GetCivilUnitState() == ECivilUnitState::None) // (2)
 	{
 		FIntPoint NewPos;
 
 		// Se determina si se debe crear un nuevo asentamiento
-		if (IsSettlementNeeded()) NewPos = CalculateBestPosForSettlement();
-		else NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+		if (CivilUnit->CanSetSettlement() && IsSettlementNeeded()) // (2.1)
+		{
+			// Se obtiene la posicion y se establece el estado de la unidad
+			NewPos = CalculateBestPosForSettlement();
+			CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
 
+			// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
+			if (NewPos == -1) NewPos = UnitInfo.Pos2D;
+		}
+		else
+		{
+			// Se obtiene la posicion y se establece el estado de la unidad
+			NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+			CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
+		}
+
+		// (2.2)
 		// Si no se ha calculado ninguna posicion y la unidad se encuentra sobre un asentamiento, se mueve a otra
 		if (NewPos == UnitInfo.Pos2D && TileMap->GetSettlementsPos().Contains(NewPos))
 		{
@@ -513,13 +612,43 @@ void ACMainAI::TurnStarted()
 	TurnFinished();
 }
 
-void ACMainAI::TurnFinished()
+void ACMainAI::TurnFinished() const
 {
 	// Si la faccion no es valida, no se hace nada
 	if (PawnFaction)
 	{
 		// Se finaliza el turno de la faccion
 		PawnFaction->TurnEnded();
+
+		// Se obtienen las unidades
+		const TArray<AActorUnit*> Units = PawnFaction->GetUnits();
+
+		// Se verifica si las unidades civiles aun pueden realizar acciones
+		for (const auto Unit : Units)
+		{
+			// Se omiten las unidades que no sean civiles
+			if (Unit->GetType() != EUnitType::Civil) continue;
+
+			// Se realiza el cast para poder acceder a los metodos de la clase
+			AActorCivilUnit* CivilUnit = Cast<AActorCivilUnit>(Unit);
+
+			// Se verifica que haya completado el camino y le queden puntos de movimiento
+			if (CivilUnit && CivilUnit->GetPath().Num() == 0 && CivilUnit->GetMovementPoints() > 0)
+			{
+				// Se verifica si puede recolectar un recurso
+				if (CivilUnit->GetCivilUnitState() == ECivilUnitState::GatheringResource &&
+					TileMap->CanGatherResourceAtPos(CivilUnit->GetPos()))
+				{
+					CivilUnit->GatherResource();
+				}
+				// Se verifica si puede establecer un asentamiento
+				else if (CivilUnit->GetCivilUnitState() == ECivilUnitState::SettingSettlement &&
+					CivilUnit->CanSetSettlement() && TileMap->CanSetSettlementAtPos(CivilUnit->GetPos()))
+				{
+					CivilUnit->CreateSettlement();
+				}
+			}
+		}
 
 		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Finished"), PawnFaction->GetIndex()))
 	}
@@ -540,4 +669,13 @@ void ACMainAI::BeginPlay()
 
 	// Se inicializa la instancia del mapa
 	TileMap = Cast<AActorTileMap>(UGameplayStatics::GetActorOfClass(GetWorld(), AActorTileMap::StaticClass()));
+
+	// Si inicializa el diccionario que almacena los valores de atractivo de las casillas
+	for (int32 Row = 0; Row < TileMap->GetSize().X; ++Row)
+	{
+		for (int32 Col = 0; Col < TileMap->GetSize().Y; ++Col)
+		{
+			TilesValue.Add(FIntPoint(Row, Col), 0.0);
+		}
+	}
 }

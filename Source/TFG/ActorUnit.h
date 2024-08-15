@@ -51,9 +51,6 @@ private:
 
 protected:
 	UFUNCTION(BlueprintCallable)
-	const TArray<FMovement>& GetPath() const { return Info.Path; }
-
-	UFUNCTION(BlueprintCallable)
 	const TArray<FMovement>& GetPathCompleted() const { return Info.PathCompleted; }
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -116,6 +113,14 @@ public:
 	 * @return Puntos de movimiento actuales
 	 */
 	int32 GetMovementPoints() const { return Info.MovementPoints; }
+
+	/**
+	 * Getter del atributo Path
+	 * 
+	 * @return Camino que va a seguir la unidad
+	 */
+	UFUNCTION(BlueprintCallable)
+	const TArray<FMovement>& GetPath() const { return Info.Path; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

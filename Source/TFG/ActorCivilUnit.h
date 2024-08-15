@@ -22,11 +22,31 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
 	int32 NumActions;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
+	ECivilUnitState CivilUnitState;
+
 public:
 	// Sets default values for this actor's properties
 	AActorCivilUnit();
 
 protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
+
+public:
+	ECivilUnitState GetCivilUnitState() const { return CivilUnitState; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void SetCivilUnitState(const ECivilUnitState State) { CivilUnitState = State; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	bool CanSetSettlement() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	UFUNCTION(BlueprintCallable)
 	void GatherResource();
 
@@ -35,10 +55,6 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
