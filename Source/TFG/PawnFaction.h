@@ -47,6 +47,9 @@ protected:
 	int32 Index;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
+	float MilitaryStrength;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
 	float Money;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
 	float MoneyBalance;

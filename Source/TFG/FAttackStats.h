@@ -27,13 +27,21 @@ struct FAttackStats
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	FAttackStats(): FAttackStats(0, 0)
+	FAttackStats(): FAttackStats(0.0, 0.0)
 	{
 	}
 
-	FAttackStats(const float Attack, const float Defense)
+	FAttackStats(const float AttackPoints, const float DefensePoints)
+		: AttackPoints(AttackPoints),
+		  DefensePoints(DefensePoints)
 	{
-		AttackPoints = Attack;
-		DefensePoints = Defense;
+	}
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	float GetStrengthPoints() const
+	{
+		// Se calculan los puntos de fuerza y se devuelven
+		return (AttackPoints * 1.2 + DefensePoints * 0.8) / 2.0;
 	}
 };

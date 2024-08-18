@@ -14,6 +14,9 @@ APawnFaction::APawnFaction()
 	// Se inicializa el indice de la faccion
 	Index = 0;
 
+	// Se inicializa la fuerza militar de la faccion
+	MilitaryStrength = 0.0;
+
 	// Se inicializa el dinero y el balance
 	Money = MoneyBalance = 0.0;
 
@@ -249,8 +252,9 @@ void APawnFaction::TurnStarted()
 	// Ademas, se actualiza el dinero y balance de la faccion teniendo en cuenta el coste de manteimiento de
 	// las unidades
 
-	// Se reinicia el balance de dinero
+	// Se reinicia el balance de dinero y la fuerza militar de la faccion
 	MoneyBalance = 0.0;
+	MilitaryStrength = 0.0;
 
 	// Se vacian los arrays para actualizarlos
 	AutomaticUnits.Empty();
@@ -267,6 +271,9 @@ void APawnFaction::TurnStarted()
 
 		// Se actualiza el balance de dinero con el coste de matenimiento de la unidad actual
 		MoneyBalance -= Unit->GetMaintenanceCost();
+
+		// Se actualiza la fuerza militar de la faccion con la fuerza de ataque de la unidad actualF
+		MilitaryStrength += Unit->GetAttackPoints();
 	}
 
 	// Se inicia el turno de los asentamientos de la faccion y se verifica si requieren seleccionar un nuevo
