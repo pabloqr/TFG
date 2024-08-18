@@ -7,6 +7,7 @@
 #include "ActorUnit.h"
 #include "CMainAI.generated.h"
 
+class UDataTable;
 class AActorSettlement;
 class AActorTileMap;
 class APawnFaction;
@@ -23,6 +24,13 @@ enum class EUnitAction : uint8
 	MoveTowardsAllyTiles = 6,
 	Heal = 7
 };
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProductionSelection, AActorSettlement*, Settlement,
+                                             EUnitType, UnitType);
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
 class TFG_API ACMainAI : public AAIController
@@ -90,6 +98,10 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	EUnitType CalculateBestUnitTypeToProduce() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
 
@@ -106,4 +118,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TurnFinished() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitProductionSelection OnUnitProductionSelection;
 };

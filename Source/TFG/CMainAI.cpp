@@ -415,6 +415,21 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
+{
+	// Se decide la unidad a producir en funcion de si se quiere defender, atacar o realizar otra accion
+	EUnitType BestUnitType;
+
+	const int32 Value = FMath::RandRange(1, 3);
+	if (Value == 1) BestUnitType = EUnitType::Infantry;
+	else if (Value == 2) BestUnitType = EUnitType::Armoured;
+	else BestUnitType = EUnitType::AntiTank;
+
+	return BestUnitType;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 {
 	// Se realiza el cast para poder acceder a los metodos de la clase
@@ -587,6 +602,23 @@ void ACMainAI::ManageUnits()
 
 void ACMainAI::ManageSettlementsProduction()
 {
+	// Si la faccion o la instancia del mapa no es valida, no se hace nada
+	if (!PawnFaction || !TileMap) return;
+
+	// Se obtienen los asentamientos de la faccion
+	const TArray<AActorSettlement*> Settlements = PawnFaction->GetSettlements();
+	const TArray<int32> IdleSettlements = PawnFaction->GetIdleSettlements();
+	for (const auto Settlement : IdleSettlements)
+	{
+		// Si la referencia al asentamiento no es valida, se omite
+		if (!Settlements[Settlement]) continue;
+
+		// Se obtiene el tipo de unidad que se tiene que producir
+		const EUnitType UnitType = IsSettlementNeeded() ? EUnitType::Civil : CalculateBestUnitTypeToProduce();
+
+		// Se llama al evento que establece la produccion del asentamiento
+		OnUnitProductionSelection.Broadcast(Settlements[Settlement], UnitType);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

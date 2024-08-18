@@ -49,15 +49,6 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	UFUNCTION(BlueprintCallable, Category="Settlement")
-	void AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
-	                          const EUnitType UnitType);
-
-	UFUNCTION(BlueprintCallable, Category="Settlement")
-	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
-
-	//----------------------------------------------------------------------------------------------------------------//
-
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -116,6 +107,15 @@ public:
 	 * @param Yield Cantidad de dinero que genera por turno. Puede ser un valor negativo
 	 */
 	void SetMoneyYield(const float Yield) { Info.MoneyYield = Yield; }
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable, Category="Settlement")
+	void AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
+							  const EUnitType UnitType);
+
+	UFUNCTION(BlueprintCallable, Category="Settlement")
+	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
