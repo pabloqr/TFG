@@ -35,7 +35,15 @@ struct FResourceCollection
 	}
 };
 
+//--------------------------------------------------------------------------------------------------------------------//
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnStarted);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyUpdated, float, Money);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyBalanceUpdated, float, MoneyBalance);
+
+//--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
 class TFG_API APawnFaction : public APawn
@@ -166,4 +174,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTurnStarted OnTurnStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMoneyUpdated OnMoneyUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMoneyBalanceUpdated OnMoneyBalanceUpdated;
 };

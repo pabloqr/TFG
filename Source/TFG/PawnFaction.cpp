@@ -18,7 +18,8 @@ APawnFaction::APawnFaction()
 	MilitaryStrength = 0.0;
 
 	// Se inicializa el dinero y el balance
-	Money = MoneyBalance = 0.0;
+	Money = 200.0;
+	MoneyBalance = 0.0;
 
 	// Se inicializan los diccionarios de recursos
 	MonetaryResources = TMap<EResource, FResourceCollection>({
@@ -152,6 +153,12 @@ void APawnFaction::AddSettlement(AActorSettlement* Settlement)
 	// Se anade el asentamiento a la lista
 	Settlements.AddUnique(Settlement);
 
+	// Se actualiza el balance de dinero
+	MoneyBalance += Settlement->GetMoneyYield();
+
+	// Se llama al evento para actualizar la interfaz
+	OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+
 	// Se actualiza su estado
 	OnSettlementStateUpdated(Settlement, ESettlementState::SelectProduction);
 }
@@ -159,7 +166,16 @@ void APawnFaction::AddSettlement(AActorSettlement* Settlement)
 void APawnFaction::RemoveSettlement(AActorSettlement* Settlement)
 {
 	// Se elimina el asentamiento de la lista
-	if (Settlements.Contains(Settlement)) Settlements.Remove(Settlement);
+	if (Settlements.Contains(Settlement))
+	{
+		Settlements.Remove(Settlement);
+
+		// Se actualiza el balance de dinero
+		MoneyBalance -= Settlement->GetMoneyYield();
+
+		// Se llama al evento para actualizar la interfaz
+		OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -171,6 +187,12 @@ void APawnFaction::AddUnit(AActorUnit* Unit)
 
 	// Se anade la unidad a la lista
 	Units.AddUnique(Unit);
+
+	// Se actualiza el balance de dinero para que tenga en cuenta la unidad anadida
+	MoneyBalance -= Unit->GetMaintenanceCost();
+
+	// Se llama al evento para actualizar la interfaz
+	OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
 
 	// Se actualiza su estado
 	OnUnitStateUpdated(Unit, EUnitState::WaitingForOrders);
@@ -188,6 +210,12 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 
 		// Se elimina la unidad de la lista
 		Units.Remove(Unit);
+
+		// Se actualiza el balance de dinero para que no tenga en cuenta la unidad eliminada
+		MoneyBalance += Unit->GetMaintenanceCost();
+
+		// Se llama al evento para actualizar la interfaz
+		OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
 	}
 }
 
@@ -219,6 +247,15 @@ void APawnFaction::AddResource(const FResource& Resource, const FIntPoint& Pos)
 	if (Resources.Contains(Resource.Resource) && Resources[Resource.Resource].Tiles.Contains(Pos))
 	{
 		Resources[Resource.Resource].GatheredResource.Quantity += Resource.Quantity;
+
+		// Si el recurso es monetario, se actualiza el balance de dinero
+		if (Resource.Type == EResourceType::Monetary)
+		{
+			MoneyBalance += Resource.Quantity;
+
+			// Se llama al evento para actualizar la interfaz
+			OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+		}
 	}
 }
 
@@ -236,6 +273,15 @@ void APawnFaction::RemoveResource(const FResource& Resource, const FIntPoint& Po
 		// Se hace que la cantidad siempre sea mayor o igual a 0
 		Resources[Resource.Resource].GatheredResource.Quantity =
 			FMath::Max(Resources[Resource.Resource].GatheredResource.Quantity - Resource.Quantity, 0);
+
+		// Si el recurso es monetario, se actualiza el balance de dinero
+		if (Resource.Type == EResourceType::Monetary)
+		{
+			MoneyBalance -= Resource.Quantity;
+
+			// Se llama al evento para actualizar la interfaz
+			OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+		}
 	}
 }
 

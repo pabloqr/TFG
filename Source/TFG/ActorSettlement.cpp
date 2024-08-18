@@ -15,7 +15,11 @@ AActorSettlement::AActorSettlement()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Se inicializa la informacion del asentamiento
 	Info = FSettlementInfo();
+
+	// Se establece el dinero inicial que produce el asentamiento
+	Info.MoneyYield = 5.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
