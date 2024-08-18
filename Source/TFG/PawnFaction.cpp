@@ -273,7 +273,7 @@ void APawnFaction::TurnStarted()
 		MoneyBalance -= Unit->GetMaintenanceCost();
 
 		// Se actualiza la fuerza militar de la faccion con la fuerza de ataque de la unidad actualF
-		MilitaryStrength += Unit->GetAttackPoints();
+		MilitaryStrength += Unit->GetStrengthPoints();
 	}
 
 	// Se inicia el turno de los asentamientos de la faccion y se verifica si requieren seleccionar un nuevo
