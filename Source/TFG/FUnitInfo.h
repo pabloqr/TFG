@@ -74,6 +74,12 @@ struct FUnitInfo
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Estado de movimiento
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	bool IsMoving;
+
+	/**
 	 * Puntos de movimiento base
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
@@ -131,7 +137,7 @@ struct FUnitInfo
 	 * Constructor por defecto
 	 */
 	FUnitInfo(): FUnitInfo(FIntPoint(-1), EUnitType::None, FResource(EResource::None, EResourceType::None, 0),
-	                       2, TArray<FMovement>(), 2, 2.0, EUnitState::None)
+	                       false, 2, TArray<FMovement>(), 2, 2.0, EUnitState::None, false)
 	{
 	}
 
@@ -141,6 +147,7 @@ struct FUnitInfo
 	 * @param Pos Posicion en el Array2D de casillas
 	 * @param UnitType Tipo de unidad. 'None' si es una unidad civil
 	 * @param ReqResource Recurso necesario para producir la unidad
+	 * @param Moving Si la unidad se esta moviendo
 	 * @param UnitBaseMovP Movimiento base de la unidad
 	 * @param UnitPath Camino asignado
 	 * @param UnitVisP Puntos de visibilidad
@@ -148,13 +155,15 @@ struct FUnitInfo
 	 * @param UnitState Estado de la unidad
 	 * @param Healing Si la unidad se esta curando
 	 */
-	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const FResource& ReqResource, const int32 UnitBaseMovP,
-	          const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitMaintC,
-	          const EUnitState UnitState, const bool Healing = false)
+	FUnitInfo(const FIntPoint& Pos, const EUnitType UnitType, const FResource& ReqResource, const bool Moving,
+	          const int32 UnitBaseMovP, const TArray<FMovement>& UnitPath, const int32 UnitVisP, const float UnitMaintC,
+	          const EUnitState UnitState, const bool Healing)
 	{
 		Pos2D = Pos;
 		Type = UnitType;
 		RequiredResource = ReqResource;
+
+		IsMoving = Moving;
 		BaseMovementPoints = MovementPoints = UnitBaseMovP;
 
 		Path = UnitPath;

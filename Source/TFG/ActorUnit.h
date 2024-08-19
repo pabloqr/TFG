@@ -13,6 +13,8 @@ class AActorTileMap;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitMoved, const FIntPoint&, PrevPos);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUnitFinishedMoving);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState, State);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDestroyed, AActorUnit*, Unit);
@@ -101,6 +103,13 @@ public:
 	float GetMaintenanceCost() const { return Info.MaintenanceCost; }
 
 	/**
+	 * Getter del atributo IsMoving
+	 * 
+	 * @return Si la unidad esta en movimiento
+	 */
+	bool GetIsMoving() const { return Info.IsMoving; }
+
+	/**
 	 * Getter del atributo BaseMovementPoints
 	 * 
 	 * @return Puntos de movimiento base
@@ -138,6 +147,14 @@ public:
 	 * @param State Estado de la unidad
 	 */
 	void SetState(const EUnitState State);
+
+	/**
+	 * Setter del atributo IsMoving
+	 * 
+	 * @param Moving Si la unidad esta en movimiento
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetIsMoving(const bool Moving) { Info.IsMoving = Moving; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -224,6 +241,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;
+
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
+	FOnUnitFinishedMoving OnUnitFinishedMoving;
 
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnUnitStateChanged OnUnitStateChanged;

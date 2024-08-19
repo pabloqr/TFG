@@ -30,6 +30,8 @@ enum class EUnitAction : uint8
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProductionSelection, AActorSettlement*, Settlement,
                                              EUnitType, UnitType);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnFinished);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
@@ -61,6 +63,10 @@ protected:
 	TSet<FIntPoint> EnemiesLocation;
 
 	TSet<FIntPoint> AlliesLocation;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	int32 UnitsMoving;
 
 public:
 	/**
@@ -106,9 +112,14 @@ private:
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
 
 	void ManageUnits();
-	void ManageSettlementsProduction();
+	void ManageSettlementsProduction() const;
 
 protected:
+	UFUNCTION(BlueprintCallable)
+	bool CanFinishTurn() const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
@@ -123,4 +134,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitProductionSelection OnUnitProductionSelection;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTurnFinished OnTurnFinished;
 };

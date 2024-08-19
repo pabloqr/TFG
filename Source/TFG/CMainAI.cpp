@@ -26,6 +26,9 @@ ACMainAI::ACMainAI()
 
 	// Se inicializa la casilla para establecer asentamientos
 	BestTileForSettlement = TTuple<FIntPoint, float>(FIntPoint(0), -1);
+
+	// Se inicializa el numero de unidades en movimiento
+	UnitsMoving = 0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -600,7 +603,7 @@ void ACMainAI::ManageUnits()
 	}
 }
 
-void ACMainAI::ManageSettlementsProduction()
+void ACMainAI::ManageSettlementsProduction() const
 {
 	// Si la faccion o la instancia del mapa no es valida, no se hace nada
 	if (!PawnFaction || !TileMap) return;
@@ -618,6 +621,43 @@ void ACMainAI::ManageSettlementsProduction()
 
 		// Se llama al evento que establece la produccion del asentamiento
 		OnUnitProductionSelection.Broadcast(Settlements[Settlement], UnitType);
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool ACMainAI::CanFinishTurn() const
+{
+	// Se verifica que la faccion sea valida
+	if (!PawnFaction) return false;
+
+	// Se obtienen y procesan todas las unidades
+	const TArray<AActorUnit*> Units = PawnFaction->GetUnits();
+	for (const auto Unit : Units)
+	{
+		// Si una unidad esta en movimiento, se devuelve
+		if (Unit->GetIsMoving()) return false;
+	}
+
+	return true;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void ACMainAI::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// Se inicializa la instancia del mapa
+	TileMap = Cast<AActorTileMap>(UGameplayStatics::GetActorOfClass(GetWorld(), AActorTileMap::StaticClass()));
+
+	// Si inicializa el diccionario que almacena los valores de atractivo de las casillas
+	for (int32 Row = 0; Row < TileMap->GetSize().X; ++Row)
+	{
+		for (int32 Col = 0; Col < TileMap->GetSize().Y; ++Col)
+		{
+			TilesValue.Add(FIntPoint(Row, Col), 0.0);
+		}
 	}
 }
 
@@ -685,29 +725,6 @@ void ACMainAI::TurnFinished() const
 		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Finished"), PawnFaction->GetIndex()))
 	}
 
-	// Se llama al metodo para gestionar la siguiente faccion
-	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
-	{
-		MainMode->NextTurn();
-	}
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-// Called when the game starts or when spawned
-void ACMainAI::BeginPlay()
-{
-	Super::BeginPlay();
-
-	// Se inicializa la instancia del mapa
-	TileMap = Cast<AActorTileMap>(UGameplayStatics::GetActorOfClass(GetWorld(), AActorTileMap::StaticClass()));
-
-	// Si inicializa el diccionario que almacena los valores de atractivo de las casillas
-	for (int32 Row = 0; Row < TileMap->GetSize().X; ++Row)
-	{
-		for (int32 Col = 0; Col < TileMap->GetSize().Y; ++Col)
-		{
-			TilesValue.Add(FIntPoint(Row, Col), 0.0);
-		}
-	}
+	// Se llama al metodo para gestionar el final del turno
+	OnTurnFinished.Broadcast();
 }

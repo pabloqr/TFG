@@ -119,6 +119,9 @@ void AActorUnit::ContinuePath()
 	// Se almacena la posicion antes del movimiento
 	const FIntPoint PrevPos = Info.Pos2D;
 
+	// Se actualiza el estado de movimiento de la unidad
+	Info.IsMoving = true;
+
 	// Se realizan todos los movimientos posibles en el turno
 	while (Info.State == EUnitState::FollowingPath) MoveUnit();
 
