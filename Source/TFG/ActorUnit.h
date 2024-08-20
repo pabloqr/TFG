@@ -13,8 +13,6 @@ class AActorTileMap;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitMoved, const FIntPoint&, PrevPos);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnUnitFinishedMoving);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState, State);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDestroyed, AActorUnit*, Unit);
@@ -40,6 +38,11 @@ public:
 	AActorUnit();
 
 private:
+	/**
+	 * Metodo privado que actualiza el estado de la unidad dependiendo del camino asignado y sus puntos de movimiento
+	 */
+	void UpdateState();
+
 	/**
 	 * Metodo privado que actualiza los costes de movimiento de las casillas del camino para reflejar la cantidad
 	 * correcta de turnos en llegar a cada una de ellas
@@ -241,9 +244,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitMoved OnUnitMoved;
-
-	UPROPERTY(BlueprintCallable, BlueprintAssignable)
-	FOnUnitFinishedMoving OnUnitFinishedMoving;
 
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnUnitStateChanged OnUnitStateChanged;

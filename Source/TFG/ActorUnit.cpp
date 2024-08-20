@@ -19,6 +19,13 @@ AActorUnit::AActorUnit()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorUnit::UpdateState()
+{
+	if (Info.MovementPoints == 0) SetState(EUnitState::NoMovementPoints);
+	else if (Info.Path.Num() == 0) SetState(EUnitState::WaitingForOrders);
+	else SetState(EUnitState::FollowingPath);
+}
+
 void AActorUnit::UpdatePathCosts()
 {
 	// Se verifica que la unidad se haya movido en el turno
@@ -49,9 +56,7 @@ void AActorUnit::UpdatePosition(const FMovement& Move)
 		Info.MovementPoints -= Move.MovementCost;
 
 		// Se actualiza el estado de la unidad
-		if (Info.MovementPoints == 0) SetState(EUnitState::NoMovementPoints);
-		else if (Info.Path.Num() == 0) SetState(EUnitState::WaitingForOrders);
-		else SetState(EUnitState::FollowingPath);
+		UpdateState();
 	}
 }
 
@@ -70,6 +75,8 @@ void AActorUnit::SetState(const EUnitState State)
 
 void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 {
+	UE_LOG(LogTemp, Log, TEXT("Unit - Assigning new path"))
+
 	// Se limpian los valores almacenados del camino previo
 	Info.Path.Empty();
 
@@ -79,12 +86,12 @@ void AActorUnit::AssignPath(const TArray<FMovement>& NewPath)
 		Info.Path.Append(NewPath);
 		if (Info.Path[0].Pos2D == Info.Pos2D) Info.Path.RemoveAt(0);
 
-		// Se establece el estado de la unidad
-		if (Info.MovementPoints > 0) SetState(EUnitState::FollowingPath);
-
 		// Se actualiza el numero de turnos para alcanzar las casillas del camino
 		UpdatePathTurns();
 	}
+
+	// Se establece el estado de la unidad
+	UpdateState();
 }
 
 void AActorUnit::UpdatePath()
@@ -113,6 +120,8 @@ void AActorUnit::RemovePath()
 
 void AActorUnit::ContinuePath()
 {
+	UE_LOG(LogTemp, Log, TEXT("Unit - Continuing path"))
+
 	// Se limpian las casillas completadas en el turno previo
 	Info.PathCompleted.Empty();
 
@@ -123,7 +132,16 @@ void AActorUnit::ContinuePath()
 	Info.IsMoving = true;
 
 	// Se realizan todos los movimientos posibles en el turno
-	while (Info.State == EUnitState::FollowingPath) MoveUnit();
+	while (Info.State == EUnitState::FollowingPath)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Unit - Movement"))
+
+		MoveUnit();
+
+		TArray<FString> ParsedEnum;
+		UEnum::GetValueAsString(Info.State).ParseIntoArray(ParsedEnum, TEXT(":"), false);
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Unit - After movement state - %s"), *ParsedEnum.Last()))
+	}
 
 	// Se llama al evento para que se actualicen los datos en el resto de actores
 	OnUnitMoved.Broadcast(PrevPos);
@@ -145,15 +163,21 @@ void AActorUnit::SkipTurn()
 
 void AActorUnit::MoveUnit()
 {
+	UE_LOG(LogTemp, Log, TEXT("Unit - Trying to move"))
+
 	// Se comprueba que haya pasos en el camino a seguir
 	if (Info.Path.Num() > 0)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Unit - Has path"))
+
 		// Se obtiene el siguiente movimiento
 		const FMovement Move = Info.Path[0];
 
 		// Se comprueba que la unidad tenga puntos de movimiento suficientes
 		if (Info.MovementPoints >= Move.MovementCost)
 		{
+			UE_LOG(LogTemp, Log, TEXT("Unit - Has MP"))
+
 			// Se elimina la entrada correspondiente al movimiento actual
 			Info.PathCompleted.Add(Move);
 			Info.Path.RemoveAt(0);
@@ -164,9 +188,18 @@ void AActorUnit::MoveUnit()
 			return;
 		}
 
+		UE_LOG(LogTemp, Log, TEXT("Unit - No MP"))
+
 		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
 		SetState(EUnitState::WaitingForNextTurn);
+
+		return;
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("Unit - No path"))
+
+	// Se actualiza el estado para salir del bucle
+	UpdateState();
 }
 
 void AActorUnit::RestoreMovement()
@@ -221,6 +254,8 @@ void AActorUnit::TurnStarted()
 
 void AActorUnit::TurnEnded()
 {
+	UE_LOG(LogTemp, Log, TEXT("Unit - Finishing turn"))
+
 	// Se recalcula el camino para tener en cuenta cualquier unidad propia que haya podido interponerse
 	UpdatePath();
 

@@ -354,6 +354,8 @@ void APawnFaction::TurnStarted()
 
 void APawnFaction::TurnEnded()
 {
+	UE_LOG(LogTemp, Log, TEXT("Faction - Finishing turn"))
+
 	// Se procesan todas las unidades
 	for (int32 i = 0; i < Units.Num(); ++i)
 	{
