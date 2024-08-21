@@ -360,10 +360,6 @@ FIntPoint ACMainAI::GetClosestAllyTilePos(const FIntPoint& Pos) const
 
 FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUnitAction UnitAction) const
 {
-	TArray<FString> ParsedEnum;
-	UEnum::GetValueAsString(UnitAction).ParseIntoArray(ParsedEnum, TEXT(":"), false);
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("CalculatingPos - %s"), *ParsedEnum.Last()))
-
 	// Si se debe mover hacia un enemigo, se obtiene el mas cercano
 	if (UnitAction == EUnitAction::MoveTowardsEnemy)
 	{
@@ -538,13 +534,9 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 	EUnitAction UnitAction = EUnitAction::None;
 	if (EnemiesLocation.Num() > 0) // (1)
 	{
-		UE_LOG(LogTemp, Log, TEXT("ENEMIES"))
-
 		// En caso de que la unidad tenga un camino asignado a una casilla propia, no se hace nada
 		if (UnitInfo.Path.Num() == 0 || !TileMap->IsTileMine(UnitInfo.Path.Last().Pos2D))
 		{
-			UE_LOG(LogTemp, Log, TEXT("Changing Path"))
-
 			// Segun el porcentaje de salud de la unidad:
 			//		* 0.0-0.3: se mueve la unidad a una casilla aliada
 			//		* 0.3-0.5: se desplaza la unidad lejos del enemigo
@@ -558,8 +550,6 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 	}
 	else // (2)
 	{
-		UE_LOG(LogTemp, Log, TEXT("NOT ENEMIES"))
-
 		// Segun el porcentaje de salud de la unidad:
 		//		* 0.0-0.7: se cura la unidad
 		//		* 0.7-1.0: se explora el mapa
@@ -573,26 +563,17 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 	switch (UnitAction)
 	{
 	case EUnitAction::None: // (a)
-		UE_LOG(LogTemp, Log, TEXT("Action - Doing nothing"))
 		break;
 	case EUnitAction::Heal: // (b)
-		UE_LOG(LogTemp, Log, TEXT("Action - Healing"))
-
 		Unit->Heal();
 		break;
 	default: //(c)
-		UE_LOG(LogTemp, Log, TEXT("Action - Moving"))
-		UE_LOG(LogTemp, Log, TEXT("Calculating NewPos"))
-
+		// Se calcula la nueva posicion y el camino que se debe seguir para llegar a ella
 		const FIntPoint NewPos = CalculateBestPosForUnit(UnitInfo, UnitAction);
-
-		UE_LOG(LogTemp, Log, TEXT("Moving Unit"))
-
 		const TArray<FMovement> Path = TileMap->FindPath(UnitInfo.Pos2D, NewPos, UnitInfo.Type,
 		                                                 UnitInfo.BaseMovementPoints, UnitInfo.MovementPoints);
 
-		UE_LOG(LogTemp, Log, TEXT("Assigning new path"))
-
+	// Se asigna el camino calculado a la unidad
 		Unit->AssignPath(Path);
 		break;
 	}
@@ -609,12 +590,8 @@ void ACMainAI::ManageUnits()
 		// Se obtienen los atributos de la unidad para poder usarlos durante el proceso
 		const FUnitInfo UnitInfo = Unit->GetInfo();
 
-		UE_LOG(LogTemp, Log, TEXT("Calculating EnemiesLocation"))
-
 		// PRIMERO: se comprueba si hay enemigos cerca
 		EnemiesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, true);
-
-		UE_LOG(LogTemp, Log, TEXT("Calculating AlliesLocation"))
 
 		// Tambien se obtienen las posiciones de las unidades aliadas cercanas
 		AlliesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, false);

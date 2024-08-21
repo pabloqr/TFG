@@ -50,6 +50,28 @@ APawnFaction::APawnFaction()
 			FResourceCollection(FResource(EResource::Oil, EResourceType::Strategic, 0), TArray<FIntPoint>())
 		}
 	});
+
+	// Se inicializa el diccionario de relaciones diplomaticas
+	FactionsWithDiplomaticRelationship = TMap<EDiplomaticRelationship, FFactionsSet>({
+		{EDiplomaticRelationship::AtWar, FFactionsSet()},
+		{EDiplomaticRelationship::Neutral, FFactionsSet()},
+		{EDiplomaticRelationship::Ally, FFactionsSet()},
+	});
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void APawnFaction::UpdateFactionDiplomaticRelationship(const int32 Faction, const EDiplomaticRelationship Relationship)
+{
+	// Se verifica que la faccion existe
+	if (!KnownFactions.Contains(Faction)) return;
+
+	// Se actualiza el diccionario de relaciones diplomaticas y facciones
+	FactionsWithDiplomaticRelationship[KnownFactions[Faction].Relationship].Factions.Remove(Faction);
+	FactionsWithDiplomaticRelationship[Relationship].Factions.Add(Faction);
+
+	// Se actualiza la relacion diplomatica de la faccion dada
+	KnownFactions[Faction].Relationship = Relationship;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -287,6 +309,52 @@ void APawnFaction::RemoveResource(const FResource& Resource, const FIntPoint& Po
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength)
+{
+	// Se obtienen todos los indices de las facciones conocidas y se procesan
+	TArray<int32> FactionsIndex;
+	KnownFactions.GetKeys(FactionsIndex);
+	for (const auto FactionIndex : FactionsIndex)
+	{
+		// Si la faccion no se encuentra en la lista significa que ya no esta en juego, por lo que se elimina
+		// y se omite
+		if (!FactionsStrength.Contains(FactionIndex))
+		{
+			KnownFactions.Remove(FactionIndex);
+			continue;
+		}
+
+		// Se actualiza la fuerza militar de la faccion
+		KnownFactions[FactionIndex].MilitaryStrength = FactionsStrength[FactionIndex];
+	}
+}
+
+void APawnFaction::DeclareWarOnFaction(const int32 Faction)
+{
+	// Se actualiza la relacion diplomatica
+	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::AtWar);
+}
+
+void APawnFaction::MakePeaceWithFaction(const int32 Faction)
+{
+	// Se actualiza la relacion diplomatica
+	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Neutral);
+}
+
+void APawnFaction::MakeAllianceWithFaction(const int32 Faction)
+{
+	// Se actualiza la relacion diplomatica
+	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Ally);
+}
+
+void APawnFaction::BreakAllianceWithFaction(const int32 Faction)
+{
+	// Se actualiza la relacion diplomatica
+	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Neutral);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void APawnFaction::TurnStarted()
 {
 	// Se inicia el turno de las unidades de la faccion y se realiza su clasificacion para que puedan ser
@@ -354,8 +422,6 @@ void APawnFaction::TurnStarted()
 
 void APawnFaction::TurnEnded()
 {
-	UE_LOG(LogTemp, Log, TEXT("Faction - Finishing turn"))
-
 	// Se procesan todas las unidades
 	for (int32 i = 0; i < Units.Num(); ++i)
 	{

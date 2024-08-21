@@ -13,6 +13,28 @@ class AActorSettlement;
 enum class ESettlementState : uint8;
 class AActorDamageableElement;
 
+//--------------------------------------------------------------------------------------------------------------------//
+
+USTRUCT(BlueprintType)
+struct FFactionsSet
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsArray")
+	TSet<int32> Factions;
+
+	FFactionsSet(): FFactionsSet(TSet<int32>())
+	{
+	}
+
+	explicit FFactionsSet(const TSet<int32>& Factions)
+		: Factions(Factions)
+	{
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 USTRUCT(BlueprintType)
 struct FResourceCollection
 {
@@ -31,6 +53,38 @@ struct FResourceCollection
 	FResourceCollection(const FResource& GatheredResource, const TArray<FIntPoint>& Tiles)
 		: GatheredResource(GatheredResource),
 		  Tiles(Tiles)
+	{
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+UENUM(BlueprintType)
+enum class EDiplomaticRelationship : uint8
+{
+	AtWar = 0 UMETA(DisplayName = "AtWar"),
+	Neutral = 1 UMETA(DisplayName = "Neutral"),
+	Ally = 2 UMETA(DisplayName = "Ally"),
+};
+
+USTRUCT(BlueprintType)
+struct FOpponentFactionInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
+	EDiplomaticRelationship Relationship;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
+	float MilitaryStrength;
+
+	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0)
+	{
+	}
+
+	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength)
+		: Relationship(Relationship),
+		  MilitaryStrength(MilitaryStrength)
 	{
 	}
 };
@@ -79,11 +133,19 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TMap<EResource, FResourceCollection> StrategicResources;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Opponents")
+	TMap<int32, FOpponentFactionInfo> KnownFactions;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Opponents")
+	TMap<EDiplomaticRelationship, FFactionsSet> FactionsWithDiplomaticRelationship;
+
 public:
 	/**
 	 * Constructor por defecto
 	 */
 	APawnFaction();
+
+private:
+	void UpdateFactionDiplomaticRelationship(int32 Faction, const EDiplomaticRelationship Relationship);
 
 protected:
 	UFUNCTION(BlueprintCallable, Category="Faction")
@@ -101,6 +163,7 @@ protected:
 
 public:
 	int32 GetIndex() const { return Index; }
+	float GetMilitaryStrength() const { return MilitaryStrength; }
 	float GetMoney() const { return Money; }
 	float GetMoneyBalance() const { return MoneyBalance; }
 	const TArray<AActorSettlement*>& GetSettlements() const { return Settlements; }
@@ -152,6 +215,22 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveResource(const FResource& Resource, const FIntPoint& Pos);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength);
+
+	UFUNCTION(BlueprintCallable)
+	void DeclareWarOnFaction(const int32 Faction);
+
+	UFUNCTION(BlueprintCallable)
+	void MakePeaceWithFaction(const int32 Faction);
+
+	UFUNCTION(BlueprintCallable)
+	void MakeAllianceWithFaction(const int32 Faction);
+
+	UFUNCTION(BlueprintCallable)
+	void BreakAllianceWithFaction(const int32 Faction);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
