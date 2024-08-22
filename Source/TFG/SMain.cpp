@@ -67,6 +67,45 @@ APawnFaction* ASMain::NextFaction()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void ASMain::StartWar(const int32 FactionA, const int32 FactionB)
+{
+	// Se anade la nueva entrada si no existe, en caso contrario, se restablecen los atributos
+	if (!CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
+	{
+		CurrentWars.Add(FFactionsPair(FactionA, FactionB), FWarInfo());
+	}
+	else
+	{
+		CurrentWars[FFactionsPair(FactionA, FactionB)].WarScore = 0.0;
+		CurrentWars[FFactionsPair(FactionA, FactionB)].NumTurns = 0;
+	}
+}
+
+float ASMain::GetWarScore(const int32 FactionA, const int32 FactionB) const
+{
+	return CurrentWars.Contains(FFactionsPair(FactionA, FactionB))
+		       ? CurrentWars[FFactionsPair(FactionA, FactionB)].WarScore
+		       : -1.0;
+}
+
+int32 ASMain::GetWarTurns(const int32 FactionA, const int32 FactionB) const
+{
+	return CurrentWars.Contains(FFactionsPair(FactionA, FactionB))
+		       ? CurrentWars[FFactionsPair(FactionA, FactionB)].NumTurns
+		       : -1;
+}
+
+void ASMain::EndWar(const int32 FactionA, const int32 FactionB)
+{
+	// Se verifica que la entrada existe y se elimina
+	if (CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
+	{
+		CurrentWars.Remove(FFactionsPair(FactionA, FactionB));
+	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 int32 ASMain::AddTurn()
 {
 	return ++CurrentTurn;

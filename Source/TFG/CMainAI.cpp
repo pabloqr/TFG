@@ -7,7 +7,6 @@
 #include "ActorSettlement.h"
 #include "ActorTileMap.h"
 #include "LibraryTileMap.h"
-#include "MMain.h"
 #include "SMain.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -24,11 +23,29 @@ ACMainAI::ACMainAI()
 	// Se inicializa el mapa a un valor nulo
 	TileMap = nullptr;
 
+	// Se inicializa el estado del controlador
+	MilitaryState = EMilitaryState::Neutral;
+
 	// Se inicializa la casilla para establecer asentamientos
 	BestTileForSettlement = TTuple<FIntPoint, float>(FIntPoint(0), -1);
 
 	// Se inicializa el numero de unidades en movimiento
 	UnitsMoving = 0;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+float ACMainAI::CalculateStrengthDifferenceRelevance(const float StrengthA, const float StrengthB)
+{
+	// Se calcula la diferencia absoluta y la media de las fuerzas
+	const float Difference = FMath::Abs(StrengthA - StrengthB);
+	const float Average = (StrengthA + StrengthB) / 2.0;
+
+	// Se aplica la formula para la relevancia y se normaliza entre 0 y 1
+	const float Relevance = Difference / (Average + 1.0) * FMath::Exp(Difference / (Average + 1.0));
+	const float NormalizedRelevance = 1 / (1 + FMath::Exp(-Relevance));
+
+	return NormalizedRelevance;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -197,6 +214,13 @@ FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
 	}
 
 	return ClosestResource;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+float ACMainAI::ProposePeaceTreaty(const FDealInfo& Deal) const
+{
+	return -1.0;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -416,23 +440,6 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 	return UnitInfo.Pos2D;
 }
 
-//--------------------------------------------------------------------------------------------------------------------//
-
-EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
-{
-	// Se decide la unidad a producir en funcion de si se quiere defender, atacar o realizar otra accion
-	EUnitType BestUnitType;
-
-	const int32 Value = FMath::RandRange(1, 3);
-	if (Value == 1) BestUnitType = EUnitType::Infantry;
-	else if (Value == 2) BestUnitType = EUnitType::Armoured;
-	else BestUnitType = EUnitType::AntiTank;
-
-	return BestUnitType;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 {
 	// Se realiza el cast para poder acceder a los metodos de la clase
@@ -579,6 +586,141 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 	}
 }
 
+//--------------------------------------------------------------------------------------------------------------------//
+
+EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
+{
+	// Se decide la unidad a producir en funcion de si se quiere defender, atacar o realizar otra accion
+	EUnitType BestUnitType = EUnitType::Infantry;
+
+	switch (MilitaryState)
+	{
+	case EMilitaryState::Defensive: BestUnitType = EUnitType::AntiTank;
+		break;
+	case EMilitaryState::Neutral: BestUnitType = EUnitType::Infantry;
+		break;
+	case EMilitaryState::Offensive: BestUnitType = EUnitType::Armoured;
+		break;
+	}
+
+	return BestUnitType;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+float ACMainAI::CalculateMoneyAmountForPeaceTreaty(const bool ImLoosing, const float WarScore,
+                                                   float StrengthDiffRel) const
+{
+	// Se actualiza el valor de la comparativa de fuerza dependiendo de si es favorable o no
+	StrengthDiffRel *= ImLoosing ? 1.0 : -1.0;
+
+	// Se normaliza la puntuacion ente 0-1 y se introduce un tope de 1000 puntos
+	const float NormWarScore = FMath::Min(WarScore, 1000.0f) / 1000.0;
+
+	// Se aplica una funcion para regular la puntuacion de guerra
+	const float WarScoreModifier = 1.0 / (1.0 + FMath::Exp(-10.0 * NormWarScore));
+
+	// Se ajustan pesos en funcion del tanto por uno
+	const float WarScoreWeight = !ImLoosing ? 0.5 : 0.55;
+	const float StrengthDiffRelWeight = !ImLoosing ? 0.6 : 0.55;
+
+	// Se combinan los valores de la puntuacion y la relevancia de la fuerza
+	const float MoneyPercentage = WarScoreModifier * WarScoreWeight + StrengthDiffRel * StrengthDiffRelWeight;
+
+	// Se calcula la cantidad de dinero y se devuelve
+	const float MoneyAmount = FMath::Min(PawnFaction->GetMoney() * MoneyPercentage, PawnFaction->GetMoney());
+	return FMath::Max(MoneyAmount, 0.0f);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void ACMainAI::ManageDiplomacy() const
+{
+	// Si la faccion no es valida, no se hace nada
+	if (!PawnFaction) return;
+
+	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
+	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
+	{
+		// Se obtiene la fuerza militar de cada una de las facciones
+		const TMap<int32, float> FactionsStrength = MainMode->GetFactionsMilitaryStrength();
+
+		// Se obtienen todas las facciones con las que se esta en guerra
+		TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
+		for (const auto FactionAtWar : FactionsAtWar)
+		{
+			// Se verifica que los diferentes contenedores contengan la faccion actual
+			if (!FactionsStrength.Contains(FactionAtWar)) continue;
+
+			// Se obtiene la puntuacion de guerra
+			const int32 WarScore = MainMode->GetWarScore(PawnFaction->GetIndex(), FactionAtWar);
+			// Se obtienen los turnos transcurridos desde el comienzo de la guerra
+			const int32 WarTurns = MainMode->GetWarTurns(PawnFaction->GetIndex(), FactionAtWar);
+
+			// Si la puntuacion de guerra contiene un resultado invalido, se establece la paz
+			if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionAtWar);
+			else
+			{
+				// Se debe decidir:
+				//		(a) si se sigue con la guerra:
+				//			(a.1) la puntuacion es mayor que 0, si se tiene fuerza militar suficiente para continuar
+				//			(a.2) la puntuacion es cercana a 0, si se tiene fuerza militar suficiente para continuar
+				//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
+				//		(b) si se debe tratar de firmar un pacto de paz:
+				//			(b.1) la puntuacion es igual o inferior a 0 y no se tiene fuerza militar suficiente
+				//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
+				//			(b.3) la puntuacion es cercana a 0, la fuerza es equiparable y es prolongada
+				//		(c) si es imprescindible acabar con la guerra
+				//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
+				//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
+
+				const float FactionAtWarStrength = FactionsStrength[FactionAtWar];
+				const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
+				const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
+					PawnFaction->GetMilitaryStrength(), FactionAtWarStrength);
+
+				// Se calculan una serie de flags para determinar el estado de la puntuacion de guerra
+				const bool ScoreVeryLow = WarScore <= -800.0;
+				const bool ScoreLow = -800.0 < WarScore && WarScore < -50.0;
+				const bool ScoreCloseToZero = -50.0 <= WarScore && WarScore <= 50.0;
+				const bool ScoreHigh = 50.0 < WarScore && WarScore < 600.0;
+				const bool ScoreVeryHigh = 600.0 <= WarScore;
+
+				const bool ImLoosing = StrengthDiff < 0.0;
+
+				// No se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
+				//		* Si se tiene mas fuerza y la diferencia es baja (hacia abajo)
+				const bool CondB1 = (ImLoosing && StrengthDiffRel >= 0.5) || (!ImLoosing && StrengthDiffRel <= 0.3);
+				// Se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
+				//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
+				const bool CondB2 = (ImLoosing && StrengthDiffRel <= 0.3) || (!ImLoosing && StrengthDiffRel >= 0.5);
+				// Se tiene fuerza militar equiparable:
+				//		* Si la diferencia es muy baja (hacia abajo)
+				const bool CondB3 = ScoreCloseToZero && StrengthDiffRel <= 0.1 && WarTurns >= 100;
+
+				// No se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza, aunque la diferencia es baja (hacia arriba)
+				//		* Si se tiene mas fuerza y la diferencia es media (hacia abajo)
+				const bool CondC1 = (ImLoosing && StrengthDiffRel >= 0.2) || (!ImLoosing && StrengthDiffRel <= 0.5);
+				if ((ScoreVeryLow && CondC1) || PawnFaction->GetNumSettlements() <= 2) // c
+				{
+					// Imprescindible acabar con la guerra
+
+					// Se calcula la cantidad de dinero a ofrecer
+					const float MoneyAmount = CalculateMoneyAmountForPeaceTreaty(ImLoosing, WarScore, StrengthDiffRel);
+					MainMode->ProposePeaceTreaty(FactionAtWar, FDealInfo(MoneyAmount, FResource()));
+				}
+				else if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB3) // b
+				{
+					// Intentar acabar con la guerra
+				}
+			}
+		}
+	}
+}
+
 void ACMainAI::ManageUnits()
 {
 	// Si la faccion o la instancia del mapa no es valida, no se hace nada
@@ -675,10 +817,13 @@ void ACMainAI::TurnStarted()
 	{
 		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Started"), PawnFaction->GetIndex()))
 
-		// Primero: se gestionan los movimientos de las unidades de la faccion
+		// Primero: se gestionan las relaciones diplomaticas con el resto de facciones
+		ManageDiplomacy();
+
+		// Segundo: se gestionan los movimientos de las unidades de la faccion
 		ManageUnits();
 
-		// Segundo: se gestiona la produccion de los asentamientos
+		// Tercero: se gestiona la produccion de los asentamientos
 		ManageSettlementsProduction();
 	}
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "ActorUnit.h"
+#include "MMain.h"
 #include "CMainAI.generated.h"
 
 class UDataTable;
@@ -12,7 +13,15 @@ class AActorSettlement;
 class AActorTileMap;
 class APawnFaction;
 
-UENUM()
+UENUM(BlueprintType)
+enum class EMilitaryState : uint8
+{
+	Defensive = 0 UMETA(DisplayName = "Defensive"),
+	Neutral = 1 UMETA(DisplayName = "Neutral"),
+	Offensive = 2 UMETA(DisplayName = "Offensive"),
+};
+
+UENUM(BlueprintType)
 enum class EUnitAction : uint8
 {
 	None = 0,
@@ -48,6 +57,11 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
+	EMilitaryState MilitaryState;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Atributo que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento en cada turno
 	 */
@@ -75,6 +89,10 @@ public:
 	ACMainAI();
 
 private:
+	static float CalculateStrengthDifferenceRelevance(const float StrengthA, const float StrengthB);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	static const AActorSettlement* GetClosestSettlementFromPos(const FIntPoint& Pos,
 	                                                           const TArray<AActorSettlement*>& Settlements);
 	FIntPoint GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& SettlementOwnedTiles) const;
@@ -102,15 +120,21 @@ private:
 
 	FIntPoint CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUnitAction UnitAction) const;
 
+	void ManageCivilUnit(AActorUnit* Unit);
+	void ManageMilitaryUnit(AActorUnit* Unit) const;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	EUnitType CalculateBestUnitTypeToProduce() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void ManageCivilUnit(AActorUnit* Unit);
-	void ManageMilitaryUnit(AActorUnit* Unit) const;
+	float CalculateMoneyAmountForPeaceTreaty(const bool ImLoosing, const float WarScore,
+	                                         float StrengthDiffRel) const;
 
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void ManageDiplomacy() const;
 	void ManageUnits();
 	void ManageSettlementsProduction() const;
 
@@ -124,6 +148,10 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	float ProposePeaceTreaty(const FDealInfo& Deal) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	UFUNCTION(BlueprintCallable)
 	void TurnStarted();
 

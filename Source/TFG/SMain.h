@@ -7,6 +7,62 @@
 #include "GameFramework/GameStateBase.h"
 #include "SMain.generated.h"
 
+USTRUCT(BlueprintType)
+struct FFactionsPair
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsPair")
+	int32 FactionA;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsPair")
+	int32 FactionB;
+
+	FFactionsPair(): FFactionsPair(-1, -1)
+	{
+	}
+
+	FFactionsPair(const int32 FactionA, const int32 FactionB)
+		: FactionA(FactionA),
+		  FactionB(FactionB)
+	{
+	}
+
+	bool operator==(const FFactionsPair& Other) const
+	{
+		return FactionA == Other.FactionA && FactionB == Other.FactionB;
+	}
+
+	friend uint32 GetTypeHash(const FFactionsPair& Other)
+	{
+		return GetTypeHash(Other.FactionA) + GetTypeHash(Other.FactionB);
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FWarInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="WarInfo")
+	float WarScore;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="WarInfo")
+	int32 NumTurns;
+
+	FWarInfo(): FWarInfo(0.0, 0)
+	{
+	}
+
+	FWarInfo(const float WarScore, const int32 NumTurns)
+		: WarScore(WarScore),
+		  NumTurns(NumTurns)
+	{
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 /**
  * 
  */
@@ -44,6 +100,12 @@ protected:
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
 	TSet<int32> FactionsAlive = TSet<int32>();
+
+	/**
+	 * Diccionario de guerras en curso en la partida
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	TMap<FFactionsPair, FWarInfo> CurrentWars = TMap<FFactionsPair, FWarInfo>();
 
 	/**
 	 * Numero del turno actual
@@ -136,6 +198,13 @@ public:
 	 * @return Numero de la faccion actual
 	 */
 	APawnFaction* NextFaction();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void StartWar(const int32 FactionA, const int32 FactionB);
+	float GetWarScore(const int32 FactionA, const int32 FactionB) const;
+	int32 GetWarTurns(const int32 FactionA, const int32 FactionB) const;
+	void EndWar(const int32 FactionA, const int32 FactionB);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

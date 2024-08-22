@@ -175,6 +175,19 @@ public:
 	const TArray<int32>& GetManualUnits() const { return ManualUnits; }
 	const TArray<int32>& GetAutomaticUnits() const { return AutomaticUnits; }
 
+	const TSet<int32>& GetFactionsAtWar() const
+	{
+		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar].Factions;
+	}
+	const TSet<int32>& GetNeutralFactions() const
+	{
+		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions;
+	}
+	const TSet<int32>& GetAllyFactions() const
+	{
+		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions;
+	}
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	void SetIndex(const int32 I) { Index = I; }

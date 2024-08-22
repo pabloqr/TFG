@@ -3,10 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FDealInfo.h"
 #include "GameFramework/GameModeBase.h"
 #include "MMain.generated.h"
 
 class ASMain;
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInitFinished);
 
 /**
@@ -38,6 +42,15 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DeclareWarOnFaction(const int32 CurrentFaction, const int32 TargetFaction) const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetWarScore(const int32 CurrentFaction, const int32 TargetFaction) const;
+
+	UFUNCTION(BlueprintCallable)
+	float GetWarTurns(const int32 CurrentFaction, const int32 TargetFaction) const;
+
+	UFUNCTION(BlueprintCallable)
+	float ProposePeaceTreaty(const int32 TargetFaction, const FDealInfo& Deal) const;
 
 	UFUNCTION(BlueprintCallable)
 	void MakePeaceWithFaction(const int32 CurrentFaction, const int32 TargetFaction) const;

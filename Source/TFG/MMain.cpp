@@ -49,6 +49,35 @@ void AMMain::DeclareWarOnFaction(const int32 CurrentFaction, const int32 TargetF
 	}
 }
 
+float AMMain::GetWarScore(const int32 CurrentFaction, const int32 TargetFaction) const
+{
+	return State ? State->GetWarScore(CurrentFaction, TargetFaction) : -1.0;
+}
+
+float AMMain::GetWarTurns(const int32 CurrentFaction, const int32 TargetFaction) const
+{
+	return State ? State->GetWarTurns(CurrentFaction, TargetFaction) : -1;
+}
+
+float AMMain::ProposePeaceTreaty(const int32 TargetFaction, const FDealInfo& Deal) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return -1.0;
+
+	// Se obtienen las facciones en juego y se verifica que la dada sea valida
+	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+	if (!FactionsAlive.Contains(TargetFaction)) return -1.0;
+
+	// Se obtienen todas las facciones y se verifica que ladada sea valida
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (!Factions.Contains(TargetFaction)) return -1.0;
+
+	// Se obtiene el controlador de la faccion y se trata de hacer un cast al de la IA (o al del humano)
+	const ACMainAI* FactionController = Cast<ACMainAI>(Factions[TargetFaction]->GetController());
+
+	return FactionController ? FactionController->ProposePeaceTreaty(Deal) : -1.0;
+}
+
 void AMMain::MakePeaceWithFaction(const int32 CurrentFaction, const int32 TargetFaction) const
 {
 	// Se verifica que la instancia del estado sea valida
