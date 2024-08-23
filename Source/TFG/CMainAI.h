@@ -64,7 +64,7 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
-	TArray<int32> FactionsAtWar;
+	TArray<int32> FactionsIndex;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -129,10 +129,12 @@ private:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	EUnitType CalculateBestUnitTypeToProduce() const;
-	
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	void ManageFactionAtWar(const int32 FactionAtWar) const;
+	void ManageNeutralFaction(const int32 NeutralFaction) const;
+	void ManageAllyFaction(const int32 AllyFaction) const;
 
 	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
@@ -155,6 +157,8 @@ protected:
 
 public:
 	void ManageNextFactionAtWar();
+	void ManageNextNeutralFaction();
+	void ManageNextAllyFaction();
 
 	UFUNCTION(BlueprintCallable)
 	virtual void ProposeDeal(const FDealInfo& Deal) const override;

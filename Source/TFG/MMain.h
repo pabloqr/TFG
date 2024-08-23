@@ -47,8 +47,22 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	float CalculateMoneyAmountForPeaceTreaty(int32 TargetFaction, const bool ImLoosing,
+	float CalculateMoneyAmountForPeaceTreaty(int32 TargetFaction, const bool ImWeaker,
 	                                         const float WarScore, float StrengthDiffRel) const;
+
+	UFUNCTION(BlueprintCallable)
+	float CalculateMoneyAmountForAllianceTreaty(int32 TargetFaction, float StrengthDiffRel) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	bool IsFactionAtWarWith(const int32 TargetFaction, const int32 FactionAtWar) const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsFactionNeutralWith(const int32 TargetFaction, const int32 NeutralFaction) const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsFactionAlliedWith(const int32 TargetFaction, const int32 AllyFaction) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

@@ -60,6 +60,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	bool IsMine() const;
 
+	UFUNCTION(BlueprintCallable)
+	bool IsEnemy() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsNeutral() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsAlly() const;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**

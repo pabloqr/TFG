@@ -42,6 +42,51 @@ bool AActorDamageableElement::IsMine() const
 	return false;
 }
 
+bool AActorDamageableElement::IsEnemy() const
+{
+	// Se verifica si la unidad pertenece a la faccion en juego
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+		if (Factions.Contains(State->GetCurrentIndex()))
+		{
+			return Factions[State->GetCurrentIndex()]->GetFactionsAtWar().Contains(DamageableInfo.Owner);
+		}
+	}
+
+	return false;
+}
+
+bool AActorDamageableElement::IsNeutral() const
+{
+	// Se verifica si la unidad pertenece a la faccion en juego
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+		if (Factions.Contains(State->GetCurrentIndex()))
+		{
+			return Factions[State->GetCurrentIndex()]->GetFactionsAtWar().Contains(DamageableInfo.Owner);
+		}
+	}
+
+	return false;
+}
+
+bool AActorDamageableElement::IsAlly() const
+{
+	// Se verifica si la unidad pertenece a la faccion en juego
+	if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+	{
+		const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+		if (Factions.Contains(State->GetCurrentIndex()))
+		{
+			return Factions[State->GetCurrentIndex()]->GetFactionsAtWar().Contains(DamageableInfo.Owner);
+		}
+	}
+
+	return false;
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const

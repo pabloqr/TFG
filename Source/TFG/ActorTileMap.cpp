@@ -1040,11 +1040,10 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			{
 				// Se trata de obtener el elemento de la casilla actual y, si lo tiene, solo se acepta si
 				//		* es un asentamiento propio
-				//		* se encuentra en la casilla de destino y no es propiedad de la faccion actual
+				//		* se encuentra en la casilla de destino y es propiedad de una faccion enemiga (en guerra)
 				const AActorDamageableElement* Element = NeighborTile->GetElement();
-				const bool IsMine = Element ? Element->IsMine() : false;
-				if (!Element || (Cast<AActorSettlement>(Element) && IsMine) || (NeighborTile->GetPos() == PosEnd &&
-					!IsMine))
+				if (!Element || (Cast<AActorSettlement>(Element) && Element->IsMine()) ||
+					(NeighborTile->GetPos() == PosEnd && Element->IsEnemy()))
 				{
 					// Se calcula el coste de llegar a esta casilla junto con el coste de movimiento de la propia casilla
 					int32 NewCost = TotalCost[CurrentData.Pos2D] + NeighborTile->GetMovementCost();

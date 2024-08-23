@@ -102,7 +102,7 @@ TMap<int32, float> AMMain::GetFactionsMilitaryStrength() const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-float AMMain::CalculateMoneyAmountForPeaceTreaty(const int32 TargetFaction, const bool ImLoosing,
+float AMMain::CalculateMoneyAmountForPeaceTreaty(const int32 TargetFaction, const bool ImWeaker,
                                                  const float WarScore, float StrengthDiffRel) const
 {
 	// Se verifica que la instancia del estado sea valida
@@ -120,7 +120,7 @@ float AMMain::CalculateMoneyAmountForPeaceTreaty(const int32 TargetFaction, cons
 	const APawnFaction* Faction = Factions[TargetFaction];
 
 	// Se actualiza el valor de la comparativa de fuerza dependiendo de si es favorable o no
-	StrengthDiffRel *= ImLoosing ? 1.0 : -1.0;
+	StrengthDiffRel *= ImWeaker ? 1.0 : -1.0;
 
 	// Se normaliza la puntuacion ente 0-1 y se introduce un tope de 1000 puntos
 	const float NormWarScore = FMath::Min(WarScore, 1000.0f) / 1000.0;
@@ -129,15 +129,86 @@ float AMMain::CalculateMoneyAmountForPeaceTreaty(const int32 TargetFaction, cons
 	const float WarScoreModifier = 1.0 / (1.0 + FMath::Exp(-10.0 * NormWarScore));
 
 	// Se ajustan pesos en funcion del tanto por uno
-	const float WarScoreWeight = !ImLoosing ? 0.5 : 0.55;
-	const float StrengthDiffRelWeight = !ImLoosing ? 0.6 : 0.55;
+	const float WarScoreWeight = !ImWeaker ? 0.5 : 0.55;
+	const float StrengthDiffRelWeight = !ImWeaker ? 0.6 : 0.55;
 
 	// Se combinan los valores de la puntuacion y la relevancia de la fuerza
 	const float MoneyPercentage = WarScoreModifier * WarScoreWeight + StrengthDiffRel * StrengthDiffRelWeight;
 
 	// Se calcula la cantidad de dinero y se devuelve
-	const float MoneyAmount = FMath::Min(Faction->GetMoney() * MoneyPercentage, Faction->GetMoney());
-	return FMath::Max(MoneyAmount, 0.0f);
+	return FMath::Clamp(Faction->GetMoney() * MoneyPercentage, 0.0f, Faction->GetMoney());
+}
+
+float AMMain::CalculateMoneyAmountForAllianceTreaty(const int32 TargetFaction, const float StrengthDiffRel) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return 0.0;
+
+	// Se verifica que la faccion es valida
+	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (FactionsAlive.Contains(TargetFaction) && Factions.Contains(TargetFaction))
+	{
+		return 0.0;
+	}
+
+	// Se obtiene la referencia a la faccion
+	const APawnFaction* Faction = Factions[TargetFaction];
+
+	return FMath::Clamp(Faction->GetMoney() * FMath::Pow(StrengthDiffRel, 2.0f), 0.0f, Faction->GetMoney());
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+bool AMMain::IsFactionAtWarWith(const int32 TargetFaction, const int32 FactionAtWar) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return false;
+
+	// Se obtienen las facciones y se procesa
+	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (FactionsAlive.Contains(TargetFaction) && FactionsAlive.Contains(FactionAtWar) &&
+		Factions.Contains(TargetFaction) && Factions.Contains(FactionAtWar))
+	{
+		return Factions[TargetFaction]->GetFactionsAtWar().Contains(FactionAtWar);
+	}
+
+	return false;
+}
+
+bool AMMain::IsFactionNeutralWith(const int32 TargetFaction, const int32 NeutralFaction) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return false;
+
+	// Se obtienen las facciones y se procesa
+	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (FactionsAlive.Contains(TargetFaction) && FactionsAlive.Contains(NeutralFaction) &&
+		Factions.Contains(TargetFaction) && Factions.Contains(NeutralFaction))
+	{
+		return Factions[TargetFaction]->GetFactionsAtWar().Contains(NeutralFaction);
+	}
+
+	return false;
+}
+
+bool AMMain::IsFactionAlliedWith(const int32 TargetFaction, const int32 AllyFaction) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return false;
+
+	// Se obtienen las facciones y se procesa
+	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (FactionsAlive.Contains(TargetFaction) && FactionsAlive.Contains(AllyFaction) &&
+		Factions.Contains(TargetFaction) && Factions.Contains(AllyFaction))
+	{
+		return Factions[TargetFaction]->GetFactionsAtWar().Contains(AllyFaction);
+	}
+
+	return false;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -146,8 +217,6 @@ void AMMain::ProposeDeal(const FDealInfo& Deal) const
 {
 	// Se verifica que la instancia del estado sea valida
 	if (!State) return;
-
-	UE_LOG(LogTemp, Log, TEXT("MMain - Deal proposed"));
 
 	// Se obtienen los indices de las facciones
 	const int32 CurrentFaction = Deal.FactionAElements.FactionIndex;
@@ -159,13 +228,9 @@ void AMMain::ProposeDeal(const FDealInfo& Deal) const
 	if (FactionsAlive.Contains(CurrentFaction) && FactionsAlive.Contains(TargetFaction) &&
 		Factions.Contains(CurrentFaction) && Factions.Contains(TargetFaction))
 	{
-		UE_LOG(LogTemp, Log, TEXT("MMain - Factions correct"));
-		
 		// Se obtiene la referencia para poder llamar al metodo correspondiente
 		if (const IInterfaceDeal* InterfaceRef = Cast<IInterfaceDeal>(Factions[TargetFaction]->GetController()))
 		{
-			UE_LOG(LogTemp, Log, TEXT("MMain - Cast correct"));
-			
 			// Se obtiene la confirmacion de la faccion correspondiente para llevar a cabo el trato
 			InterfaceRef->ProposeDeal(Deal);
 		}
@@ -197,11 +262,12 @@ void AMMain::ResolveDeal(const float DealResult, const FDealInfo& Deal) const
 	// Se obtienen las facciones y se verifica que es valida
 	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
 	if (!Factions.Contains(Deal.FactionAElements.FactionIndex)) return;
-	
+
 	// Se obtiene la referencia para poder llamar al metodo correspondiente
 	if (ACMainAI* FactionController = Cast<ACMainAI>(Factions[Deal.FactionAElements.FactionIndex]->GetController()))
 	{
-		FactionController->ManageNextFactionAtWar();
+		if (Deal.Type == EDealType::WarDeal) FactionController->ManageNextFactionAtWar();
+		else if (Deal.Type == EDealType::AllianceDeal) FactionController->ManageNextNeutralFaction();
 	}
 }
 
