@@ -3,63 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FFactionsPair.h"
+#include "FWarInfo.h"
 #include "PawnFaction.h"
 #include "GameFramework/GameStateBase.h"
 #include "SMain.generated.h"
-
-USTRUCT(BlueprintType)
-struct FFactionsPair
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsPair")
-	int32 FactionA;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsPair")
-	int32 FactionB;
-
-	FFactionsPair(): FFactionsPair(-1, -1)
-	{
-	}
-
-	FFactionsPair(const int32 FactionA, const int32 FactionB)
-		: FactionA(FactionA),
-		  FactionB(FactionB)
-	{
-	}
-
-	bool operator==(const FFactionsPair& Other) const
-	{
-		return FactionA == Other.FactionA && FactionB == Other.FactionB;
-	}
-
-	friend uint32 GetTypeHash(const FFactionsPair& Other)
-	{
-		return GetTypeHash(Other.FactionA) + GetTypeHash(Other.FactionB);
-	}
-};
-
-USTRUCT(BlueprintType)
-struct FWarInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="WarInfo")
-	float WarScore;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="WarInfo")
-	int32 NumTurns;
-
-	FWarInfo(): FWarInfo(0.0, 0)
-	{
-	}
-
-	FWarInfo(const float WarScore, const int32 NumTurns)
-		: WarScore(WarScore),
-		  NumTurns(NumTurns)
-	{
-	}
-};
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -148,6 +96,9 @@ public:
 	 * @return Indices de las facciones en juego
 	 */
 	const TSet<int32>& GetFactionsAlive() const { return FactionsAlive; }
+
+	const TMap<FFactionsPair, FWarInfo>& GetCurrentWars() const { return CurrentWars; }
+	TMap<FFactionsPair, FWarInfo> GetCurrentWarsForFaction(const int32 Faction) const;
 
 	/**
 	 * Getter del atributo CurrentTurn

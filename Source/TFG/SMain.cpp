@@ -3,6 +3,23 @@
 
 #include "SMain.h"
 
+TMap<FFactionsPair, FWarInfo> ASMain::GetCurrentWarsForFaction(const int32 Faction) const
+{
+	TMap<FFactionsPair, FWarInfo> CurrentWarsForFaction = TMap<FFactionsPair, FWarInfo>();
+
+	if (FactionsAlive.Contains(Faction) && Factions.Contains(Faction))
+	{
+		for (const auto War : CurrentWars)
+		{
+			if (War.Key.Contains(Faction)) CurrentWarsForFaction.Add(War.Key, War.Value);
+		}
+	}
+
+	return CurrentWarsForFaction;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void ASMain::AddFaction(APawnFaction* Faction)
 {
 	// Se obtiene el indice de la faccion

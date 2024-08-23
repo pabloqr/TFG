@@ -6,7 +6,6 @@
 #include "CMainAI.h"
 #include "GInstance.h"
 #include "PawnFaction.h"
-#include "SMain.h"
 #include "Kismet/GameplayStatics.h"
 
 void AMMain::MakePeaceWithFaction(const FDealInfo& Deal) const
@@ -98,6 +97,31 @@ TMap<int32, float> AMMain::GetFactionsMilitaryStrength() const
 	}
 
 	return FactionsMilitaryStrength;
+}
+
+TMap<int32, FWarInfo> AMMain::GetFactionsAtWarInfo() const
+{
+	TMap<int32, FWarInfo> FactionsAtWarInfo = TMap<int32, FWarInfo>();
+
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return FactionsAtWarInfo;
+
+	// Se obtiene el indice de la faccion actual
+	const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
+
+	// Se obtienen las guerras para la faccion actual y se procesan
+	const TMap<FFactionsPair, FWarInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
+	for (const auto War : CurrentWarsForFaction)
+	{
+		// Se verifica que el indice de la faccion actual sea valido
+		if (!War.Key.Contains(CurrentIndex)) continue;
+
+		// Se actualiza el diccionario de facciones y guerras
+		const int32 FactionIndex = War.Key.FactionA == CurrentIndex ? War.Key.FactionB : War.Key.FactionA;
+		FactionsAtWarInfo.Add(FactionIndex, War.Value);
+	}
+
+	return FactionsAtWarInfo;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -324,7 +348,7 @@ void AMMain::NextTurn() const
 	if (APawnFaction* CurrentFaction = State->NextFaction())
 	{
 		// Antes de iniciar el turno, se actualiza la informacion sobre las facciones conocidas por la actual
-		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength());
+		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength(), GetFactionsAtWarInfo());
 
 		// Se inicia el turno de la faccion actual
 		CurrentFaction->TurnStarted();

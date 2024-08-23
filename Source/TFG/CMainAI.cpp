@@ -441,16 +441,16 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar) const
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
 	{
-		// Se obtiene la fuerza militar de cada una de las facciones
-		const TMap<int32, float> FactionsStrength = MainMode->GetFactionsMilitaryStrength();
+		// Se obtiene la informacion de cada una de las facciones
+		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsStrength.Contains(FactionAtWar)) return;
+		if (!FactionsInfo.Contains(FactionAtWar)) return;
 
 		// Se obtiene la puntuacion de guerra
-		const int32 WarScore = MainMode->GetWarScore(PawnFaction->GetIndex(), FactionAtWar);
+		const int32 WarScore = FactionsInfo[FactionAtWar].WarInfo.WarScore;
 		// Se obtienen los turnos transcurridos desde el comienzo de la guerra
-		const int32 WarTurns = MainMode->GetWarTurns(PawnFaction->GetIndex(), FactionAtWar);
+		const int32 WarTurns = FactionsInfo[FactionAtWar].WarInfo.NumTurns;
 
 		// Si la puntuacion de guerra contiene un resultado invalido, se establece la paz
 		if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionAtWar);
@@ -469,7 +469,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar) const
 			//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
 			//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
 
-			const float FactionStrength = FactionsStrength[FactionAtWar];
+			const float FactionStrength = FactionsInfo[FactionAtWar].MilitaryStrength;
 			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionStrength);
@@ -546,11 +546,11 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction) const
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
 	{
-		// Se obtiene la fuerza militar de cada una de las facciones
-		const TMap<int32, float> FactionsStrength = MainMode->GetFactionsMilitaryStrength();
+		// Se obtiene la informacion de cada una de las facciones
+		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsStrength.Contains(NeutralFaction)) return;
+		if (!FactionsInfo.Contains(NeutralFaction)) return;
 
 		// Se obtienen las diferentes facciones segun la relacion diplomatica
 		const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
@@ -566,7 +566,7 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction) const
 		//			(b.2) la fuerza militar es insuficiente
 		//		(c) si se mantiene la relacion
 
-		const float FactionStrength = FactionsStrength[NeutralFaction];
+		const float FactionStrength = FactionsInfo[NeutralFaction].MilitaryStrength;
 		const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
 		const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 			PawnFaction->GetMilitaryStrength(), FactionStrength);
@@ -631,11 +631,11 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction) const
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
 	{
-		// Se obtiene la fuerza militar de cada una de las facciones
-		const TMap<int32, float> FactionsStrength = MainMode->GetFactionsMilitaryStrength();
+		// Se obtiene la informacion de cada una de las facciones
+		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsStrength.Contains(AllyFaction)) return;
+		if (!FactionsInfo.Contains(AllyFaction)) return;
 
 		// Se obtienen las diferentes facciones segun la relacion diplomatica
 		const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
@@ -652,7 +652,7 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction) const
 		//			(b.2) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
 		//			(b.3) la fuerza militar es insuficiente
 
-		const float FactionAtWarStrength = FactionsStrength[AllyFaction];
+		const float FactionAtWarStrength = FactionsInfo[AllyFaction].MilitaryStrength;
 		const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
 		const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 			PawnFaction->GetMilitaryStrength(), FactionAtWarStrength);

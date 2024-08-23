@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FDealInfo.h"
+#include "SMain.h"
 #include "GameFramework/GameModeBase.h"
 #include "MMain.generated.h"
 
@@ -43,6 +44,7 @@ protected:
 
 public:
 	TMap<int32, float> GetFactionsMilitaryStrength() const;
+	TMap<int32, FWarInfo> GetFactionsAtWarInfo() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "ActorUnit.h"
 #include "FResourceInfo.h"
+#include "FWarInfo.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
@@ -78,13 +79,18 @@ struct FOpponentFactionInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
 	float MilitaryStrength;
 
-	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0)
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
+	FWarInfo WarInfo;
+
+	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0, FWarInfo())
 	{
 	}
 
-	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength)
+	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength,
+		const FWarInfo& WarInfo)
 		: Relationship(Relationship),
-		  MilitaryStrength(MilitaryStrength)
+		  MilitaryStrength(MilitaryStrength),
+		  WarInfo(WarInfo)
 	{
 	}
 };
@@ -156,6 +162,11 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
+	void AddKnowFaction(const int32 Faction, const FOpponentFactionInfo& FactionInfo);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
 	 */
@@ -174,6 +185,8 @@ public:
 	const TArray<AActorUnit*>& GetUnits() const { return Units; }
 	const TArray<int32>& GetManualUnits() const { return ManualUnits; }
 	const TArray<int32>& GetAutomaticUnits() const { return AutomaticUnits; }
+
+	const TMap<int32, FOpponentFactionInfo>& GetKnownFactions() const { return KnownFactions; }
 
 	const TSet<int32>& GetFactionsAtWar() const
 	{
@@ -241,7 +254,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength);
+	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength, TMap<int32, FWarInfo> CurrentWars);
 
 	UFUNCTION(BlueprintCallable)
 	void DeclareWarOnFaction(const int32 Faction);

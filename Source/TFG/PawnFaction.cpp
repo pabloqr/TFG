@@ -131,6 +131,16 @@ void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, 
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void APawnFaction::AddKnowFaction(const int32 Faction, const FOpponentFactionInfo& FactionInfo)
+{
+	// Se anade la faccion y su informacion
+	KnownFactions.Add(Faction, FactionInfo);
+	// Se anade la faccion al estado diplomatico neutral
+	FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions.Add(Faction);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void APawnFaction::BeginPlay()
 {
 	Super::BeginPlay();
@@ -321,7 +331,8 @@ void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength)
+void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength,
+                                           TMap<int32, FWarInfo> CurrentWars)
 {
 	// Se obtienen todos los indices de las facciones conocidas y se procesan
 	TArray<int32> FactionsIndex;
@@ -332,12 +343,37 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 		// y se omite
 		if (!FactionsStrength.Contains(FactionIndex))
 		{
+			// Se elimina de la coleccion de facciones conocidas
 			KnownFactions.Remove(FactionIndex);
+
+			// Se elimina del diccionario de relaciones diplomaticas
+			int32 Removed = FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar]
+			                .Factions.Remove(FactionIndex);
+			if (Removed == 0)
+			{
+				Removed = FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral]
+				          .Factions.Remove(FactionIndex);
+			}
+			if (Removed == 0)
+			{
+				FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions.Remove(FactionIndex);
+			}
+
+			// Se elimina de la lista de guerras en curso
+			CurrentWars.Remove(FactionIndex);
+
 			continue;
 		}
 
 		// Se actualiza la fuerza militar de la faccion
 		KnownFactions[FactionIndex].MilitaryStrength = FactionsStrength[FactionIndex];
+
+		// Se actualizan los datos sobre la guerra
+		if (CurrentWars.Contains(FactionIndex))
+		{
+			KnownFactions[FactionIndex].WarInfo.WarScore = CurrentWars[FactionIndex].WarScore;
+			KnownFactions[FactionIndex].WarInfo.NumTurns = CurrentWars[FactionIndex].NumTurns;
+		}
 	}
 }
 
