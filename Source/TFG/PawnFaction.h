@@ -148,10 +148,10 @@ private:
 	void UpdateFactionDiplomaticRelationship(int32 Faction, const EDiplomaticRelationship Relationship);
 
 protected:
-	UFUNCTION(BlueprintCallable, Category="Faction")
+	UFUNCTION(BlueprintCallable)
 	void OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState State);
 
-	UFUNCTION(BlueprintCallable, Category="Faction")
+	UFUNCTION(BlueprintCallable)
 	void OnSettlementStateUpdated(const AActorSettlement* Settlement, const ESettlementState State);
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -179,10 +179,12 @@ public:
 	{
 		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar].Factions;
 	}
+
 	const TSet<int32>& GetNeutralFactions() const
 	{
 		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions;
 	}
+
 	const TSet<int32>& GetAllyFactions() const
 	{
 		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions;
@@ -198,6 +200,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	UFUNCTION(BlueprintCallable)
+	void AddMoney(const int32 Amount);
+
+	UFUNCTION(BlueprintCallable)
+	void RemoveMoney(const int32 Amount);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -224,10 +234,10 @@ public:
 	void DisownResource(const EResource Resource, const FIntPoint& Pos);
 
 	UFUNCTION(BlueprintCallable)
-	void AddResource(const FResource& Resource, const FIntPoint& Pos);
+	void AddResource(bool FromDeal, const FResource& Resource, const FIntPoint& Pos);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveResource(const FResource& Resource, const FIntPoint& Pos);
+	void RemoveResource(bool FromDeal, const FResource& Resource, const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

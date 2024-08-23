@@ -57,7 +57,7 @@ public:
 	 * 
 	 * @return Si el elemtnos es propiedad del jugador actual
 	 */
-	UFUNCTION(BlueprintCallable, Category="GameElement")
+	UFUNCTION(BlueprintCallable)
 	bool IsMine() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -69,7 +69,7 @@ public:
 	 * @param Stats Elemento que se ataca
 	 * @return Valores de dano a aplicar a cada uno de los elementos tras el ataque
 	 */
-	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
+	UFUNCTION(BlueprintCallable)
 	float CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const;
 
 	/**
@@ -78,7 +78,7 @@ public:
 	 * @param IsAttacking
 	 * @param Stats Elemento que se ataca
 	 */
-	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
+	UFUNCTION(BlueprintCallable)
 	void PerformAttack(const bool IsAttacking, const FAttackStats& Stats);
 
 	/**
@@ -86,7 +86,7 @@ public:
 	 * 
 	 * @param Damage Dano a aplicar sobre un elemento
 	 */
-	UFUNCTION(BlueprintCallable, Category="GameElement|Damage")
+	UFUNCTION(BlueprintCallable)
 	virtual void ApplyDamage(const float Damage);
 
 	//----------------------------------------------------------------------------------------------------------------//

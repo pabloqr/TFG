@@ -218,9 +218,13 @@ FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-float ACMainAI::ProposePeaceTreaty(const FDealInfo& Deal) const
+void ACMainAI::ProposeDeal(const FDealInfo& Deal) const
 {
-	return -1.0;
+	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
+	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
+	{
+		MainMode->ResolveDeal(1.0, Deal);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -608,32 +612,6 @@ EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-float ACMainAI::CalculateMoneyAmountForPeaceTreaty(const bool ImLoosing, const float WarScore,
-                                                   float StrengthDiffRel) const
-{
-	// Se actualiza el valor de la comparativa de fuerza dependiendo de si es favorable o no
-	StrengthDiffRel *= ImLoosing ? 1.0 : -1.0;
-
-	// Se normaliza la puntuacion ente 0-1 y se introduce un tope de 1000 puntos
-	const float NormWarScore = FMath::Min(WarScore, 1000.0f) / 1000.0;
-
-	// Se aplica una funcion para regular la puntuacion de guerra
-	const float WarScoreModifier = 1.0 / (1.0 + FMath::Exp(-10.0 * NormWarScore));
-
-	// Se ajustan pesos en funcion del tanto por uno
-	const float WarScoreWeight = !ImLoosing ? 0.5 : 0.55;
-	const float StrengthDiffRelWeight = !ImLoosing ? 0.6 : 0.55;
-
-	// Se combinan los valores de la puntuacion y la relevancia de la fuerza
-	const float MoneyPercentage = WarScoreModifier * WarScoreWeight + StrengthDiffRel * StrengthDiffRelWeight;
-
-	// Se calcula la cantidad de dinero y se devuelve
-	const float MoneyAmount = FMath::Min(PawnFaction->GetMoney() * MoneyPercentage, PawnFaction->GetMoney());
-	return FMath::Max(MoneyAmount, 0.0f);
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 void ACMainAI::ManageDiplomacy() const
 {
 	// Si la faccion no es valida, no se hace nada
@@ -709,12 +687,38 @@ void ACMainAI::ManageDiplomacy() const
 					// Imprescindible acabar con la guerra
 
 					// Se calcula la cantidad de dinero a ofrecer
-					const float MoneyAmount = CalculateMoneyAmountForPeaceTreaty(ImLoosing, WarScore, StrengthDiffRel);
-					MainMode->ProposePeaceTreaty(FactionAtWar, FDealInfo(MoneyAmount, FResource()));
+					const float MoneyAmount = MainMode->CalculateMoneyAmountForPeaceTreaty(
+						PawnFaction->GetIndex(), ImLoosing, WarScore, StrengthDiffRel);
+
+					// Se establecen los elementos del trato
+					const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
+					const FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+
+					// Se propone el trato de paz
+					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
 				}
 				else if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB3) // b
 				{
 					// Intentar acabar con la guerra
+
+					// Se establecen los elementos del trato
+					FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
+					FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+
+					// Se calcula la cantidad de dinero a ofrecer dependiendo de si es favorable o no
+					if (ScoreHigh || ScoreVeryHigh)
+					{
+						EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+							FactionAtWar, ImLoosing, WarScore, StrengthDiffRel);
+					}
+					else
+					{
+						OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+							PawnFaction->GetIndex(), ImLoosing, WarScore, StrengthDiffRel);
+					}
+
+					// Se propone el trato de paz
+					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
 				}
 			}
 		}

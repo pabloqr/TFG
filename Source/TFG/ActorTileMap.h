@@ -638,7 +638,7 @@ protected:
 	/**
 	 * Metodo que almacena la informacion de las casillas en un archivo de guardado para su posterior carga
 	 */
-	UFUNCTION(BlueprintCallable, BlueprintPure=false, Category="Map|Save")
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	FString SaveMap(const FString CustomName = TEXT("")) const;
 
 	/**

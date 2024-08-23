@@ -167,6 +167,18 @@ bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType U
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void APawnFaction::AddMoney(const int32 Amount)
+{
+	Money += Amount;
+}
+
+void APawnFaction::RemoveMoney(const int32 Amount)
+{
+	Money -= Amount;
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 void APawnFaction::AddSettlement(AActorSettlement* Settlement)
 {
 	// Se establece la faccion actual como propietaria del asentamiento
@@ -257,16 +269,16 @@ void APawnFaction::DisownResource(const EResource Resource, const FIntPoint& Pos
 	else if (StrategicResources.Contains(Resource)) StrategicResources[Resource].Tiles.Remove(Pos);
 }
 
-void APawnFaction::AddResource(const FResource& Resource, const FIntPoint& Pos)
+void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
 		                                                  ? MonetaryResources
 		                                                  : StrategicResources;
 
-	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
+	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource) && Resources[Resource.Resource].Tiles.Contains(Pos))
+	if (Resources.Contains(Resource.Resource) && (!FromDeal || Resources[Resource.Resource].Tiles.Contains(Pos)))
 	{
 		Resources[Resource.Resource].GatheredResource.Quantity += Resource.Quantity;
 
@@ -281,16 +293,16 @@ void APawnFaction::AddResource(const FResource& Resource, const FIntPoint& Pos)
 	}
 }
 
-void APawnFaction::RemoveResource(const FResource& Resource, const FIntPoint& Pos)
+void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
 		                                                  ? MonetaryResources
 		                                                  : StrategicResources;
 
-	// Se comprueba si el recurso ya lo posee la unidad y se actualiza su cantidad, en caso contrario,
+	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource) && Resources[Resource.Resource].Tiles.Contains(Pos))
+	if (Resources.Contains(Resource.Resource) && (!FromDeal || Resources[Resource.Resource].Tiles.Contains(Pos)))
 	{
 		// Se hace que la cantidad siempre sea mayor o igual a 0
 		Resources[Resource.Resource].GatheredResource.Quantity =

@@ -5,7 +5,8 @@
 
 #include "Kismet/GameplayStatics.h"
 
-void ACMain::BeginPlay()
+void ACMain::ProposeDeal(const FDealInfo& Deal) const
 {
-	Super::BeginPlay();
+	// Se llama al evento para gestionar la proposicion del trato
+	OnDealProposed.Broadcast(Deal);
 }

@@ -44,7 +44,7 @@ protected:
 	/**
 	 * Metodo que establece las casillas que posee inicialmente el asentamiento
 	 */
-	UFUNCTION(BlueprintCallable, Category="Settlement")
+	UFUNCTION(BlueprintCallable)
 	void SetInitialOwnedTiles();
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -110,11 +110,11 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	UFUNCTION(BlueprintCallable, Category="Settlement")
+	UFUNCTION(BlueprintCallable)
 	void AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
 							  const EUnitType UnitType);
 
-	UFUNCTION(BlueprintCallable, Category="Settlement")
+	UFUNCTION(BlueprintCallable)
 	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
 
 	//----------------------------------------------------------------------------------------------------------------//

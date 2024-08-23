@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "ActorUnit.h"
+#include "InterfaceDeal.h"
 #include "MMain.h"
 #include "CMainAI.generated.h"
 
@@ -44,7 +45,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnFinished);
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
-class TFG_API ACMainAI : public AAIController
+class TFG_API ACMainAI : public AAIController, public IInterfaceDeal
 {
 	GENERATED_BODY()
 
@@ -129,11 +130,6 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	float CalculateMoneyAmountForPeaceTreaty(const bool ImLoosing, const float WarScore,
-	                                         float StrengthDiffRel) const;
-
-	//----------------------------------------------------------------------------------------------------------------//
-
 	void ManageDiplomacy() const;
 	void ManageUnits();
 	void ManageSettlementsProduction() const;
@@ -148,7 +144,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	float ProposePeaceTreaty(const FDealInfo& Deal) const;
+	UFUNCTION(BlueprintCallable)
+	virtual void ProposeDeal(const FDealInfo& Deal) const override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

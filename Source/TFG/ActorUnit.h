@@ -65,7 +65,7 @@ protected:
 	 * 
 	 * @param Move Movimiento a aplicar
 	 */
-	UFUNCTION(BlueprintCallable, Category="Unit|Movement")
+	UFUNCTION(BlueprintCallable)
 	void UpdatePosition(const FMovement& Move);
 
 public:

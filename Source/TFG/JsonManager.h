@@ -92,7 +92,7 @@ public:
 	 * @param ResultMessage Informacion de la operacion
 	 * @return Lista que contiene la informacion del archivo Json
 	 */
-	UFUNCTION(BlueprintCallable, Category="FileManager|Json")
+	UFUNCTION(BlueprintCallable)
 	static TArray<FMapDataForJson> JsonToMapStruct(FString JsonPath, bool& Success, FString& ResultMessage);
 
 	/**
