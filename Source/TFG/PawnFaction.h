@@ -87,7 +87,7 @@ struct FOpponentFactionInfo
 	}
 
 	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength,
-		const FWarInfo& WarInfo)
+	                     const FWarInfo& WarInfo)
 		: Relationship(Relationship),
 		  MilitaryStrength(MilitaryStrength),
 		  WarInfo(WarInfo)

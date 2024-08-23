@@ -232,6 +232,9 @@ void APawnFaction::AddUnit(AActorUnit* Unit)
 	// Se anade la unidad a la lista
 	Units.AddUnique(Unit);
 
+	// Se actualiza la fuerza militar para que se tenga en cuenta la unidad anadida
+	MilitaryStrength += Unit->GetStrengthPoints();
+
 	// Se actualiza el balance de dinero para que tenga en cuenta la unidad anadida
 	MoneyBalance -= Unit->GetMaintenanceCost();
 
@@ -254,6 +257,9 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 
 		// Se elimina la unidad de la lista
 		Units.Remove(Unit);
+
+		// Se actualiza la fuerza militar para que no se tenga en cuenta la unidad eliminada
+		MilitaryStrength -= Unit->GetStrengthPoints();
 
 		// Se actualiza el balance de dinero para que no tenga en cuenta la unidad eliminada
 		MoneyBalance += Unit->GetMaintenanceCost();
