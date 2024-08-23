@@ -63,6 +63,11 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
+	TArray<int32> FactionsAtWar;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Atributo que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento en cada turno
 	 */
@@ -121,16 +126,21 @@ private:
 
 	FIntPoint CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUnitAction UnitAction) const;
 
+	//----------------------------------------------------------------------------------------------------------------//
+
+	EUnitType CalculateBestUnitTypeToProduce() const;
+	
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void ManageFactionAtWar(const int32 FactionAtWar) const;
+
 	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	EUnitType CalculateBestUnitTypeToProduce() const;
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	void ManageDiplomacy() const;
+	void ManageDiplomacy();
+	void ManageElements();
 	void ManageUnits();
 	void ManageSettlementsProduction() const;
 
@@ -144,6 +154,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	void ManageNextFactionAtWar();
+
 	UFUNCTION(BlueprintCallable)
 	virtual void ProposeDeal(const FDealInfo& Deal) const override;
 

@@ -55,7 +55,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ProposeDeal(const FDealInfo& Deal) const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
 	void ResolveDeal(float DealResult, const FDealInfo& Deal) const;
 
 	UFUNCTION(BlueprintCallable)

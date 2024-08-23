@@ -147,6 +147,8 @@ void AMMain::ProposeDeal(const FDealInfo& Deal) const
 	// Se verifica que la instancia del estado sea valida
 	if (!State) return;
 
+	UE_LOG(LogTemp, Log, TEXT("MMain - Deal proposed"));
+
 	// Se obtienen los indices de las facciones
 	const int32 CurrentFaction = Deal.FactionAElements.FactionIndex;
 	const int32 TargetFaction = Deal.FactionBElements.FactionIndex;
@@ -157,9 +159,13 @@ void AMMain::ProposeDeal(const FDealInfo& Deal) const
 	if (FactionsAlive.Contains(CurrentFaction) && FactionsAlive.Contains(TargetFaction) &&
 		Factions.Contains(CurrentFaction) && Factions.Contains(TargetFaction))
 	{
+		UE_LOG(LogTemp, Log, TEXT("MMain - Factions correct"));
+		
 		// Se obtiene la referencia para poder llamar al metodo correspondiente
 		if (const IInterfaceDeal* InterfaceRef = Cast<IInterfaceDeal>(Factions[TargetFaction]->GetController()))
 		{
+			UE_LOG(LogTemp, Log, TEXT("MMain - Cast correct"));
+			
 			// Se obtiene la confirmacion de la faccion correspondiente para llevar a cabo el trato
 			InterfaceRef->ProposeDeal(Deal);
 		}
@@ -183,6 +189,19 @@ void AMMain::ResolveDeal(const float DealResult, const FDealInfo& Deal) const
 			MakeExchangeDeal(Deal);
 			break;
 		}
+	}
+
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return;
+
+	// Se obtienen las facciones y se verifica que es valida
+	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+	if (!Factions.Contains(Deal.FactionAElements.FactionIndex)) return;
+	
+	// Se obtiene la referencia para poder llamar al metodo correspondiente
+	if (ACMainAI* FactionController = Cast<ACMainAI>(Factions[Deal.FactionAElements.FactionIndex]->GetController()))
+	{
+		FactionController->ManageNextFactionAtWar();
 	}
 }
 

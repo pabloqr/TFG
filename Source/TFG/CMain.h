@@ -15,6 +15,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedUnitUpdated, AActorUnit*,
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSelectedSettlementUpdated, AActorSettlement*, Settlement);
 
+// ReSharper disable once UnrealHeaderToolError
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDealProposed, FDealInfo, Deal);
 
 /**
