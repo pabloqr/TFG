@@ -16,6 +16,8 @@ AActorTileMap::AActorTileMap()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	UpdatingMap = true;
+
 	TilesInfo = TMap<FIntPoint, FTileInfo>();
 	TilesWithState = TMap<ETileState, FTilesArray>();
 	TileTypeCount = TMap<ETileType, int32>({
@@ -246,7 +248,7 @@ void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileTyp
 	OnTileInfoUpdated.Broadcast(Pos2D);
 }
 
-void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceInfo>& ResourcesData)
+void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData)
 {
 	// Se libera toda la informacion de las casillas previas para actualizarla con la nueva
 	TilesInfo.Empty();
@@ -281,9 +283,6 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData, const
 		const int32 Index = GetPositionInArray(Pos);
 		if (Index != -1 && !Tiles[Index] && TilesInfo.Contains(Pos)) OnTileUpdated.Broadcast(TilesInfo[Pos]);
 	}
-
-	// Se procesan todos los recursos del archivo de guardado
-	for (int32 i = 0; i < ResourcesData.Num(); ++i) OnResourceCreation.Broadcast(ResourcesData[i]);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -362,18 +361,26 @@ int32 AActorTileMap::GetPositionInArray(const int32 Row, const int32 Col) const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+bool AActorTileMap::AreTilesValid() const
+{
+	// Se verifica que todas las referencias sean validas
+	for (const auto Tile : Tiles) if (!Tile) return false;
+
+	return true;
+}
+
 bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos) const
 {
 	// Se verifica el indice, si no es correcto, se devuelve 'false'
 	const int32 Index = GetPositionInArray(Pos);
-	return Index != -1 ? Tiles[Index]->IsAccesible() : false;
+	return Index != -1 && Tiles[Index] ? Tiles[Index]->IsAccesible() : false;
 }
 
 AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos) const
 {
 	// Se verifica el indice, si no es correcto, se devuelve 'nullptr'
 	const int32 Index = GetPositionInArray(Pos);
-	return Index != -1 ? Tiles[Index] : nullptr;
+	return Index != -1 && Tiles[Index] ? Tiles[Index] : nullptr;
 }
 
 TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState State) const
@@ -386,6 +393,9 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithState(const ETileState State) const
 void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
                                 const float WaterChance)
 {
+	// Se actualiza el flag de actualizacion
+	UpdatingMap = true;
+
 	// Se actualizan los valores del tamano del mapa
 	Rows = Size2D.X;
 	Cols = Size2D.Y;
@@ -452,6 +462,17 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 		GameInstance->MapSize2D = FVector2D(GridSize.X, GridSize.Y - RowOffset);
 		GameInstance->Size2D = FIntPoint(Rows, Cols);
 	}
+
+	// Se actualiza el flag de actualizacion
+	UpdatingMap = false;
+}
+
+void AActorTileMap::SetResourcesFromSave(const TArray<FResourceInfo>& ResourcesData) const
+{
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumResources - %d"), ResourcesData.Num()))
+
+	// Se procesan todos los recursos del archivo de guardado
+	for (int32 i = 0; i < ResourcesData.Num(); ++i) OnResourceCreation.Broadcast(ResourcesData[i]);
 }
 
 TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 NumFactions) const
@@ -581,7 +602,10 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("ResourcePos - (%d, %d) (%d)"), Pos.X, Pos.Y, Index))
+	if (Index == -1 || !Tiles[Index]) return;
+
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("CreatingResource")))
 
 	// Se obtiene la casilla
 	AActorTile* Tile = Tiles[Index];
@@ -594,6 +618,8 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 
 	if (NewResource)
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("InitialisingResource")))
+
 		// Se actualizan los atributos del recurso
 		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), -1, Resource));
 
@@ -617,7 +643,7 @@ void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	if (Index == -1 || !Tiles[Index]) return;
 
 	// Se obtiene la casilla
 	AActorTile* Tile;
@@ -637,7 +663,7 @@ void AActorTileMap::AddUnitToTile(const FIntPoint& Pos, AActorUnit* Unit)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	if (Index == -1 || !Tiles[Index]) return;
 
 	// Se actualiza la casilla
 	Tiles[Index]->SetUnit(Unit);
@@ -650,7 +676,7 @@ void AActorTileMap::RemoveUnitFromTile(const FIntPoint& Pos)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	if (Index == -1 || !Tiles[Index]) return;
 
 	// Se actualiza la casilla
 	Tiles[Index]->SetUnit(nullptr);
@@ -663,7 +689,7 @@ void AActorTileMap::AddSettlementToTile(const FIntPoint& Pos, AActorSettlement* 
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	if (Index == -1 || !Tiles[Index]) return;
 
 	// Se actualiza la casilla
 	Tiles[Index]->SetSettlement(Settlement);
@@ -679,7 +705,7 @@ void AActorTileMap::RemoveSettlementFromTile(const FIntPoint& Pos)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return;
+	if (Index == -1 || !Tiles[Index]) return;
 
 	// Se actualiza la casilla
 	Tiles[Index]->SetSettlement(nullptr);
@@ -738,13 +764,24 @@ FString AActorTileMap::SaveMap(const FString CustomName) const
 
 void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 {
+	// Se actualiza el flag de actualizacion
+	UpdatingMap = true;
+
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(MapSaveData.SaveName, 0)))
 	{
 		// Se actualizan la dimension del mapa
 		Rows = LoadedGame->Tiles.Last().Pos2D.X + 1;
 		Cols = LoadedGame->Tiles.Last().Pos2D.Y + 1;
 
-		SetMapFromSave(LoadedGame->Tiles, LoadedGame->Resources);
+		// Se actualizan las casillas
+		SetMapFromSave(LoadedGame->Tiles);
+
+		// Se actualizan los recursos
+		OnSaveMapTilesUpdated.Broadcast(LoadedGame->Resources);
+
+		// Se actualiza el tamano del mapa
+		GridSize.X = (Cols - 1) * HorizontalOffset;
+		GridSize.Y = (Cols - 1) % 2 == 0 ? (Rows - 1) * VerticalOffset : (Rows - 1) * VerticalOffset + RowOffset;
 
 		// Se actualizan los atributos del mapa
 		MapTemperature = LoadedGame->MapTemperature;
@@ -755,6 +792,7 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 		// Se actualiza la instancia del juego
 		if (UGInstance* GameInstance = Cast<UGInstance>(UGameplayStatics::GetGameInstance(GetWorld())))
 		{
+			GameInstance->MapSize2D = GridSize;
 			GameInstance->Size2D = FIntPoint(Rows, Cols);
 
 			GameInstance->MapTemperature = LoadedGame->MapTemperature;
@@ -763,6 +801,9 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 			GameInstance->WaterTileChance = LoadedGame->WaterTileChance;
 		}
 	}
+
+	// Se actualiza el flag de actualizacion
+	UpdatingMap = false;
 }
 
 void AActorTileMap::DeleteMap(const FSaveData& MapSaveData)
@@ -818,25 +859,23 @@ bool AActorTileMap::IsTileMine(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
 
-	return Tiles[Index]->IsMine();
+	return Index != -1 && Tiles[Index] ? Tiles[Index]->IsMine() : false;
 }
 
 bool AActorTileMap::TileHasResource(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
 
-	return Tiles[Index]->HasResource();
+	return Index != -1 && Tiles[Index] ? Tiles[Index]->HasResource() : false;
 }
 
 bool AActorTileMap::CanGatherResourceAtPos(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
+	if (Index == -1 || !Tiles[Index]) return false;
 
 	// Se obtiene el recurso
 	const AActorResource* Resource = Tiles[Index]->GetResource();
@@ -848,7 +887,7 @@ bool AActorTileMap::IsResourceGathered(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
+	if (Index == -1 || !Tiles[Index]) return false;
 
 	// Se obtiene el recurso
 	const AActorResource* Resource = Tiles[Index]->GetResource();
@@ -860,7 +899,7 @@ bool AActorTileMap::TileHasElement(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
+	if (Index == -1 || !Tiles[Index]) return false;
 
 	return Tiles[Index]->GetElement() != nullptr;
 }
@@ -869,7 +908,7 @@ bool AActorTileMap::TileHasEnemyOrAlly(const FIntPoint& Pos2D, const bool CheckE
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos2D);
-	if (Index == -1) return false;
+	if (Index == -1 || !Tiles[Index]) return false;
 
 	// Se obtiene el elemento que contiene la casilla
 	const AActorDamageableElement* Element = Tiles[Index]->GetElement();
@@ -896,7 +935,7 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 		{
 			// Se obtiene el indice y se verifica que es valido, en caso contrario, se omite el vecino
 			const int32 Index = GetPositionInArray(Neighbor);
-			if (Index == -1) continue;
+			if (Index == -1 || !Tiles[Index]) continue;
 
 			// Se obtiene la casilla
 			const AActorTile* Tile = Tiles[Index];
@@ -924,7 +963,7 @@ bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	if (Index == -1) return false;
+	if (Index == -1 || !Tiles[Index]) return false;
 
 	// Si la casilla no es accesible o no es valida, no se puede establecer un asentamiento
 	if (!IsTileAccesible(Pos)) return false;
@@ -1001,7 +1040,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 			while (Current != PosIni)
 			{
 				const int32 Index = GetPositionInArray(Current);
-				if (Index == -1) break;
+				if (Index == -1 || !Tiles[Index]) break;
 
 				// Se obtiene el coste de movimiento de la casilla actual
 				const int32 CurrentCost = Tiles[Index]->GetMovementCost();
@@ -1032,7 +1071,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 		{
 			// Si el indice no es valido, se salta el vecino actual
 			const int32 Index = GetPositionInArray(NeighborPos);
-			if (Index == -1) continue;
+			if (Index == -1 || !Tiles[Index]) continue;
 
 			// Se verifica si el vecino calculado es correcto y, en caso de ser accesible, se obtiene
 			const AActorTile* NeighborTile;

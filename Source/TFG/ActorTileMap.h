@@ -237,6 +237,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileUpdated, FTileInfo, TileInfo);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSaveMapTilesUpdated, const TArray<FResourceInfo>&, ResourcesData);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreation, FResourceInfo, ResourceInfo);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreated, AActorResource*, Resource);
@@ -256,6 +258,14 @@ class TFG_API AActorTileMap : public AActor
 	GENERATED_BODY()
 
 protected:
+	/**
+	 * Flag para determinar si el mapa se esta actualizando
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map")
+	bool UpdatingMap;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Array con informacion sobre el posicionamiento de las casillas y su tipo. Se emplea en los archivos de guardado
 	 */
@@ -295,6 +305,7 @@ protected:
 	/**
 	 * Posicion de la ultima casilla en coordenadas de la escena
 	 */
+	UPROPERTY(VisibleInstanceOnly, Category="Map|Grid")
 	FVector2D GridSize;
 
 	/**
@@ -460,9 +471,8 @@ private:
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
 	 * 
 	 * @param TilesData Array de Struct que contienen la informacion necesaria para establecer las casillas del mapa
-	 * @param ResourcesData
 	 */
-	void SetMapFromSave(const TArray<FTileSaveData>& TilesData, const TArray<FResourceInfo>& ResourcesData);
+	void SetMapFromSave(const TArray<FTileSaveData>& TilesData);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -510,6 +520,9 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
+	bool AreTilesValid() const;
+
 	/**
 	 * Metodo que verifica si la casilla con las coordenadas dadas es accesible
 	 * 
@@ -551,6 +564,14 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void GenerateMap(const FIntPoint& Size2D, const EMapTemperature Temperature, const EMapSeaLevel SeaLevel,
 	                 const float WaterChance);
+
+	/**
+	 * Metodo que actualiza los recursos del mapa dada la informacion del archivo de guardado
+	 * 
+	 * @param ResourcesData Array de Struct que contienen la informacion necesaria para establecer los recursos del mapa
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
+	void SetResourcesFromSave(const TArray<FResourceInfo>& ResourcesData) const;
 
 	/**
 	 * Metodo que calcula y devuelve posiciones validas para las unidades iniciales de las facciones
@@ -787,6 +808,9 @@ public:
 	FOnTileInfoUpdated OnTileInfoUpdated;
 	UPROPERTY(BlueprintAssignable)
 	FOnTileUpdated OnTileUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSaveMapTilesUpdated OnSaveMapTilesUpdated;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnResourceCreation OnResourceCreation;
