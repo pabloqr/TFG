@@ -42,8 +42,8 @@ float ACMainAI::CalculateStrengthDifferenceRelevance(const float StrengthA, cons
 	const float Average = (StrengthA + StrengthB) / 2.0;
 
 	// Se aplica la formula para la relevancia y se normaliza entre 0 y 1
-	const float Relevance = Difference / (Average + 1.0) * FMath::Exp(Difference / (Average + 1.0));
-	const float NormalizedRelevance = 1 / (1 + FMath::Exp(-Relevance));
+	const float Relevance = Difference / (Average + 1.0) * FMath::Exp(Difference / (Average + 1.0)) * 2.0;
+	const float NormalizedRelevance = 1.0 / (1.0 + FMath::Exp(-(Relevance - 2.5)));
 
 	return NormalizedRelevance;
 }
@@ -436,7 +436,7 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar) const
+void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 {
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -445,103 +445,202 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar) const
 		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsInfo.Contains(FactionAtWar)) return;
-
-		// Se obtiene la puntuacion de guerra
-		const int32 WarScore = FactionsInfo[FactionAtWar].WarInfo.WarScore;
-		// Se obtienen los turnos transcurridos desde el comienzo de la guerra
-		const int32 WarTurns = FactionsInfo[FactionAtWar].WarInfo.NumTurns;
-
-		// Si la puntuacion de guerra contiene un resultado invalido, se establece la paz
-		if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionAtWar);
-		else
+		if (FactionsInfo.Contains(FactionAtWar))
 		{
-			// Se debe decidir:
-			//		(a) si se sigue con la guerra:
-			//			(a.1) la puntuacion es mayor que 0, si se tiene fuerza militar suficiente para continuar
-			//			(a.2) la puntuacion es cercana a 0, si se tiene fuerza militar suficiente para continuar
-			//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
-			//		(b) si se debe tratar de firmar un pacto de paz:
-			//			(b.1) la puntuacion es igual o inferior a 0 y no se tiene fuerza militar suficiente
-			//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
-			//			(b.3) la puntuacion es cercana a 0, la fuerza es equiparable y es prolongada
-			//		(c) si es imprescindible acabar con la guerra
-			//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
-			//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
+			// Se obtiene la puntuacion de guerra
+			const int32 WarScore = FactionsInfo[FactionAtWar].WarInfo.WarScore;
+			// Se obtienen los turnos transcurridos desde el comienzo de la guerra
+			const int32 WarTurns = FactionsInfo[FactionAtWar].WarInfo.NumTurns;
 
-			const float FactionStrength = FactionsInfo[FactionAtWar].MilitaryStrength;
+			// Si la puntuacion de guerra contiene un resultado invalido, se establece la paz
+			if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionAtWar);
+			else
+			{
+				// Se debe decidir:
+				//		(a) si se sigue con la guerra:
+				//			(a.1) la puntuacion es mayor que 0, si se tiene fuerza militar suficiente para continuar
+				//			(a.2) la puntuacion es cercana a 0, si se tiene fuerza militar suficiente para continuar
+				//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
+				//		(b) si se debe tratar de firmar un pacto de paz:
+				//			(b.1) la puntuacion es igual o inferior a 0 y no se tiene fuerza militar suficiente
+				//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
+				//			(b.3) la puntuacion es cercana a 0, la fuerza es equiparable y es prolongada
+				//		(c) si es imprescindible acabar con la guerra
+				//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
+				//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
+
+				const float FactionStrength = FactionsInfo[FactionAtWar].MilitaryStrength;
+				const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
+				const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
+					PawnFaction->GetMilitaryStrength(), FactionStrength);
+
+				// Se calculan una serie de flags para determinar el estado de la puntuacion de guerra
+				const bool ScoreVeryLow = WarScore <= -800.0;
+				const bool ScoreLow = -800.0 < WarScore && WarScore < -50.0;
+				const bool ScoreCloseToZero = -50.0 <= WarScore && WarScore <= 50.0;
+				const bool ScoreHigh = 50.0 < WarScore && WarScore < 600.0;
+				const bool ScoreVeryHigh = 600.0 <= WarScore;
+
+				const bool ImWeaker = StrengthDiff < 0.0;
+
+				// No se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
+				//		* Si se tiene mas fuerza y la diferencia es baja (hacia abajo)
+				const bool CondB1 = (ImWeaker && StrengthDiffRel >= 0.5) || (!ImWeaker && StrengthDiffRel <= 0.3);
+				// Se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
+				//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
+				const bool CondB2 = (ImWeaker && StrengthDiffRel <= 0.3) || (!ImWeaker && StrengthDiffRel >= 0.5);
+				// Se tiene fuerza militar equiparable:
+				//		* Si la diferencia es muy baja (hacia abajo)
+				const bool CondB3 = ScoreCloseToZero && StrengthDiffRel <= 0.1 && WarTurns >= 100;
+
+				// No se tiene fuerza militar suficiente:
+				//		* Si se tiene menos fuerza, aunque la diferencia es baja (hacia arriba)
+				//		* Si se tiene mas fuerza y la diferencia es media (hacia abajo)
+				const bool CondC1 = (ImWeaker && StrengthDiffRel >= 0.2) || (!ImWeaker && StrengthDiffRel <= 0.5);
+				if ((ScoreVeryLow && CondC1) || PawnFaction->GetNumSettlements() <= 2) // c
+				{
+					// Imprescindible acabar con la guerra
+
+					// Se calcula la cantidad de dinero a ofrecer
+					const float MoneyAmount = MainMode->CalculateMoneyAmountForPeaceTreaty(
+						PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+
+					// Se establecen los elementos del trato
+					const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
+					const FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+
+					// Se propone el trato de paz
+					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+				}
+				else if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB3) // b
+				{
+					// Intentar acabar con la guerra
+
+					// Se establecen los elementos del trato
+					FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
+					FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+
+					// Se calcula la cantidad de dinero a ofrecer o solicitar dependiendo de si es favorable o no
+					if (ScoreHigh || ScoreVeryHigh)
+					{
+						EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+							FactionAtWar, ImWeaker, WarScore, StrengthDiffRel);
+					}
+					else
+					{
+						OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+							PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+					}
+
+					// Se propone el trato de paz
+					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+				}
+
+				return;
+			}
+		}
+	}
+
+	// Se procesa la siguiente faccion
+	ManageNextFactionAtWar();
+}
+
+void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
+{
+	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
+	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
+	{
+		// Se obtiene la informacion de cada una de las facciones
+		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
+
+		// Se verifica que los diferentes contenedores contengan la faccion actual
+		if (FactionsInfo.Contains(NeutralFaction))
+		{
+			// Se obtienen las diferentes facciones segun la relacion diplomatica
+			const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
+			const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
+			const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
+
+			// Se debe decidir:
+			//		(a) si se declara la guerra:
+			//			(a.1) otras facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
+			//			(a.2) la fuerza militar es superior
+			//		(b) si se propone una alianza:
+			//			(b.1) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
+			//			(b.2) la fuerza militar es insuficiente
+			//		(c) si se mantiene la relacion
+
+			const float FactionStrength = FactionsInfo[NeutralFaction].MilitaryStrength;
 			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionStrength);
 
-			// Se calculan una serie de flags para determinar el estado de la puntuacion de guerra
-			const bool ScoreVeryLow = WarScore <= -800.0;
-			const bool ScoreLow = -800.0 < WarScore && WarScore < -50.0;
-			const bool ScoreCloseToZero = -50.0 <= WarScore && WarScore <= 50.0;
-			const bool ScoreHigh = 50.0 < WarScore && WarScore < 600.0;
-			const bool ScoreVeryHigh = 600.0 <= WarScore;
-
 			const bool ImWeaker = StrengthDiff < 0.0;
 
-			// No se tiene fuerza militar suficiente:
-			//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
-			//		* Si se tiene mas fuerza y la diferencia es baja (hacia abajo)
-			const bool CondB1 = (ImWeaker && StrengthDiffRel >= 0.5) || (!ImWeaker && StrengthDiffRel <= 0.3);
+			int32 AllyFactionsAtWar = 0;
+			int32 AllyFactionsAllied = 0;
+
+			// Se procesan las facciones aliadas
+			for (const auto Faction : AllyFactions)
+			{
+				if (MainMode->IsFactionAtWarWith(Faction, NeutralFaction)) ++AllyFactionsAtWar;
+				else if (MainMode->IsFactionAlliedWith(Faction, NeutralFaction)) ++AllyFactionsAllied;
+			}
+
 			// Se tiene fuerza militar suficiente:
 			//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
+			//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
+			const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.2) || (!ImWeaker && StrengthDiffRel >= 0.2);
+			// Se tiene fuerza militar suficiente:
 			//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
-			const bool CondB2 = (ImWeaker && StrengthDiffRel <= 0.3) || (!ImWeaker && StrengthDiffRel >= 0.5);
-			// Se tiene fuerza militar equiparable:
-			//		* Si la diferencia es muy baja (hacia abajo)
-			const bool CondB3 = ScoreCloseToZero && StrengthDiffRel <= 0.1 && WarTurns >= 100;
+			const bool CondA2 = !ImWeaker && StrengthDiffRel >= 0.5;
 
-			// No se tiene fuerza militar suficiente:
-			//		* Si se tiene menos fuerza, aunque la diferencia es baja (hacia arriba)
-			//		* Si se tiene mas fuerza y la diferencia es media (hacia abajo)
-			const bool CondC1 = (ImWeaker && StrengthDiffRel >= 0.2) || (!ImWeaker && StrengthDiffRel <= 0.5);
-			if ((ScoreVeryLow && CondC1) || PawnFaction->GetNumSettlements() <= 2) // c
+			// Se tiene fuerza militar complementaria:
+			//		* Si se tiene mas fuerza y la diferencia es muy baja (hacia abajo)
+			const bool CondB1 = StrengthDiffRel <= 0.1;
+			// Se tiene fuerza militar insuficiente:
+			//		* Si se tiene menos fuerza y la diferencia es alta (hacia arriba)
+			const bool CondB2 = ImWeaker && StrengthDiffRel >= 0.7;
+
+			// Se determina si se declara la guerra, se propone una alianza o se mantiene la relacion
+			if ((AllyFactionsAtWar > AllyFactionsAllied && CondA1) || CondA2) // a
 			{
-				// Imprescindible acabar con la guerra
-
-				// Se calcula la cantidad de dinero a ofrecer
-				const float MoneyAmount = MainMode->CalculateMoneyAmountForPeaceTreaty(
-					PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
-
-				// Se establecen los elementos del trato
-				const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
-				const FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
-
-				// Se propone el trato de paz
-				MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+				MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), NeutralFaction);
 			}
-			else if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB3) // b
+			// b
+			else if ((AllyFactions.Num() != 0 && AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB1) || CondB2)
 			{
-				// Intentar acabar con la guerra
-
 				// Se establecen los elementos del trato
 				FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
-				FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+				FDealElements EnemyElements = FDealElements(NeutralFaction, 0.0, FResource());
 
-				// Se calcula la cantidad de dinero a ofrecer o solicitar dependiendo de si es favorable o no
-				if (ScoreHigh || ScoreVeryHigh)
+				// Se calcula la cantidad de dinero a ofrecer o solicitar
+				if (ImWeaker)
 				{
-					EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
-						FactionAtWar, ImWeaker, WarScore, StrengthDiffRel);
+					OwnElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(
+						PawnFaction->GetIndex(), StrengthDiffRel);
 				}
 				else
 				{
-					OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
-						PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+					EnemyElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(
+						NeutralFaction, StrengthDiffRel);
 				}
 
-				// Se propone el trato de paz
-				MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+				// Se propone el trato y se finaliza
+				MainMode->ProposeDeal(FDealInfo(EDealType::AllianceDeal, OwnElements, EnemyElements));
+
+				return;
 			}
 		}
 	}
+
+	// Se procesa la siguiente faccion
+	ManageNextNeutralFaction();
 }
 
-void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction) const
+void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
 {
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -550,157 +649,76 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction) const
 		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsInfo.Contains(NeutralFaction)) return;
-
-		// Se obtienen las diferentes facciones segun la relacion diplomatica
-		const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
-		const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
-		const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
-
-		// Se debe decidir:
-		//		(a) si se declara la guerra:
-		//			(a.1) otras facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
-		//			(a.2) la fuerza militar es superior
-		//		(b) si se propone una alianza:
-		//			(b.1) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
-		//			(b.2) la fuerza militar es insuficiente
-		//		(c) si se mantiene la relacion
-
-		const float FactionStrength = FactionsInfo[NeutralFaction].MilitaryStrength;
-		const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
-		const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
-			PawnFaction->GetMilitaryStrength(), FactionStrength);
-
-		const bool ImWeaker = StrengthDiff < 0.0;
-
-		int32 AllyFactionsAtWar = 0;
-		int32 AllyFactionsAllied = 0;
-
-		// Se procesan las facciones aliadas
-		for (const auto Faction : AllyFactions)
+		if (FactionsInfo.Contains(AllyFaction))
 		{
-			if (MainMode->IsFactionAtWarWith(Faction, NeutralFaction)) ++AllyFactionsAtWar;
-			else if (MainMode->IsFactionAlliedWith(Faction, NeutralFaction)) ++AllyFactionsAllied;
-		}
+			// Se obtienen las diferentes facciones segun la relacion diplomatica
+			const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
+			const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
+			const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
 
-		// Se tiene fuerza militar suficiente:
-		//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
-		//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
-		const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.2) || (!ImWeaker && StrengthDiffRel >= 0.2);
-		// Se tiene fuerza militar suficiente:
-		//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
-		const bool CondA2 = !ImWeaker && StrengthDiffRel >= 0.5;
+			// Se debe decidir:
+			//		(a) si se rompe la alianza:
+			//			(a.1) todas facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
+			//			(a.2) otras facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
+			//			(a.3) la fuerza militar es superior
+			//		(b) si se mantiene la alianza:
+			//			(b.1) todas las facciones aliadas tambien son aliadas
+			//			(b.2) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
+			//			(b.3) la fuerza militar es insuficiente
 
-		// Se tiene fuerza militar complementaria:
-		//		* Si se tiene mas fuerza y la diferencia es muy baja (hacia abajo)
-		const bool CondB1 = StrengthDiffRel <= 0.1;
-		// Se tiene fuerza militar insuficiente:
-		//		* Si se tiene menos fuerza y la diferencia es alta (hacia arriba)
-		const bool CondB2 = ImWeaker && StrengthDiffRel >= 0.7;
+			const float FactionAtWarStrength = FactionsInfo[AllyFaction].MilitaryStrength;
+			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
+			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
+				PawnFaction->GetMilitaryStrength(), FactionAtWarStrength);
 
-		// Se determina si se declara la guerra, se propone una alianza o se mantiene la relacion
-		if ((AllyFactionsAtWar > AllyFactionsAllied && CondA1) || CondA2) // a
-		{
-			MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), NeutralFaction);
-		}
-		else if ((AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB1) || CondB2) // b
-		{
-			// Se establecen los elementos del trato
-			FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
-			FDealElements EnemyElements = FDealElements(NeutralFaction, 0.0, FResource());
+			const bool ImWeaker = StrengthDiff < 0.0;
 
-			// Se calcula la cantidad de dinero a ofrecer o solicitar
-			if (ImWeaker)
+			int32 AllyFactionsAtWar = 0;
+			int32 AllyFactionsAllied = 0;
+
+			// Se procesan las facciones aliadas
+			for (const auto Faction : AllyFactions)
 			{
-				OwnElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(
-					PawnFaction->GetIndex(), StrengthDiffRel);
-			}
-			else
-			{
-				EnemyElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(NeutralFaction, StrengthDiffRel);
+				if (MainMode->IsFactionAtWarWith(Faction, AllyFaction)) ++AllyFactionsAtWar;
+				else if (MainMode->IsFactionAlliedWith(Faction, AllyFaction)) ++AllyFactionsAllied;
 			}
 
-			// Se propone el trato
-			MainMode->ProposeDeal(FDealInfo(EDealType::AllianceDeal, OwnElements, EnemyElements));
+			// Se tiene fuerza militar suficiente:
+			//		* Si se tiene menos fuerza y la diferencia es media (hacia abajo)
+			//		* Si se tiene mas fuerza
+			const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.4) || !ImWeaker;
+			// Se tiene fuerza militar suficiente:
+			//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
+			//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
+			const bool CondA2 = (ImWeaker && StrengthDiffRel <= 0.2) || (!ImWeaker && StrengthDiffRel >= 0.2);
+			// Se tiene fuerza militar suficiente:
+			//		* Si se tiene mas fuerza y la diferencia es alta (hacia arriba)
+			const bool CondA3 = !ImWeaker && StrengthDiffRel >= 0.7;
+
+			// Se tiene fuerza militar complementaria:
+			//		* Si se tiene mas fuerza y la diferencia es muy baja (hacia abajo)
+			const bool CondB2 = StrengthDiffRel <= 0.1;
+			// Se tiene fuerza militar insuficiente:
+			//		* Si se tiene menos fuerza y la diferencia es alta (hacia arriba)
+			const bool CondB3 = ImWeaker && StrengthDiffRel >= 0.7;
+
+			// a
+			const bool CondBreakAlliance = (AllyFactions.Num() == AllyFactionsAtWar && CondA1) ||
+				(AllyFactionsAtWar > AllyFactionsAllied && CondA2) || CondA3;
+			// b
+			const bool CondAlliance = AllyFactions.Num() == AllyFactionsAllied ||
+				(AllyFactions.Num() != 0 && AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB2) || CondB3;
+
+			// Se determina si se mantiene la alianza o se rompe
+			if (CondBreakAlliance && !CondAlliance)
+			{
+				MainMode->BreakAllianceWithFaction(PawnFaction->GetIndex(), AllyFaction);
+			}
 		}
 	}
-}
 
-void ACMainAI::ManageAllyFaction(const int32 AllyFaction) const
-{
-	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
-	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
-	{
-		// Se obtiene la informacion de cada una de las facciones
-		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
-
-		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (!FactionsInfo.Contains(AllyFaction)) return;
-
-		// Se obtienen las diferentes facciones segun la relacion diplomatica
-		const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
-		const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
-		const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
-
-		// Se debe decidir:
-		//		(a) si se rompe la alianza:
-		//			(a.1) todas facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
-		//			(a.2) otras facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
-		//			(a.3) la fuerza militar es superior
-		//		(b) si se mantiene la alianza:
-		//			(b.1) todas las facciones aliadas tambien son aliadas
-		//			(b.2) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
-		//			(b.3) la fuerza militar es insuficiente
-
-		const float FactionAtWarStrength = FactionsInfo[AllyFaction].MilitaryStrength;
-		const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
-		const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
-			PawnFaction->GetMilitaryStrength(), FactionAtWarStrength);
-
-		const bool ImWeaker = StrengthDiff < 0.0;
-
-		int32 AllyFactionsAtWar = 0;
-		int32 AllyFactionsAllied = 0;
-
-		// Se procesan las facciones aliadas
-		for (const auto Faction : AllyFactions)
-		{
-			if (MainMode->IsFactionAtWarWith(Faction, AllyFaction)) ++AllyFactionsAtWar;
-			else if (MainMode->IsFactionAlliedWith(Faction, AllyFaction)) ++AllyFactionsAllied;
-		}
-
-		// Se tiene fuerza militar suficiente:
-		//		* Si se tiene menos fuerza y la diferencia es media (hacia abajo)
-		//		* Si se tiene mas fuerza
-		const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.4) || !ImWeaker;
-		// Se tiene fuerza militar suficiente:
-		//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
-		//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
-		const bool CondA2 = (ImWeaker && StrengthDiffRel <= 0.2) || (!ImWeaker && StrengthDiffRel >= 0.2);
-		// Se tiene fuerza militar suficiente:
-		//		* Si se tiene mas fuerza y la diferencia es alta (hacia arriba)
-		const bool CondA3 = !ImWeaker && StrengthDiffRel >= 0.7;
-
-		// Se tiene fuerza militar complementaria:
-		//		* Si se tiene mas fuerza y la diferencia es muy baja (hacia abajo)
-		const bool CondB2 = StrengthDiffRel <= 0.1;
-		// Se tiene fuerza militar insuficiente:
-		//		* Si se tiene menos fuerza y la diferencia es alta (hacia arriba)
-		const bool CondB3 = ImWeaker && StrengthDiffRel >= 0.7;
-
-		// a
-		const bool CondBreakAlliance = (AllyFactions.Num() == AllyFactionsAtWar && CondA1) ||
-			(AllyFactionsAtWar > AllyFactionsAllied && CondA2) || CondA3;
-		// b
-		const bool CondAlliance = AllyFactions.Num() == AllyFactionsAllied ||
-			(AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB2) || CondB3;
-
-		// Se determina si se mantiene la alianza o se rompe
-		if (CondBreakAlliance && !CondAlliance)
-		{
-			MainMode->BreakAllianceWithFaction(PawnFaction->GetIndex(), AllyFaction);
-		}
-	}
+	// Se procesa la siguiente faccion
+	ManageNextAllyFaction();
 }
 
 void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
@@ -993,12 +1011,12 @@ void ACMainAI::ManageNextFactionAtWar()
 	// Se gestionan las facciones mientras queden
 	if (FactionsIndex.Num() > 0)
 	{
-		// Se obtiene el indice de la faccion y se procesa
+		// Se obtiene el indice de la faccion y elimina de la lista
 		const int32 FactionIndex = FactionsIndex[0];
-		ManageFactionAtWar(FactionIndex);
-
-		// Se elimina de la lista
 		FactionsIndex.RemoveAt(0);
+
+		// Se procesa la faccion
+		ManageFactionAtWar(FactionIndex);
 	}
 	else
 	{
@@ -1015,12 +1033,12 @@ void ACMainAI::ManageNextNeutralFaction()
 	// Se gestionan las facciones mientras queden
 	if (FactionsIndex.Num() > 0)
 	{
-		// Se obtiene el indice de la faccion y se procesa
+		// Se obtiene el indice de la faccion y elimina de la lista
 		const int32 FactionIndex = FactionsIndex[0];
-		ManageNeutralFaction(FactionIndex);
-
-		// Se elimina de la lista
 		FactionsIndex.RemoveAt(0);
+
+		// Se procesa la faccion
+		ManageNeutralFaction(FactionIndex);
 	}
 	else
 	{
@@ -1037,12 +1055,12 @@ void ACMainAI::ManageNextAllyFaction()
 	// Se gestionan las facciones mientras queden
 	if (FactionsIndex.Num() > 0)
 	{
-		// Se obtiene el indice de la faccion y se procesa
+		// Se obtiene el indice de la faccion y elimina de la lista
 		const int32 FactionIndex = FactionsIndex[0];
-		ManageNeutralFaction(FactionIndex);
-
-		// Se elimina de la lista
 		FactionsIndex.RemoveAt(0);
+
+		// Se procesa la faccion
+		ManageAllyFaction(FactionIndex);
 	}
 	else
 	{
@@ -1077,8 +1095,6 @@ void ACMainAI::TurnStarted()
 	// Si la faccion no es valida, se finaliza el turno
 	if (PawnFaction)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Started"), PawnFaction->GetIndex()))
-
 		// Primero: se gestionan las relaciones diplomaticas con el resto de facciones
 		ManageDiplomacy();
 	}
@@ -1126,8 +1142,6 @@ void ACMainAI::TurnFinished() const
 				}
 			}
 		}
-
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("(%d) AI Turn Finished"), PawnFaction->GetIndex()))
 	}
 
 	// Se llama al metodo para gestionar el final del turno

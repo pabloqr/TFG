@@ -469,8 +469,6 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 
 void AActorTileMap::SetResourcesFromSave(const TArray<FResourceInfo>& ResourcesData) const
 {
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("NumResources - %d"), ResourcesData.Num()))
-
 	// Se procesan todos los recursos del archivo de guardado
 	for (int32 i = 0; i < ResourcesData.Num(); ++i) OnResourceCreation.Broadcast(ResourcesData[i]);
 }
@@ -602,11 +600,8 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("ResourcePos - (%d, %d) (%d)"), Pos.X, Pos.Y, Index))
 	if (Index == -1 || !Tiles[Index]) return;
-
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("CreatingResource")))
-
+	
 	// Se obtiene la casilla
 	AActorTile* Tile = Tiles[Index];
 
@@ -618,8 +613,6 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 
 	if (NewResource)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("InitialisingResource")))
-
 		// Se actualizan los atributos del recurso
 		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), -1, Resource));
 

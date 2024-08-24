@@ -132,9 +132,9 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void ManageFactionAtWar(const int32 FactionAtWar) const;
-	void ManageNeutralFaction(const int32 NeutralFaction) const;
-	void ManageAllyFaction(const int32 AllyFaction) const;
+	void ManageFactionAtWar(const int32 FactionAtWar);
+	void ManageNeutralFaction(const int32 NeutralFaction);
+	void ManageAllyFaction(const int32 AllyFaction);
 
 	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;
