@@ -31,6 +31,11 @@ void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+bool AActorDamageableElement::IsHuman() const
+{
+	return DamageableInfo.Owner == 0;
+}
+
 bool AActorDamageableElement::IsMine() const
 {
 	// Se verifica si la unidad pertenece a la faccion en juego

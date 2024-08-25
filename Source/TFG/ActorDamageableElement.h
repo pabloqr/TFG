@@ -52,6 +52,9 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
+	bool IsHuman() const;
+
 	/**
 	 * Metodo que verifica si el elemento es propiedad del jugador actual
 	 * 
