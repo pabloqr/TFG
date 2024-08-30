@@ -520,6 +520,11 @@ protected:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	/**
+	 * Metodo que verifica todas las referencias del Array de casillas
+	 * 
+	 * @return Si todas las referencias de las casillas son validas
+	 */
 	UFUNCTION(BlueprintCallable)
 	bool AreTilesValid() const;
 

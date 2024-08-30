@@ -11,18 +11,21 @@ APawnFaction::APawnFaction()
 	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Se inicializa la informacion de la faccion para modificarla a continuacion
+	Info = FFactionInfo();
+
 	// Se inicializa el indice de la faccion
-	Index = 0;
+	Info.Index = 0;
 
 	// Se inicializa la fuerza militar de la faccion
-	MilitaryStrength = 0.0;
+	Info.MilitaryStrength = 0.0;
 
 	// Se inicializa el dinero y el balance
-	Money = 200.0;
-	MoneyBalance = 0.0;
+	Info.Money = 200.0;
+	Info.MoneyBalance = 0.0;
 
 	// Se inicializan los diccionarios de recursos
-	MonetaryResources = TMap<EResource, FResourceCollection>({
+	Info.MonetaryResources = TMap<EResource, FResourceCollection>({
 		{
 			EResource::Diamond,
 			FResourceCollection(FResource(EResource::Diamond, EResourceType::Monetary, 0), TArray<FIntPoint>())
@@ -36,7 +39,7 @@ APawnFaction::APawnFaction()
 			FResourceCollection(FResource(EResource::Copper, EResourceType::Monetary, 0), TArray<FIntPoint>())
 		}
 	});
-	StrategicResources = TMap<EResource, FResourceCollection>({
+	Info.StrategicResources = TMap<EResource, FResourceCollection>({
 		{
 			EResource::Aluminium,
 			FResourceCollection(FResource(EResource::Aluminium, EResourceType::Strategic, 0), TArray<FIntPoint>())
@@ -52,7 +55,7 @@ APawnFaction::APawnFaction()
 	});
 
 	// Se inicializa el diccionario de relaciones diplomaticas
-	FactionsWithDiplomaticRelationship = TMap<EDiplomaticRelationship, FFactionsSet>({
+	Info.FactionsWithDiplomaticRelationship = TMap<EDiplomaticRelationship, FFactionsSet>({
 		{EDiplomaticRelationship::AtWar, FFactionsSet()},
 		{EDiplomaticRelationship::Neutral, FFactionsSet()},
 		{EDiplomaticRelationship::Ally, FFactionsSet()},
@@ -64,14 +67,14 @@ APawnFaction::APawnFaction()
 void APawnFaction::UpdateFactionDiplomaticRelationship(const int32 Faction, const EDiplomaticRelationship Relationship)
 {
 	// Se verifica que la faccion existe
-	if (!KnownFactions.Contains(Faction)) return;
+	if (!Info.KnownFactions.Contains(Faction)) return;
 
 	// Se actualiza el diccionario de relaciones diplomaticas y facciones
-	FactionsWithDiplomaticRelationship[KnownFactions[Faction].Relationship].Factions.Remove(Faction);
-	FactionsWithDiplomaticRelationship[Relationship].Factions.Add(Faction);
+	Info.FactionsWithDiplomaticRelationship[Info.KnownFactions[Faction].Relationship].Factions.Remove(Faction);
+	Info.FactionsWithDiplomaticRelationship[Relationship].Factions.Add(Faction);
 
 	// Se actualiza la relacion diplomatica de la faccion dada
-	KnownFactions[Faction].Relationship = Relationship;
+	Info.KnownFactions[Faction].Relationship = Relationship;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -80,32 +83,32 @@ void APawnFaction::OnUnitStateUpdated(const AActorUnit* Unit, const EUnitState S
 {
 	// Se busca la unidad en el array de unidades de la faccion
 	int32 UnitIndex = -1;
-	for (int32 i = 0; i < Units.Num() && UnitIndex == -1; ++i)
+	for (int32 i = 0; i < Info.Units.Num() && UnitIndex == -1; ++i)
 	{
-		if (Units[i] == Unit) UnitIndex = i;
+		if (Info.Units[i] == Unit) UnitIndex = i;
 	}
 
 	// Si no se encuentra la unidad, no se ejecuta nada mas
 	if (UnitIndex == -1) return;
 
 	// Se comprueba si la unidad esta siguiendo un camino o espera ordenes
-	if (State == EUnitState::FollowingPath && !AutomaticUnits.Contains(UnitIndex))
+	if (State == EUnitState::FollowingPath && !Info.AutomaticUnits.Contains(UnitIndex))
 	{
 		// Se comprueba que no este en la otra lista y se anade a la correcta
-		if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
-		AutomaticUnits.AddUnique(UnitIndex);
+		if (Info.ManualUnits.Contains(UnitIndex)) Info.ManualUnits.Remove(UnitIndex);
+		Info.AutomaticUnits.AddUnique(UnitIndex);
 	}
-	else if (State == EUnitState::WaitingForOrders && !ManualUnits.Contains(UnitIndex))
+	else if (State == EUnitState::WaitingForOrders && !Info.ManualUnits.Contains(UnitIndex))
 	{
 		// Se comprueba que no este en la otra lista y se anade a la correcta
-		if (AutomaticUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
-		AutomaticUnits.AddUnique(UnitIndex);
+		if (Info.AutomaticUnits.Contains(UnitIndex)) Info.ManualUnits.Remove(UnitIndex);
+		Info.AutomaticUnits.AddUnique(UnitIndex);
 	}
 	else
 	{
 		// Si no tiene ninguno de los estados anteriores, se elimina de cualquiera de las dos listas
-		if (AutomaticUnits.Contains(UnitIndex)) AutomaticUnits.Remove(UnitIndex);
-		else if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
+		if (Info.AutomaticUnits.Contains(UnitIndex)) Info.AutomaticUnits.Remove(UnitIndex);
+		else if (Info.ManualUnits.Contains(UnitIndex)) Info.ManualUnits.Remove(UnitIndex);
 	}
 }
 
@@ -113,9 +116,9 @@ void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, 
 {
 	// Se busca el asentamiento en el array de asentamientos de la faccion
 	int32 SettlementIndex = -1;
-	for (int32 i = 0; i < Settlements.Num() && SettlementIndex == -1; ++i)
+	for (int32 i = 0; i < Info.Settlements.Num() && SettlementIndex == -1; ++i)
 	{
-		if (Settlements[i] == Settlement) SettlementIndex = i;
+		if (Info.Settlements[i] == Settlement) SettlementIndex = i;
 	}
 
 	// Si no se encuentra el asentamiento, no se ejecuta nada mas
@@ -124,9 +127,9 @@ void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, 
 	// Se actualiza la lista de acuerdo al estado del asentamiento
 	if (State == ESettlementState::SelectProduction)
 	{
-		if (!IdleSettlements.Contains(SettlementIndex)) IdleSettlements.AddUnique(SettlementIndex);
+		if (!Info.IdleSettlements.Contains(SettlementIndex)) Info.IdleSettlements.AddUnique(SettlementIndex);
 	}
-	else if (IdleSettlements.Contains(SettlementIndex)) IdleSettlements.Remove(SettlementIndex);
+	else if (Info.IdleSettlements.Contains(SettlementIndex)) Info.IdleSettlements.Remove(SettlementIndex);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -134,9 +137,9 @@ void APawnFaction::OnSettlementStateUpdated(const AActorSettlement* Settlement, 
 void APawnFaction::AddKnowFaction(const int32 Faction, const FOpponentFactionInfo& FactionInfo)
 {
 	// Se anade la faccion y su informacion
-	KnownFactions.Add(Faction, FactionInfo);
+	Info.KnownFactions.Add(Faction, FactionInfo);
 	// Se anade la faccion al estado diplomatico neutral
-	FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions.Add(Faction);
+	Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions.Add(Faction);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -152,11 +155,11 @@ bool APawnFaction::HasElement(const AActorDamageableElement* Element) const
 {
 	// Se comprueba si es una unidad y, si lo es, se verifica si es de esta faccion
 	const AActorUnit* Unit = Cast<AActorUnit>(Element);
-	if (Unit) return Units.Contains(Unit);
+	if (Unit) return Info.Units.Contains(Unit);
 
 	// Se comprueba si es un asentamiento y, si lo es, se verifica si es de esta faccion
 	const AActorSettlement* Settlement = Cast<AActorSettlement>(Element);
-	if (Settlement) return Settlements.Contains(Settlement);
+	if (Settlement) return Info.Settlements.Contains(Settlement);
 
 	return false;
 }
@@ -165,10 +168,10 @@ bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType U
 {
 	// Se obtiene la informacion de la unidad
 	const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(DataTable, UnitType);
-	if (StrategicResources.Contains(UnitData.RequiredResource.Resource))
+	if (Info.StrategicResources.Contains(UnitData.RequiredResource.Resource))
 	{
 		// Se devuelve si hay recursos suficientes
-		return StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity >=
+		return Info.StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity >=
 			UnitData.RequiredResource.Quantity;
 	}
 
@@ -179,12 +182,12 @@ bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType U
 
 void APawnFaction::AddMoney(const int32 Amount)
 {
-	Money += Amount;
+	Info.Money += Amount;
 }
 
 void APawnFaction::RemoveMoney(const int32 Amount)
 {
-	Money -= Amount;
+	Info.Money -= Amount;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -192,16 +195,16 @@ void APawnFaction::RemoveMoney(const int32 Amount)
 void APawnFaction::AddSettlement(AActorSettlement* Settlement)
 {
 	// Se establece la faccion actual como propietaria del asentamiento
-	Settlement->SetFactionOwner(Index);
+	Settlement->SetFactionOwner(Info.Index);
 
 	// Se anade el asentamiento a la lista
-	Settlements.AddUnique(Settlement);
+	Info.Settlements.AddUnique(Settlement);
 
 	// Se actualiza el balance de dinero
-	MoneyBalance += Settlement->GetMoneyYield();
+	Info.MoneyBalance += Settlement->GetMoneyYield();
 
 	// Se llama al evento para actualizar la interfaz
-	OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+	OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 
 	// Se actualiza su estado
 	OnSettlementStateUpdated(Settlement, ESettlementState::SelectProduction);
@@ -210,15 +213,15 @@ void APawnFaction::AddSettlement(AActorSettlement* Settlement)
 void APawnFaction::RemoveSettlement(AActorSettlement* Settlement)
 {
 	// Se elimina el asentamiento de la lista
-	if (Settlements.Contains(Settlement))
+	if (Info.Settlements.Contains(Settlement))
 	{
-		Settlements.Remove(Settlement);
+		Info.Settlements.Remove(Settlement);
 
 		// Se actualiza el balance de dinero
-		MoneyBalance -= Settlement->GetMoneyYield();
+		Info.MoneyBalance -= Settlement->GetMoneyYield();
 
 		// Se llama al evento para actualizar la interfaz
-		OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+		OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 	}
 }
 
@@ -227,19 +230,19 @@ void APawnFaction::RemoveSettlement(AActorSettlement* Settlement)
 void APawnFaction::AddUnit(AActorUnit* Unit)
 {
 	// Se establece la faccion actual como propietaria de la unidad
-	Unit->SetFactionOwner(Index);
+	Unit->SetFactionOwner(Info.Index);
 
 	// Se anade la unidad a la lista
-	Units.AddUnique(Unit);
+	Info.Units.AddUnique(Unit);
 
 	// Se actualiza la fuerza militar para que se tenga en cuenta la unidad anadida
-	MilitaryStrength += Unit->GetStrengthPoints();
+	Info.MilitaryStrength += Unit->GetStrengthPoints();
 
 	// Se actualiza el balance de dinero para que tenga en cuenta la unidad anadida
-	MoneyBalance -= Unit->GetMaintenanceCost();
+	Info.MoneyBalance -= Unit->GetMaintenanceCost();
 
 	// Se llama al evento para actualizar la interfaz
-	OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+	OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 
 	// Se actualiza su estado
 	OnUnitStateUpdated(Unit, EUnitState::WaitingForOrders);
@@ -248,24 +251,24 @@ void APawnFaction::AddUnit(AActorUnit* Unit)
 void APawnFaction::RemoveUnit(AActorUnit* Unit)
 {
 	// Se verifica que la unidad sea de esta faccion
-	const int32 UnitIndex = Units.Find(Unit);
+	const int32 UnitIndex = Info.Units.Find(Unit);
 	if (UnitIndex != INDEX_NONE)
 	{
 		// Se elimina el indice de las listas de unidades
-		if (ManualUnits.Contains(UnitIndex)) ManualUnits.Remove(UnitIndex);
-		if (AutomaticUnits.Contains(UnitIndex)) AutomaticUnits.Remove(UnitIndex);
+		if (Info.ManualUnits.Contains(UnitIndex)) Info.ManualUnits.Remove(UnitIndex);
+		if (Info.AutomaticUnits.Contains(UnitIndex)) Info.AutomaticUnits.Remove(UnitIndex);
 
 		// Se elimina la unidad de la lista
-		Units.Remove(Unit);
+		Info.Units.Remove(Unit);
 
 		// Se actualiza la fuerza militar para que no se tenga en cuenta la unidad eliminada
-		MilitaryStrength -= Unit->GetStrengthPoints();
+		Info.MilitaryStrength -= Unit->GetStrengthPoints();
 
 		// Se actualiza el balance de dinero para que no tenga en cuenta la unidad eliminada
-		MoneyBalance += Unit->GetMaintenanceCost();
+		Info.MoneyBalance += Unit->GetMaintenanceCost();
 
 		// Se llama al evento para actualizar la interfaz
-		OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+		OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 	}
 }
 
@@ -274,23 +277,23 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 void APawnFaction::OwnResource(const EResource Resource, const FIntPoint& Pos)
 {
 	// Se anade la posicion del recurso a la lista correspondiente para indicar que esta dentro de las fronteras
-	if (MonetaryResources.Contains(Resource)) MonetaryResources[Resource].Tiles.Add(Pos);
-	else if (StrategicResources.Contains(Resource)) StrategicResources[Resource].Tiles.Add(Pos);
+	if (Info.MonetaryResources.Contains(Resource)) Info.MonetaryResources[Resource].Tiles.Add(Pos);
+	else if (Info.StrategicResources.Contains(Resource)) Info.StrategicResources[Resource].Tiles.Add(Pos);
 }
 
 void APawnFaction::DisownResource(const EResource Resource, const FIntPoint& Pos)
 {
 	// Se elimina la posicion del recurso a la lista correspondiente para indicar que ya no esta dentro de las fronteras
-	if (MonetaryResources.Contains(Resource)) MonetaryResources[Resource].Tiles.Remove(Pos);
-	else if (StrategicResources.Contains(Resource)) StrategicResources[Resource].Tiles.Remove(Pos);
+	if (Info.MonetaryResources.Contains(Resource)) Info.MonetaryResources[Resource].Tiles.Remove(Pos);
+	else if (Info.StrategicResources.Contains(Resource)) Info.StrategicResources[Resource].Tiles.Remove(Pos);
 }
 
 void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
-		                                                  ? MonetaryResources
-		                                                  : StrategicResources;
+		                                                  ? Info.MonetaryResources
+		                                                  : Info.StrategicResources;
 
 	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
@@ -301,10 +304,10 @@ void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, c
 		// Si el recurso es monetario, se actualiza el balance de dinero
 		if (Resource.Type == EResourceType::Monetary)
 		{
-			MoneyBalance += Resource.Quantity;
+			Info.MoneyBalance += Resource.Quantity;
 
 			// Se llama al evento para actualizar la interfaz
-			OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+			OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 		}
 	}
 }
@@ -313,8 +316,8 @@ void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
-		                                                  ? MonetaryResources
-		                                                  : StrategicResources;
+		                                                  ? Info.MonetaryResources
+		                                                  : Info.StrategicResources;
 
 	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
@@ -327,10 +330,10 @@ void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource
 		// Si el recurso es monetario, se actualiza el balance de dinero
 		if (Resource.Type == EResourceType::Monetary)
 		{
-			MoneyBalance -= Resource.Quantity;
+			Info.MoneyBalance -= Resource.Quantity;
 
 			// Se llama al evento para actualizar la interfaz
-			OnMoneyBalanceUpdated.Broadcast(MoneyBalance);
+			OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 		}
 	}
 }
@@ -342,7 +345,7 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 {
 	// Se obtienen todos los indices de las facciones conocidas y se procesan
 	TArray<int32> FactionsIndex;
-	KnownFactions.GetKeys(FactionsIndex);
+	Info.KnownFactions.GetKeys(FactionsIndex);
 	for (const auto FactionIndex : FactionsIndex)
 	{
 		// Si la faccion no se encuentra en la lista significa que ya no esta en juego, por lo que se elimina
@@ -350,19 +353,19 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 		if (!FactionsStrength.Contains(FactionIndex))
 		{
 			// Se elimina de la coleccion de facciones conocidas
-			KnownFactions.Remove(FactionIndex);
+			Info.KnownFactions.Remove(FactionIndex);
 
 			// Se elimina del diccionario de relaciones diplomaticas
-			int32 Removed = FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar]
+			int32 Removed = Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar]
 			                .Factions.Remove(FactionIndex);
 			if (Removed == 0)
 			{
-				Removed = FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral]
+				Removed = Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral]
 				          .Factions.Remove(FactionIndex);
 			}
 			if (Removed == 0)
 			{
-				FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions.Remove(FactionIndex);
+				Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions.Remove(FactionIndex);
 			}
 
 			// Se elimina de la lista de guerras en curso
@@ -372,13 +375,13 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 		}
 
 		// Se actualiza la fuerza militar de la faccion
-		KnownFactions[FactionIndex].MilitaryStrength = FactionsStrength[FactionIndex];
+		Info.KnownFactions[FactionIndex].MilitaryStrength = FactionsStrength[FactionIndex];
 
 		// Se actualizan los datos sobre la guerra
 		if (CurrentWars.Contains(FactionIndex))
 		{
-			KnownFactions[FactionIndex].WarInfo.WarScore = CurrentWars[FactionIndex].WarScore;
-			KnownFactions[FactionIndex].WarInfo.NumTurns = CurrentWars[FactionIndex].NumTurns;
+			Info.KnownFactions[FactionIndex].WarInfo.WarScore = CurrentWars[FactionIndex].WarScore;
+			Info.KnownFactions[FactionIndex].WarInfo.NumTurns = CurrentWars[FactionIndex].NumTurns;
 		}
 	}
 }
@@ -421,54 +424,54 @@ void APawnFaction::TurnStarted()
 	// las unidades
 
 	// Se reinicia el balance de dinero y la fuerza militar de la faccion
-	MoneyBalance = 0.0;
-	MilitaryStrength = 0.0;
+	Info.MoneyBalance = 0.0;
+	Info.MilitaryStrength = 0.0;
 
 	// Se vacian los arrays para actualizarlos
-	AutomaticUnits.Empty();
-	ManualUnits.Empty();
+	Info.AutomaticUnits.Empty();
+	Info.ManualUnits.Empty();
 
 	// Se procesan todas las unidades
-	for (int32 i = 0; i < Units.Num(); ++i)
+	for (int32 i = 0; i < Info.Units.Num(); ++i)
 	{
 		// Se obtiene la unidad
-		AActorUnit* Unit = Units[i];
+		AActorUnit* Unit = Info.Units[i];
 
 		// Se inicia el turno de la unidad
 		Unit->TurnStarted();
 
 		// Se actualiza el balance de dinero con el coste de matenimiento de la unidad actual
-		MoneyBalance -= Unit->GetMaintenanceCost();
+		Info.MoneyBalance -= Unit->GetMaintenanceCost();
 
 		// Se actualiza la fuerza militar de la faccion con la fuerza de ataque de la unidad actualF
-		MilitaryStrength += Unit->GetStrengthPoints();
+		Info.MilitaryStrength += Unit->GetStrengthPoints();
 	}
 
 	// Se inicia el turno de los asentamientos de la faccion y se verifica si requieren seleccionar un nuevo
 	// elemento a producir
-	for (int32 i = 0; i < Settlements.Num(); ++i)
+	for (int32 i = 0; i < Info.Settlements.Num(); ++i)
 	{
 		// Se obtiene el asentamiento
-		AActorSettlement* Settlement = Settlements[i];
+		AActorSettlement* Settlement = Info.Settlements[i];
 
 		// Se inicia el turno del asentamiento
 		Settlement->TurnStarted();
 
 		// Se actualiza el balance de dinero con el rendimiento del asentamiento
-		MoneyBalance += Settlement->GetMoneyYield();
+		Info.MoneyBalance += Settlement->GetMoneyYield();
 	}
 
 	// Se actualiza el balance de dinero teniendo en cuenta el rendimiento de los recursos
-	for (const auto Resource : MonetaryResources)
+	for (const auto Resource : Info.MonetaryResources)
 	{
-		MoneyBalance += Resource.Value.GatheredResource.Quantity;
+		Info.MoneyBalance += Resource.Value.GatheredResource.Quantity;
 	}
 
 	// Se actualiza el dinero de la faccion teniendo en cuenta:
 	//		* El coste de mantenimiento de todas las unidades
 	//		* El rendimiento de los asentamientos
 	//		* El rendimiento de los recursos
-	Money += MoneyBalance;
+	Info.Money += Info.MoneyBalance;
 
 	// Se llama al evento para actualizar todos los parametros del juego
 	OnTurnStarted.Broadcast();
@@ -477,10 +480,10 @@ void APawnFaction::TurnStarted()
 void APawnFaction::TurnEnded()
 {
 	// Se procesan todas las unidades
-	for (int32 i = 0; i < Units.Num(); ++i)
+	for (int32 i = 0; i < Info.Units.Num(); ++i)
 	{
 		// Se obtiene la unidad
-		AActorUnit* Unit = Units[i];
+		AActorUnit* Unit = Info.Units[i];
 
 		// Se finaliza el turno de la unidad
 		Unit->TurnEnded();

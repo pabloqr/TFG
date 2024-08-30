@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorUnit.h"
+#include "FFactionInfo.h"
 #include "FResourceInfo.h"
 #include "FWarInfo.h"
 #include "Engine/DataTable.h"
@@ -13,87 +14,6 @@
 class AActorSettlement;
 enum class ESettlementState : uint8;
 class AActorDamageableElement;
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-USTRUCT(BlueprintType)
-struct FFactionsSet
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="FactionsArray")
-	TSet<int32> Factions;
-
-	FFactionsSet(): FFactionsSet(TSet<int32>())
-	{
-	}
-
-	explicit FFactionsSet(const TSet<int32>& Factions)
-		: Factions(Factions)
-	{
-	}
-};
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-USTRUCT(BlueprintType)
-struct FResourceCollection
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ResourceCollection")
-	FResource GatheredResource;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="ResourceCollection")
-	TArray<FIntPoint> Tiles;
-
-	FResourceCollection(): FResourceCollection(FResource(), TArray<FIntPoint>())
-	{
-	}
-
-	FResourceCollection(const FResource& GatheredResource, const TArray<FIntPoint>& Tiles)
-		: GatheredResource(GatheredResource),
-		  Tiles(Tiles)
-	{
-	}
-};
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-UENUM(BlueprintType)
-enum class EDiplomaticRelationship : uint8
-{
-	AtWar = 0 UMETA(DisplayName = "AtWar"),
-	Neutral = 1 UMETA(DisplayName = "Neutral"),
-	Ally = 2 UMETA(DisplayName = "Ally"),
-};
-
-USTRUCT(BlueprintType)
-struct FOpponentFactionInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
-	EDiplomaticRelationship Relationship;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
-	float MilitaryStrength;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
-	FWarInfo WarInfo;
-
-	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0, FWarInfo())
-	{
-	}
-
-	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength,
-	                     const FWarInfo& WarInfo)
-		: Relationship(Relationship),
-		  MilitaryStrength(MilitaryStrength),
-		  WarInfo(WarInfo)
-	{
-	}
-};
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -112,37 +32,7 @@ class TFG_API APawnFaction : public APawn
 
 protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
-	int32 Index;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
-	float MilitaryStrength;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
-	float Money;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Stats")
-	float MoneyBalance;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<AActorSettlement*> Settlements;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<int32> IdleSettlements;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<AActorUnit*> Units;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<int32> ManualUnits;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TArray<int32> AutomaticUnits;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TMap<EResource, FResourceCollection> MonetaryResources;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
-	TMap<EResource, FResourceCollection> StrategicResources;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Opponents")
-	TMap<int32, FOpponentFactionInfo> KnownFactions;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Opponents")
-	TMap<EDiplomaticRelationship, FFactionsSet> FactionsWithDiplomaticRelationship;
+	FFactionInfo Info;
 
 public:
 	/**
@@ -173,39 +63,39 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	int32 GetIndex() const { return Index; }
-	float GetMilitaryStrength() const { return MilitaryStrength; }
-	float GetMoney() const { return Money; }
-	float GetMoneyBalance() const { return MoneyBalance; }
-	const TArray<AActorSettlement*>& GetSettlements() const { return Settlements; }
-	int32 GetNumSettlements() const { return Settlements.Num(); }
-	const TArray<int32>& GetIdleSettlements() const { return IdleSettlements; }
-	const TMap<EResource, FResourceCollection>& GetMonetaryResources() const { return MonetaryResources; }
-	const TMap<EResource, FResourceCollection>& GetStrategicResources() const { return StrategicResources; }
-	const TArray<AActorUnit*>& GetUnits() const { return Units; }
-	const TArray<int32>& GetManualUnits() const { return ManualUnits; }
-	const TArray<int32>& GetAutomaticUnits() const { return AutomaticUnits; }
+	int32 GetIndex() const { return Info.Index; }
+	float GetMilitaryStrength() const { return Info.MilitaryStrength; }
+	float GetMoney() const { return Info.Money; }
+	float GetMoneyBalance() const { return Info.MoneyBalance; }
+	const TArray<AActorSettlement*>& GetSettlements() const { return Info.Settlements; }
+	int32 GetNumSettlements() const { return Info.Settlements.Num(); }
+	const TArray<int32>& GetIdleSettlements() const { return Info.IdleSettlements; }
+	const TMap<EResource, FResourceCollection>& GetMonetaryResources() const { return Info.MonetaryResources; }
+	const TMap<EResource, FResourceCollection>& GetStrategicResources() const { return Info.StrategicResources; }
+	const TArray<AActorUnit*>& GetUnits() const { return Info.Units; }
+	const TArray<int32>& GetManualUnits() const { return Info.ManualUnits; }
+	const TArray<int32>& GetAutomaticUnits() const { return Info.AutomaticUnits; }
 
-	const TMap<int32, FOpponentFactionInfo>& GetKnownFactions() const { return KnownFactions; }
+	const TMap<int32, FOpponentFactionInfo>& GetKnownFactions() const { return Info.KnownFactions; }
 
 	const TSet<int32>& GetFactionsAtWar() const
 	{
-		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar].Factions;
+		return Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::AtWar].Factions;
 	}
 
 	const TSet<int32>& GetNeutralFactions() const
 	{
-		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions;
+		return Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Neutral].Factions;
 	}
 
 	const TSet<int32>& GetAllyFactions() const
 	{
-		return FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions;
+		return Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions;
 	}
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void SetIndex(const int32 I) { Index = I; }
+	void SetIndex(const int32 I) { Info.Index = I; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

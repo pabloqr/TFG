@@ -306,6 +306,11 @@ void AMMain::DeclareWarOnFaction(const int32 CurrentFaction, const int32 TargetF
 	if (FactionsAlive.Contains(CurrentFaction) && FactionsAlive.Contains(TargetFaction) &&
 		Factions.Contains(CurrentFaction) && Factions.Contains(TargetFaction))
 	{
+		// Se llama al evento para gestionar el mensaje a mostrar
+		OnDiplomaticMessageSent.Broadcast(FDealInfo(
+			EDealType::WarDeal, FDealElements(CurrentFaction, 0.0, FResource()),
+			FDealElements(TargetFaction, 0.0, FResource())));
+
 		Factions[CurrentFaction]->DeclareWarOnFaction(TargetFaction);
 		Factions[TargetFaction]->DeclareWarOnFaction(CurrentFaction);
 	}
@@ -332,6 +337,11 @@ void AMMain::BreakAllianceWithFaction(const int32 CurrentFaction, const int32 Ta
 	if (FactionsAlive.Contains(CurrentFaction) && FactionsAlive.Contains(TargetFaction) &&
 		Factions.Contains(CurrentFaction) && Factions.Contains(TargetFaction))
 	{
+		// Se llama al evento para gestionar el mensaje a mostrar
+		OnDiplomaticMessageSent.Broadcast(FDealInfo(
+			EDealType::AllianceDeal, FDealElements(CurrentFaction, 0.0, FResource()),
+			FDealElements(TargetFaction, 0.0, FResource())));
+
 		Factions[CurrentFaction]->BreakAllianceWithFaction(TargetFaction);
 		Factions[TargetFaction]->BreakAllianceWithFaction(CurrentFaction);
 	}

@@ -14,6 +14,8 @@ class ASMain;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInitFinished);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnDiplomaticMessageSent, FDealInfo, Deal);
+
 /**
  * 
  */
@@ -95,4 +97,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnInitFinished OnInitFinished;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnDiplomaticMessageSent OnDiplomaticMessageSent;
 };
