@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "ActorUnit.h"
+#include "FCivilUnitInfo.h"
 #include "GameFramework/Actor.h"
 #include "ActorCivilUnit.generated.h"
 
@@ -19,11 +20,8 @@ class TFG_API AActorCivilUnit : public AActorUnit
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
-	int32 NumActions;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
-	ECivilUnitState CivilUnitState;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	FCivilUnitInfo CivilInfo;
 
 public:
 	// Sets default values for this actor's properties
@@ -34,11 +32,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	ECivilUnitState GetCivilUnitState() const { return CivilUnitState; }
+	ECivilUnitState GetCivilUnitState() const { return CivilInfo.CivilUnitState; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void SetCivilUnitState(const ECivilUnitState State) { CivilUnitState = State; }
+	void SetCivilUnitState(const ECivilUnitState State) { CivilInfo.CivilUnitState = State; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

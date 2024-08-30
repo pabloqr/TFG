@@ -99,8 +99,6 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	bool HasElement(const AActorDamageableElement* Element) const;
-
 	UFUNCTION(BlueprintCallable)
 	bool CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const;
 

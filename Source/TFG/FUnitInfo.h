@@ -35,18 +35,6 @@ enum class EUnitState : uint8
 	Healing = 6 UMETA(DisplayName="Healing")
 };
 
-/**
- * Tipo enumerado para determinar el estado de una unidad civil
- */
-UENUM(BlueprintType)
-enum class ECivilUnitState : uint8
-{
-	None = 0 UMETA(DisplayName="None"),
-	WaitingForNextTurn = 1 UMETA(DisplayName"WaitingForNextTurn"),
-	GatheringResource = 2 UMETA(DisplayName="GatheringResource"),
-	SettingSettlement = 3 UMETA(DisplayName="SettingSettlement"),
-};
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 /**

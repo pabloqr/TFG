@@ -151,19 +151,6 @@ void APawnFaction::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-bool APawnFaction::HasElement(const AActorDamageableElement* Element) const
-{
-	// Se comprueba si es una unidad y, si lo es, se verifica si es de esta faccion
-	const AActorUnit* Unit = Cast<AActorUnit>(Element);
-	if (Unit) return Info.Units.Contains(Unit);
-
-	// Se comprueba si es un asentamiento y, si lo es, se verifica si es de esta faccion
-	const AActorSettlement* Settlement = Cast<AActorSettlement>(Element);
-	if (Settlement) return Info.Settlements.Contains(Settlement);
-
-	return false;
-}
-
 bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const
 {
 	// Se obtiene la informacion de la unidad
