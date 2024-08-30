@@ -32,11 +32,11 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
-	ECivilUnitState GetCivilUnitState() const { return CivilInfo.CivilUnitState; }
+	ECivilUnitState GetCivilUnitState() const { return CivilInfo.State; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void SetCivilUnitState(const ECivilUnitState State) { CivilInfo.CivilUnitState = State; }
+	void SetCivilUnitState(const ECivilUnitState State) { CivilInfo.State = State; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

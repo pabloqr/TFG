@@ -13,7 +13,7 @@ AActorCivilUnit::AActorCivilUnit()
 	// Se inicializan los atributos de la unidad
 	CivilInfo.NumActions = 2;
 
-	CivilInfo.CivilUnitState = ECivilUnitState::None;
+	CivilInfo.State = ECivilUnitState::None;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

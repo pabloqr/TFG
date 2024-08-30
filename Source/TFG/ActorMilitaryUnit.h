@@ -13,10 +13,6 @@ class TFG_API AActorMilitaryUnit : public AActorUnit
 {
 	GENERATED_BODY()
 
-protected:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
-	EResourceType ProductionResource;
-
 public:
 	// Sets default values for this actor's properties
 	AActorMilitaryUnit();

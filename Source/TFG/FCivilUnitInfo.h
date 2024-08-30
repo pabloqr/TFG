@@ -27,7 +27,7 @@ struct FCivilUnitInfo
 	int32 NumActions;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
-	ECivilUnitState CivilUnitState;
+	ECivilUnitState State;
 
 	FCivilUnitInfo(): FCivilUnitInfo(0, ECivilUnitState::None)
 	{
@@ -35,7 +35,7 @@ struct FCivilUnitInfo
 
 	FCivilUnitInfo(const int32 NumActions, const ECivilUnitState CivilUnitState)
 		: NumActions(NumActions),
-		  CivilUnitState(CivilUnitState)
+		  State(CivilUnitState)
 	{
 	}
 };
