@@ -601,7 +601,7 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
 	if (Index == -1 || !Tiles[Index]) return;
-	
+
 	// Se obtiene la casilla
 	AActorTile* Tile = Tiles[Index];
 
@@ -848,6 +848,14 @@ void AActorTileMap::JsonToMap()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+bool AActorTileMap::IsTileOwned(const FIntPoint& Pos2D) const
+{
+	// Se verifica que la casilla sea valida
+	const int32 Index = GetPositionInArray(Pos2D);
+
+	return Index != -1 && Tiles[Index] ? Tiles[Index]->IsOwned() : false;
+}
+
 bool AActorTileMap::IsTileMine(const FIntPoint& Pos2D) const
 {
 	// Se verifica que la casilla sea valida
@@ -914,7 +922,7 @@ bool AActorTileMap::TileHasEnemyOrAlly(const FIntPoint& Pos2D, const bool CheckE
 }
 
 TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range,
-                                                     const bool CheckTileCost)
+                                                     const bool CheckTileCost, const bool CheckTileAccesibility)
 {
 	// Se inicializa la lista de casillas alcanzables
 	TArray<FIntPoint> InRange = TArray<FIntPoint>();
@@ -935,15 +943,15 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 
 			// Se obtiene el coste de acceder al vecino y se comprueba que se tenga alcance y que sea accesible
 			const int32 Cost = CheckTileCost ? Tile->GetMovementCost() : 1;
-			if (Cost <= Range && Tile->IsAccesible())
+			if (Cost <= Range && (!CheckTileAccesibility || Tile->IsAccesible()))
 			{
 				// Se trata de obtener el elemento de la casilla y se comprueba si es propiedad de la faccion actual
 				const AActorDamageableElement* Element = Tile->GetElement();
-				if (!Element || !Element->IsMine())
+				if (!CheckTileAccesibility || !Element || !Element->IsMine())
 				{
 					// Si es accesible, se anade a la lista y se obtienen todos sus vecinos que sean alcanzables
 					InRange.Add(Neighbor);
-					InRange.Append(GetTilesWithinRange(Neighbor, Range - Cost, CheckTileCost));
+					InRange.Append(GetTilesWithinRange(Neighbor, Range - Cost, CheckTileCost, CheckTileAccesibility));
 				}
 			}
 		}

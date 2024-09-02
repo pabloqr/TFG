@@ -121,6 +121,11 @@ void AActorTile::RemoveState(const ETileState State)
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+bool AActorTile::IsOwned() const
+{
+	return Info.Owner != -1;
+}
+
 bool AActorTile::IsMine() const
 {
 	// Se verifica si la unidad pertenece a la faccion en juego

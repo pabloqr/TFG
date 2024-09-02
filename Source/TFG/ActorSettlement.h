@@ -15,6 +15,8 @@ class AActorUnit;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileOwned, const FIntPoint&, Pos2D);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileDisowned, const FIntPoint&, Pos2D);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, const FProductionElement&, Unit);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
@@ -31,6 +33,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	FSettlementInfo Info;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	AActorTileMap* TileMap;
+
 public:
 	/**
 	 * Constructor por defecto de la clase que inicializa los tributos
@@ -40,12 +45,17 @@ public:
 private:
 	void OwnTile(const FIntPoint& Pos);
 
+	void OwnTileInRange();
+
 protected:
 	/**
 	 * Metodo que establece las casillas que posee inicialmente el asentamiento
 	 */
 	UFUNCTION(BlueprintCallable)
 	void SetInitialOwnedTiles();
+
+	UFUNCTION(BlueprintCallable)
+	void DisownTile(const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -112,7 +122,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void AddToProductionQueue(const UDataTable* DataTable, const TSubclassOf<AActorUnit> UnitClass,
-							  const EUnitType UnitType);
+	                          const EUnitType UnitType);
 
 	UFUNCTION(BlueprintCallable)
 	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
@@ -144,6 +154,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileOwned OnTileOwned;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTileDisowned OnTileDisowned;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitProduced OnUnitProduced;

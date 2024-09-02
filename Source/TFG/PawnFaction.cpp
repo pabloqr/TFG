@@ -153,13 +153,20 @@ void APawnFaction::BeginPlay()
 
 bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const
 {
+	// Se verifica que la referencia a la tabla sea correcta
+	if (!DataTable) return true;
+
 	// Se obtiene la informacion de la unidad
 	const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(DataTable, UnitType);
 	if (Info.StrategicResources.Contains(UnitData.RequiredResource.Resource))
 	{
-		// Se devuelve si hay recursos suficientes
-		return Info.StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity >=
-			UnitData.RequiredResource.Quantity;
+		// Se verifica si hay dinero suficiente
+		const bool HasMoney = Info.Money > 0.0;
+		// Se verifica si hay recursos suficientes
+		const bool HasResources = Info.StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity
+			>= UnitData.RequiredResource.Quantity;
+
+		return UnitType == EUnitType::Civil || (HasResources && HasMoney);
 	}
 
 	return true;
@@ -466,14 +473,28 @@ void APawnFaction::TurnStarted()
 
 void APawnFaction::TurnEnded()
 {
-	// Se procesan todas las unidades
-	for (int32 i = 0; i < Info.Units.Num(); ++i)
+	// Se procesan todas las unidades y asentamientos
+	for (int32 i = 0; i < Info.Units.Num() || i < Info.Settlements.Num(); ++i)
 	{
-		// Se obtiene la unidad
-		AActorUnit* Unit = Info.Units[i];
+		// Se trata de obtener la unidad
+		if (i < Info.Units.Num())
+		{
+			// Se obtiene la unidad
+			AActorUnit* Unit = Info.Units[i];
 
-		// Se finaliza el turno de la unidad
-		Unit->TurnEnded();
+			// Se finaliza el turno de la unidad
+			Unit->TurnEnded();
+		}
+
+		// Se trata de obtener el asentamiento
+		if (i < Info.Settlements.Num())
+		{
+			// Se obtiene el asentamiento
+			AActorSettlement* Settlement = Info.Settlements[i];
+
+			// Se finaliza el turno del asentamiento
+			Settlement->TurnEnded();
+		}
 	}
 }
 

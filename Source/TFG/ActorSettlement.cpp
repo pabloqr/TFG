@@ -18,6 +18,9 @@ AActorSettlement::AActorSettlement()
 	// Se inicializa la informacion del asentamiento
 	Info = FSettlementInfo();
 
+	// Se establecen los turnos para adquirir una nueva casilla
+	Info.TurnsToOwnTile = 5;
+
 	// Se establece el dinero inicial que produce el asentamiento
 	Info.MoneyYield = 5.0;
 }
@@ -26,11 +29,51 @@ AActorSettlement::AActorSettlement()
 
 void AActorSettlement::OwnTile(const FIntPoint& Pos)
 {
+	// Se verifica que la instancia del mapa sea valida y la casilla no este ya en propiedad de alguna faccion
+	if (!TileMap || TileMap->IsTileOwned(Pos)) return;
+
 	// Se anade la casilla a la lista
 	Info.OwnedTiles.Add(Pos);
 
 	// Se llama al evento para actualizar el propietario de la casilla
 	OnTileOwned.Broadcast(Pos);
+}
+
+void AActorSettlement::OwnTileInRange()
+{
+	// Se verifica que la instancia del mapa sea valida
+	if (!TileMap) return;
+
+	// Se crean contenedores para almacenar las casillas de los anillos exteriores
+	TArray<FIntPoint> RangeTwo = TArray<FIntPoint>();
+	TArray<FIntPoint> RangeThree = TArray<FIntPoint>();
+
+	// Se obtienen todas las casillas dentro del rango de expansion y se procesan
+	TArray<FIntPoint> InRange = TileMap->GetTilesWithinRange(Info.Pos2D, 3, false, false);
+	for (const auto TilePos : InRange)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Tile (%d, %d)"), TilePos.X, TilePos.Y))
+		
+		// Si la casilla ya tiene propietario, se omite
+		if (!TileMap->IsTileOwned(TilePos))
+		{
+			// Se calcula la distancia
+			const int32 Distance = ULibraryTileMap::GetDistanceToElement(Info.Pos2D, TilePos);
+
+			UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Distance %d"), Distance))
+
+			// Se clasifica segun el resultado
+			if (Distance == 2) RangeTwo.Add(TilePos);
+			else if (Distance == 3) RangeThree.Add(TilePos);
+		}
+	}
+
+	// Si se han obtenido casillas, se establece la propiedad de una de ellas
+	if (RangeTwo.Num() > 0) OwnTile(RangeTwo[0]);
+	else if (RangeThree.Num() > 0) OwnTile(RangeThree[0]);
+
+	// Se actualiza el contador de turnos
+	Info.TurnsToOwnTile = 5;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -50,6 +93,15 @@ void AActorSettlement::SetInitialOwnedTiles()
 
 	// Se realiza el mismo proceso para la casilla en la que se situa el asentamiento
 	OwnTile(Info.Pos2D);
+}
+
+void AActorSettlement::DisownTile(const FIntPoint& Pos)
+{
+	// Se elimina la casilla de la lista
+	Info.OwnedTiles.Remove(Pos);
+
+	// Se llama al evento para actualizar el propietario de la casilla
+	OnTileDisowned.Broadcast(Pos);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -152,6 +204,14 @@ void AActorSettlement::TurnStarted()
 
 void AActorSettlement::TurnEnded()
 {
+	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("TurnToOwnTile %d"), Info.TurnsToOwnTile))
+	
+	// Se actualiza el contador para la expansion y se obtiene una nueva casilla si procede
+	if (--Info.TurnsToOwnTile <= 0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("TimeToOwnTile")))
+		OwnTileInRange();
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

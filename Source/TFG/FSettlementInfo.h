@@ -25,6 +25,9 @@ struct FSettlementInfo
 	FIntPoint Pos2D;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	int32 TurnsToOwnTile;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	TArray<FIntPoint> OwnedTiles;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
@@ -39,15 +42,18 @@ struct FSettlementInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	ESettlementState State;
 
-	FSettlementInfo(): FSettlementInfo(FIntPoint(-1), TArray<FIntPoint>(), TArray<FProductionElement>(),
-	                                   TArray<FProductionElement>(), 0.0, ESettlementState::None)
+	FSettlementInfo(): FSettlementInfo(FIntPoint(-1), 0, TArray<FIntPoint>(),
+	                                   TArray<FProductionElement>(), TArray<FProductionElement>(),
+	                                   0.0, ESettlementState::None)
 	{
 	}
 
-	FSettlementInfo(const FIntPoint& Pos2D, const TArray<FIntPoint>& OwnedTiles,
-		const TArray<FProductionElement>& ProductionQueue, const TArray<FProductionElement>& StartedProduction,
-		const float MoneyYield, const ESettlementState State)
+	FSettlementInfo(const FIntPoint& Pos2D, const int32 TurnsToOwnTile, const TArray<FIntPoint>& OwnedTiles,
+	                const TArray<FProductionElement>& ProductionQueue,
+	                const TArray<FProductionElement>& StartedProduction,
+	                const float MoneyYield, const ESettlementState State)
 		: Pos2D(Pos2D),
+		  TurnsToOwnTile(TurnsToOwnTile),
 		  OwnedTiles(OwnedTiles),
 		  ProductionQueue(ProductionQueue),
 		  StartedProduction(StartedProduction),

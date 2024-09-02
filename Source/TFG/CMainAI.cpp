@@ -27,7 +27,7 @@ ACMainAI::ACMainAI()
 	MilitaryState = EMilitaryState::Neutral;
 
 	// Se inicializa la casilla para establecer asentamientos
-	BestTileForSettlement = TTuple<FIntPoint, float>(FIntPoint(0), -1);
+	BestTileForSettlement = FTileValue(FIntPoint(0), -1);
 
 	// Se inicializa el numero de unidades en movimiento
 	UnitsMoving = 0;
@@ -136,13 +136,13 @@ void ACMainAI::UpdateTilesValue()
 					             : 0.0;
 
 				// Si la casilla tiene un recurso, se aumenta el valor
-				if (TileMap->TileHasResource(Pos)) TileValue += 5.0;
+				if (TileMap->TileHasResource(Pos)) TileValue += 15.0;
 			}
 
 			// Si el valor de atractivo es mejor que el de la casilla actual, se actualiza
 			if (TilesValue[Pos] > BestTileForSettlement.Value)
 			{
-				BestTileForSettlement = TTuple<FIntPoint, float>(Pos, TilesValue[Pos]);
+				BestTileForSettlement = FTileValue(Pos, TilesValue[Pos]);
 			}
 		}
 	}
@@ -173,6 +173,25 @@ bool ACMainAI::IsSettlementNeeded() const
 	return false;
 }
 
+bool ACMainAI::IsResourceGatheringNeeded() const
+{
+	// Se obtienen todos los recursos
+	TMap<EResource, FResourceCollection> Resources = PawnFaction->GetStrategicResources();
+	Resources.Append(PawnFaction->GetMonetaryResources());
+
+	for (const auto Resource : Resources)
+	{
+		// Se procesan todos los recursos en posesion
+		for (const auto ResourcePos : Resource.Value.Tiles)
+		{
+			// Si hay un recurso que no se ha recolectado se devuelve
+			if (!TileMap->IsResourceGathered(ResourcePos)) return true;
+		}
+	}
+
+	return false;
+}
+
 FIntPoint ACMainAI::CalculateBestPosForSettlement()
 {
 	// Si no hay asentamientos, se establece en la posicion actual
@@ -181,7 +200,7 @@ FIntPoint ACMainAI::CalculateBestPosForSettlement()
 	// Se actualizan los valores de atractivo de las casillas y se devuelve el mejor
 	UpdateTilesValue();
 
-	return BestTileForSettlement.Key;
+	return BestTileForSettlement.Pos;
 }
 
 FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
@@ -225,7 +244,7 @@ TSet<FIntPoint> ACMainAI::GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, co
 	TSet<FIntPoint> ElementsLocation = TSet<FIntPoint>();
 
 	// Se obtienen las casillas al alcance de la unidad y se procesan
-	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, false);
+	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, false, true);
 	for (auto TilePos : TilesInRange)
 	{
 		// Si la casilla tiene un enemigo, se anade a la coleccion
@@ -280,7 +299,7 @@ FIntPoint ACMainAI::GetFarthestPosFromEnemies(const FIntPoint& Pos, const int32 
 	FIntPoint FarthestPos = Pos;
 
 	// Se obtienen las casillas al alcance de la unidad y se procesan
-	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, true);
+	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, true, true);
 
 	// Variable que almacena la mayor distancia 
 	int32 MaxDistance = 0;
@@ -407,7 +426,8 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 	if (UnitAction == EUnitAction::MoveAround)
 	{
 		// Se obtienen las casillas al alcance de la unidad y se procesan para eliminar las ocupadas
-		TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(UnitInfo.Pos2D, UnitInfo.MovementPoints, true);
+		TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(
+			UnitInfo.Pos2D, UnitInfo.MovementPoints, true, true);
 		for (int32 i = 0; i < TilesInRange.Num(); ++i)
 		{
 			if (EnemiesLocation.Contains(TilesInRange[i]) || AlliesLocation.Contains(TilesInRange[i]))
@@ -436,7 +456,7 @@ FIntPoint ACMainAI::CalculateBestPosForUnit(const FUnitInfo& UnitInfo, const EUn
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
+void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 {
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -445,15 +465,15 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (FactionsInfo.Contains(FactionAtWar))
+		if (FactionsInfo.Contains(FactionIndex))
 		{
 			// Se obtiene la puntuacion de guerra
-			const int32 WarScore = FactionsInfo[FactionAtWar].WarInfo.WarScore;
+			const int32 WarScore = FactionsInfo[FactionIndex].WarInfo.WarScore;
 			// Se obtienen los turnos transcurridos desde el comienzo de la guerra
-			const int32 WarTurns = FactionsInfo[FactionAtWar].WarInfo.NumTurns;
+			const int32 WarTurns = FactionsInfo[FactionIndex].WarInfo.NumTurns;
 
 			// Si la puntuacion de guerra contiene un resultado invalido, se establece la paz
-			if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionAtWar);
+			if (WarScore == -1.0) PawnFaction->MakePeaceWithFaction(FactionIndex);
 			else
 			{
 				// Se debe decidir:
@@ -461,6 +481,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 				//			(a.1) la puntuacion es mayor que 0, si se tiene fuerza militar suficiente para continuar
 				//			(a.2) la puntuacion es cercana a 0, si se tiene fuerza militar suficiente para continuar
 				//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
+				//			(a.4) el numero de turnos es menor a 10
 				//		(b) si se debe tratar de firmar un pacto de paz:
 				//			(b.1) la puntuacion es igual o inferior a 0 y no se tiene fuerza militar suficiente
 				//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
@@ -469,7 +490,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 				//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
 				//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
 
-				const float FactionStrength = FactionsInfo[FactionAtWar].MilitaryStrength;
+				const float FactionStrength = FactionsInfo[FactionIndex].MilitaryStrength;
 				const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
 				const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 					PawnFaction->GetMilitaryStrength(), FactionStrength);
@@ -482,6 +503,15 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 				const bool ScoreVeryHigh = 600.0 <= WarScore;
 
 				const bool ImWeaker = StrengthDiff < 0.0;
+
+				// Se tiene fuerza militar suficiente
+				//		* Si se tiene menos fuerza y la diferencia es alta (hacia abajo)
+				//		* Si se tiene mas fuerza y la diferencia es muy baja (hacia arriba)
+				const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.7) || (!ImWeaker && StrengthDiffRel >= 0.1);
+				// Se tiene fuerza militar suficiente
+				//		* Si se tiene menos fuerza y la diferencia es media (hacia abajo)
+				//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
+				const bool CondA2 = (ImWeaker && StrengthDiffRel <= 0.5) || (!ImWeaker && StrengthDiffRel >= 0.3);
 
 				// No se tiene fuerza militar suficiente:
 				//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
@@ -509,7 +539,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 
 					// Se establecen los elementos del trato
 					const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
-					const FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+					const FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
 
 					// Se propone el trato de paz
 					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
@@ -520,13 +550,13 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 
 					// Se establecen los elementos del trato
 					FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
-					FDealElements EnemyElements = FDealElements(FactionAtWar, 0.0, FResource());
+					FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
 
 					// Se calcula la cantidad de dinero a ofrecer o solicitar dependiendo de si es favorable o no
 					if (ScoreHigh || ScoreVeryHigh)
 					{
 						EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
-							FactionAtWar, ImWeaker, WarScore, StrengthDiffRel);
+							FactionIndex, ImWeaker, WarScore, StrengthDiffRel);
 					}
 					else
 					{
@@ -547,7 +577,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionAtWar)
 	ManageNextFactionAtWar();
 }
 
-void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
+void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 {
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -556,7 +586,7 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (FactionsInfo.Contains(NeutralFaction))
+		if (FactionsInfo.Contains(FactionIndex))
 		{
 			// Se obtienen las diferentes facciones segun la relacion diplomatica
 			const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
@@ -572,7 +602,7 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 			//			(b.2) la fuerza militar es insuficiente
 			//		(c) si se mantiene la relacion
 
-			const float FactionStrength = FactionsInfo[NeutralFaction].MilitaryStrength;
+			const float FactionStrength = FactionsInfo[FactionIndex].MilitaryStrength;
 			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionStrength);
@@ -585,15 +615,15 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 			// Se procesan las facciones aliadas
 			for (const auto Faction : AllyFactions)
 			{
-				if (MainMode->IsFactionAtWarWith(Faction, NeutralFaction)) ++AllyFactionsAtWar;
-				else if (MainMode->IsFactionAlliedWith(Faction, NeutralFaction)) ++AllyFactionsAllied;
+				if (MainMode->IsFactionAtWarWith(Faction, FactionIndex)) ++AllyFactionsAtWar;
+				else if (MainMode->IsFactionAlliedWith(Faction, FactionIndex)) ++AllyFactionsAllied;
 			}
 
 			// Se tiene fuerza militar suficiente:
 			//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
 			//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
 			const bool CondA1 = (ImWeaker && StrengthDiffRel <= 0.2) || (!ImWeaker && StrengthDiffRel >= 0.2);
-			// Se tiene fuerza militar suficiente:
+			// Se tiene fuerza militar superior:
 			//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
 			const bool CondA2 = !ImWeaker && StrengthDiffRel >= 0.5;
 
@@ -607,14 +637,14 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 			// Se determina si se declara la guerra, se propone una alianza o se mantiene la relacion
 			if ((AllyFactionsAtWar > AllyFactionsAllied && CondA1) || CondA2) // a
 			{
-				MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), NeutralFaction);
+				MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), FactionIndex);
 			}
 			// b
 			else if ((AllyFactions.Num() != 0 && AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB1) || CondB2)
 			{
 				// Se establecen los elementos del trato
 				FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
-				FDealElements EnemyElements = FDealElements(NeutralFaction, 0.0, FResource());
+				FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
 
 				// Se calcula la cantidad de dinero a ofrecer o solicitar
 				if (ImWeaker)
@@ -625,7 +655,7 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 				else
 				{
 					EnemyElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(
-						NeutralFaction, StrengthDiffRel);
+						FactionIndex, StrengthDiffRel);
 				}
 
 				// Se propone el trato y se finaliza
@@ -640,7 +670,7 @@ void ACMainAI::ManageNeutralFaction(const int32 NeutralFaction)
 	ManageNextNeutralFaction();
 }
 
-void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
+void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 {
 	// Se obtiene el GameMode para poder obtener datos sobre la partida y ejecutar acciones
 	if (const AMMain* MainMode = Cast<AMMain>(UGameplayStatics::GetGameMode(GetWorld())))
@@ -649,7 +679,7 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
 		const TMap<int32, FOpponentFactionInfo> FactionsInfo = PawnFaction->GetKnownFactions();
 
 		// Se verifica que los diferentes contenedores contengan la faccion actual
-		if (FactionsInfo.Contains(AllyFaction))
+		if (FactionsInfo.Contains(FactionIndex))
 		{
 			// Se obtienen las diferentes facciones segun la relacion diplomatica
 			const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
@@ -666,7 +696,7 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
 			//			(b.2) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
 			//			(b.3) la fuerza militar es insuficiente
 
-			const float FactionAtWarStrength = FactionsInfo[AllyFaction].MilitaryStrength;
+			const float FactionAtWarStrength = FactionsInfo[FactionIndex].MilitaryStrength;
 			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionAtWarStrength);
@@ -679,8 +709,8 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
 			// Se procesan las facciones aliadas
 			for (const auto Faction : AllyFactions)
 			{
-				if (MainMode->IsFactionAtWarWith(Faction, AllyFaction)) ++AllyFactionsAtWar;
-				else if (MainMode->IsFactionAlliedWith(Faction, AllyFaction)) ++AllyFactionsAllied;
+				if (MainMode->IsFactionAtWarWith(Faction, FactionIndex)) ++AllyFactionsAtWar;
+				else if (MainMode->IsFactionAlliedWith(Faction, FactionIndex)) ++AllyFactionsAllied;
 			}
 
 			// Se tiene fuerza militar suficiente:
@@ -710,9 +740,9 @@ void ACMainAI::ManageAllyFaction(const int32 AllyFaction)
 				(AllyFactions.Num() != 0 && AllyFactionsAllied / AllyFactions.Num() >= 0.5 && CondB2) || CondB3;
 
 			// Se determina si se mantiene la alianza o se rompe
-			if (CondBreakAlliance && !CondAlliance)
+			if (CondBreakAlliance || !CondAlliance)
 			{
-				MainMode->BreakAllianceWithFaction(PawnFaction->GetIndex(), AllyFaction);
+				MainMode->BreakAllianceWithFaction(PawnFaction->GetIndex(), FactionIndex);
 			}
 		}
 	}
@@ -751,6 +781,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			// Se verifica que se pueda recolectar el recurso
 			if (!TileMap->CanGatherResourceAtPos(UnitInfo.Path.Last().Pos2D))
 			{
+				CivilUnit->RemovePath();
 				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
 			}
 			break;
@@ -758,6 +789,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			// Se verifica que se pueda crear el asentamiento
 			if (!TileMap->CanSetSettlementAtPos(UnitInfo.Path.Last().Pos2D))
 			{
+				CivilUnit->RemovePath();
 				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
 			}
 			break;
@@ -767,7 +799,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 		}
 	}
 
-	if (UnitInfo.Path.Num() == 0 && CivilUnit->GetCivilUnitState() == ECivilUnitState::None) // (2)
+	if (UnitInfo.Path.Num() == 0) // (2)
 	{
 		FIntPoint NewPos;
 
@@ -786,6 +818,17 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			// Se obtiene la posicion y se establece el estado de la unidad
 			NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
 			CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
+		}
+
+		// Si no se ha calculado ninguna posicion y la unidad puede establecer un asentamiento, se establece
+		if (NewPos == UnitInfo.Pos2D && CivilUnit->CanSetSettlement())
+		{
+			// Se obtiene la posicion y se establece el estado de la unidad
+			NewPos = CalculateBestPosForSettlement();
+			CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
+
+			// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
+			if (NewPos == -1) NewPos = UnitInfo.Pos2D;
 		}
 
 		// (2.2)
@@ -872,17 +915,41 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
 {
 	// Se decide la unidad a producir en funcion de si se quiere defender, atacar o realizar otra accion
-	EUnitType BestUnitType = EUnitType::Infantry;
+	EUnitType BestUnitType = EUnitType::Civil;
 
+	// Se crea una lista con los tipos de unidades
+	TArray<EUnitType> UnitsType = {
+		EUnitType::AntiTank,
+		EUnitType::Infantry,
+		EUnitType::Armoured
+	};
+
+	// Se crea una lista que indica si cada uno de los tipos puede ser producido
+	TArray<bool> ValidUnits = {
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::AntiTank),
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Infantry),
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Armoured)
+	};
+
+	// Se obtiene el indice de un tipo valido para producir
+	const int32 ValidUnitIndex = ValidUnits.Find(true);
+
+	// Se trata de crear la unidad segun el estado de la faccion
 	switch (MilitaryState)
 	{
-	case EMilitaryState::Defensive: BestUnitType = EUnitType::AntiTank;
+	case EMilitaryState::Defensive:
+		if (ValidUnits[0]) BestUnitType = EUnitType::AntiTank;
 		break;
-	case EMilitaryState::Neutral: BestUnitType = EUnitType::Infantry;
+	case EMilitaryState::Neutral:
+		if (ValidUnits[1]) BestUnitType = EUnitType::Infantry;
 		break;
-	case EMilitaryState::Offensive: BestUnitType = EUnitType::Armoured;
+	case EMilitaryState::Offensive:
+		if (ValidUnits[2]) BestUnitType = EUnitType::Armoured;
 		break;
 	}
+
+	// Si no se puede crear la unidad militar deseada, se trata de crear otra, en caso contrario, se produce una civil
+	if (BestUnitType == EUnitType::Civil && ValidUnitIndex != INDEX_NONE) BestUnitType = UnitsType[ValidUnitIndex];
 
 	return BestUnitType;
 }
@@ -960,7 +1027,9 @@ void ACMainAI::ManageSettlementsProduction() const
 		if (!Settlements[Settlement]) continue;
 
 		// Se obtiene el tipo de unidad que se tiene que producir
-		const EUnitType UnitType = IsSettlementNeeded() ? EUnitType::Civil : CalculateBestUnitTypeToProduce();
+		const EUnitType UnitType = IsSettlementNeeded() || IsResourceGatheringNeeded()
+			                           ? EUnitType::Civil
+			                           : CalculateBestUnitTypeToProduce();
 
 		// Se llama al evento que establece la produccion del asentamiento
 		OnUnitProductionSelection.Broadcast(Settlements[Settlement], UnitType);

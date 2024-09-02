@@ -37,6 +37,30 @@ enum class EUnitAction : uint8
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+USTRUCT(BlueprintType)
+struct FTileValue
+{
+	GENERATED_BODY()
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="TileValue")
+	FIntPoint Pos;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="TileValue")
+	float Value;
+
+	FTileValue(): FTileValue(-1, 0)
+	{
+	}
+
+	FTileValue(const FIntPoint& Pos, const float Value)
+		: Pos(Pos),
+		  Value(Value)
+	{
+	}
+};
+
+//--------------------------------------------------------------------------------------------------------------------//
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProductionSelection, AActorSettlement*, Settlement,
                                              EUnitType, UnitType);
 
@@ -56,6 +80,9 @@ protected:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
 	AActorTileMap* TileMap;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
+	UDataTable* UnitDataTable;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
@@ -71,7 +98,8 @@ protected:
 	/**
 	 * Atributo que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento en cada turno
 	 */
-	TTuple<FIntPoint, float> BestTileForSettlement;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
+	FTileValue BestTileForSettlement;
 
 	/**
 	 * Diccionario que almacena los valores de atractivo de las casillas
@@ -108,6 +136,7 @@ private:
 	void UpdateTilesValue();
 
 	bool IsSettlementNeeded() const;
+	bool IsResourceGatheringNeeded() const;
 	FIntPoint CalculateBestPosForSettlement();
 
 	FIntPoint GetClosestResourceToGatherPos(const FIntPoint& Pos) const;
@@ -132,9 +161,9 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void ManageFactionAtWar(const int32 FactionAtWar);
-	void ManageNeutralFaction(const int32 NeutralFaction);
-	void ManageAllyFaction(const int32 AllyFaction);
+	void ManageFactionAtWar(const int32 FactionIndex);
+	void ManageNeutralFaction(const int32 FactionIndex);
+	void ManageAllyFaction(const int32 FactionIndex);
 
 	void ManageCivilUnit(AActorUnit* Unit);
 	void ManageMilitaryUnit(AActorUnit* Unit) const;

@@ -722,6 +722,14 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que verifica si la casilla dada es propiedad de alguna faccion
+	 * 
+	 * @param Pos2D Coordenadas en el Array2D a verificar
+	 * @return Si la casilla es propiedad de alguna faccion
+	 */
+	bool IsTileOwned(const FIntPoint& Pos2D) const;
+
+	/**
 	 * Metodo que verifica si la casilla dada es la faccion actual
 	 * 
 	 * @param Pos2D Coordenadas en el Array2D a verificar
@@ -776,10 +784,11 @@ public:
 	 * @param Pos2D Coordenadas en el Array2D
 	 * @param Range Alcance desde la posicion dada
 	 * @param CheckTileCost
+	 * @param CheckTileAccesibility
 	 * @return Coordenadas de las casillas que se encuentran dentro del rango desde la posicion dada
 	 */
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true);
+	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true, bool CheckTileAccesibility = false);
 
 	/**
 	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas

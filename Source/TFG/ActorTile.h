@@ -194,6 +194,13 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que verifica si una casilla no es propiedad de ninguna faccion
+	 * 
+	 * @return Si la casilla no es propiedad de ninguna faccion
+	 */
+	bool IsOwned() const;
+
+	/**
 	 * Metodo que verifica si una casilla es propiedad de la faccion actual
 	 * 
 	 * @return Si la casilla es propiedad de la faccion actual
