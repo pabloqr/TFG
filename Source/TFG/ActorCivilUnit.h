@@ -32,10 +32,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	const FIntPoint& GetTargetPos() const { return CivilInfo.TargetPos; }
 	ECivilUnitState GetCivilUnitState() const { return CivilInfo.State; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	void SetTargetPos(const FIntPoint& Pos) { CivilInfo.TargetPos = Pos; }
 	void SetCivilUnitState(const ECivilUnitState State) { CivilInfo.State = State; }
 
 	//----------------------------------------------------------------------------------------------------------------//

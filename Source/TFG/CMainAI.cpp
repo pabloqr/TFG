@@ -192,21 +192,7 @@ bool ACMainAI::IsSettlementNeeded() const
 
 bool ACMainAI::IsResourceGatheringNeeded() const
 {
-	// Se obtienen todos los recursos
-	TMap<EResource, FResourceCollection> Resources = PawnFaction->GetStrategicResources();
-	Resources.Append(PawnFaction->GetMonetaryResources());
-
-	for (const auto Resource : Resources)
-	{
-		// Se procesan todos los recursos en posesion
-		for (const auto ResourcePos : Resource.Value.Tiles)
-		{
-			// Si hay un recurso que no se ha recolectado se devuelve
-			if (!TileMap->IsResourceGathered(ResourcePos)) return true;
-		}
-	}
-
-	return false;
+	return PendingResourcesToGather.Num() > 0;
 }
 
 FIntPoint ACMainAI::CalculateBestPosForSettlement()
@@ -226,7 +212,7 @@ FIntPoint ACMainAI::CalculateBestPosForSettlement()
 	return BestTile.Pos;
 }
 
-FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
+FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos)
 {
 	FIntPoint ClosestResource = Pos;
 
@@ -245,14 +231,27 @@ FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
 			// Si el recurso ha sido recolectado, se omite
 			if (TileMap->IsResourceGathered(ResourcePos)) continue;
 
+			// Si el recurso no esta en la coleccion de recursos para recolectar se anade
+			if (!PlannedResourcesToGather.Contains(ResourcePos) && !PendingResourcesToGather.Contains(ResourcePos))
+			{
+				PendingResourcesToGather.Add(ResourcePos);
+			}
+
 			// Se obtiene la distancia y, si es menor, se actualiza las variables
 			const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, ResourcePos);
-			if (Distance < MinDistance)
+			if (Distance < MinDistance && !PlannedResourcesToGather.Contains(ResourcePos))
 			{
 				MinDistance = Distance;
 				ClosestResource = ResourcePos;
 			}
 		}
+	}
+
+	// Se actualizan las colecciones si se ha obtenido una posicion valida
+	if (ClosestResource != Pos)
+	{
+		PendingResourcesToGather.Remove(ClosestResource);
+		PlannedResourcesToGather.Add(ClosestResource);
 	}
 
 	return ClosestResource;
@@ -832,6 +831,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			if (!TileMap->CanGatherResourceAtPos(UnitInfo.Path.Last().Pos2D))
 			{
 				CivilUnit->RemovePath();
+				CivilUnit->SetTargetPos(-1);
 				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
 			}
 			break;
@@ -840,10 +840,12 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			if (!TileMap->CanSetSettlementAtPos(UnitInfo.Path.Last().Pos2D, {}))
 			{
 				CivilUnit->RemovePath();
+				CivilUnit->SetTargetPos(-1);
 				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
 			}
 			break;
 		default:
+			CivilUnit->SetTargetPos(-1);
 			CivilUnit->SetCivilUnitState(ECivilUnitState::None);
 			break;
 		}
@@ -851,15 +853,23 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 
 	if (UnitInfo.Path.Num() == 0) // (2)
 	{
-		FIntPoint NewPos;
+		// Se obtiene la posicion objetivo de la unidad y se actualiza la nueva posicion
+		const FIntPoint TargetPos = CivilUnit->GetTargetPos();
+		FIntPoint NewPos = TargetPos != -1 ? TargetPos : UnitInfo.Pos2D;
 
-		if (!PlannedSettlements.Contains(UnitInfo.Pos2D))
+		// Se evita que se cambie la accion si esta en el lugar de destino
+		const bool PlacingSettlement = PlannedSettlements.Contains(UnitInfo.Pos2D);
+		const bool GatheringResource = CivilUnit->GetCivilUnitState() == ECivilUnitState::GatheringResource &&
+			TileMap->CanGatherResourceAtPos(UnitInfo.Pos2D);
+
+		if (CivilUnit->GetTargetPos() == -1 && !PlacingSettlement && !GatheringResource)
 		{
 			// Se determina si se debe crear un nuevo asentamiento
 			if (CivilUnit->CanSetSettlement() && IsSettlementNeeded()) // (2.1)
 			{
 				// Se obtiene la posicion y se establece el estado de la unidad
 				NewPos = CalculateBestPosForSettlement();
+				CivilUnit->SetTargetPos(NewPos != UnitInfo.Pos2D ? NewPos : -1);
 				CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
 
 				// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
@@ -869,6 +879,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			{
 				// Se obtiene la posicion y se establece el estado de la unidad
 				NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+				CivilUnit->SetTargetPos(NewPos != UnitInfo.Pos2D ? NewPos : -1);
 				CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
 			}
 
@@ -877,6 +888,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			{
 				// Se obtiene la posicion y se establece el estado de la unidad
 				NewPos = CalculateBestPosForSettlement();
+				CivilUnit->SetTargetPos(NewPos != UnitInfo.Pos2D ? NewPos : -1);
 				CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
 
 				// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
@@ -885,10 +897,11 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 		}
 
 		// (2.2)
-		// Si no se ha calculado ninguna posicion y la unidad se encuentra sobre un asentamiento, se mueve a otra
+		// Si no se ha calculado ninguna accion y la unidad se encuentra sobre un asentamiento, se mueve a otra
 		if (NewPos == UnitInfo.Pos2D && TileMap->GetSettlementsPos().Contains(NewPos))
 		{
 			NewPos = CalculateBestPosForUnit(UnitInfo, EUnitAction::MoveAround);
+			CivilUnit->SetTargetPos(-1);
 		}
 
 		// Se calcula el camino a la nueva posicion y se asigna a la unidad
@@ -1254,6 +1267,10 @@ void ACMainAI::TurnFinished()
 				if (CivilUnit->GetCivilUnitState() == ECivilUnitState::GatheringResource &&
 					TileMap->CanGatherResourceAtPos(CivilUnit->GetPos()))
 				{
+					// Se elimina la posicion de los recursos en curso de recoleccion
+					PlannedResourcesToGather.Remove(CivilUnit->GetPos());
+
+					// Se recolecta el recurso
 					CivilUnit->GatherResource();
 				}
 				// Se verifica si puede establecer un asentamiento

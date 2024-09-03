@@ -27,15 +27,19 @@ struct FCivilUnitInfo
 	int32 NumActions;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
+	FIntPoint TargetPos;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
 	ECivilUnitState State;
 
-	FCivilUnitInfo(): FCivilUnitInfo(0, ECivilUnitState::None)
+	FCivilUnitInfo(): FCivilUnitInfo(0, -1, ECivilUnitState::None)
 	{
 	}
 
-	FCivilUnitInfo(const int32 NumActions, const ECivilUnitState CivilUnitState)
+	FCivilUnitInfo(const int32 NumActions, const FIntPoint& TargetPos, const ECivilUnitState State)
 		: NumActions(NumActions),
-		  State(CivilUnitState)
+		  TargetPos(TargetPos),
+		  State(State)
 	{
 	}
 };

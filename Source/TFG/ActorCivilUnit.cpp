@@ -33,6 +33,9 @@ void AActorCivilUnit::GatherResource()
 	// Se actualizan los puntos de movimiento de la unidad
 	Info.MovementPoints = 0;
 
+	// Se invalida la posicion objetivo de la unidad
+	CivilInfo.TargetPos = -1;
+
 	// Se realiza la llamada al evento para que se gestione la recoleccion del recurso
 	OnResourceGathered.Broadcast(Info.Pos2D);
 

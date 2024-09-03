@@ -58,7 +58,7 @@ struct FTileValue
 		  Value(Value)
 	{
 	}
-	
+
 	/**
 	 * Operador <
 	 * 
@@ -179,6 +179,18 @@ protected:
 	 */
 	TMap<FIntPoint, float> TilesValue;
 
+	/**
+	 * Coleccion de recursos para recolectar
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="AI")
+	TSet<FIntPoint> PendingResourcesToGather;
+
+	/**
+	 * Coleccion de recursos planeados para su recoleccion
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="AI")
+	TSet<FIntPoint> PlannedResourcesToGather;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	TSet<FIntPoint> EnemiesLocation;
@@ -212,7 +224,7 @@ private:
 	bool IsResourceGatheringNeeded() const;
 	FIntPoint CalculateBestPosForSettlement();
 
-	FIntPoint GetClosestResourceToGatherPos(const FIntPoint& Pos) const;
+	FIntPoint GetClosestResourceToGatherPos(const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
