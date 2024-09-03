@@ -9,6 +9,7 @@
 #include "GInstance.h"
 #include "LibrarySaves.h"
 #include "LibraryTileMap.h"
+#include "TPriorityQueue.h"
 #include "Kismet/GameplayStatics.h"
 
 AActorTileMap::AActorTileMap()
@@ -960,7 +961,7 @@ TArray<FIntPoint> AActorTileMap::GetTilesWithinRange(const FIntPoint& Pos2D, con
 	return InRange;
 }
 
-bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
+bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos, const TArray<FIntPoint>& AdditionalSettlements) const
 {
 	// Se verifica que la casilla sea valida
 	const int32 Index = GetPositionInArray(Pos);
@@ -973,7 +974,14 @@ bool AActorTileMap::CanSetSettlementAtPos(const FIntPoint& Pos) const
 	if (Tiles[Index]->HasResource()) return false;
 
 	// Se procesan todos los asentamientos
-	for (auto SettlementPos : SettlementsPos)
+	for (const auto SettlementPos : SettlementsPos)
+	{
+		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
+		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;
+	}
+
+	// Se procesan los asentamientos adicionales
+	for (const auto SettlementPos : AdditionalSettlements)
 	{
 		// Si alguno de los asentamientos esta demasiado cerca, no se puede establecer el asentamiento
 		if (ULibraryTileMap::GetDistanceToElement(SettlementPos, Pos) <= 3) return false;
@@ -1017,7 +1025,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	// teniendo en cuenta que la prioridad se basa en la cercania al objetivo y el coste
 	//
 	// Inicialmente, se inserta el nodo inicial
-	FPriorityQueue Frontier;
+	TPriorityQueue<FPathData> Frontier;
 	Frontier.Push(FPathData(PosIni, 0));
 
 	// Se crea un diccionario que almacena, para cada nodo, desde cual se ha llegado a el
@@ -1028,7 +1036,7 @@ const TArray<FMovement>& AActorTileMap::FindPath(const FIntPoint& PosIni, const 
 	TotalCost.Add(PosIni, 0);
 
 	// Se procesan nodos mientras sigan quedando
-	while (!Frontier.Empty())
+	while (!Frontier.IsEmpty())
 	{
 		// Se obtiene el nodo con la mayor prioridad y se comprueba si se ha llegado al destino
 		const FPathData CurrentData = Frontier.Pop();

@@ -7,6 +7,7 @@
 #include "ActorUnit.h"
 #include "InterfaceDeal.h"
 #include "MMain.h"
+#include "TPriorityQueue.h"
 #include "CMainAI.generated.h"
 
 class UDataTable;
@@ -57,6 +58,72 @@ struct FTileValue
 		  Value(Value)
 	{
 	}
+	
+	/**
+	 * Operador <
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es menor que el que se compara
+	 */
+	bool operator<(const FTileValue& Other) const
+	{
+		return Value > Other.Value;
+	}
+
+	/**
+	 * Operador >
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es mayor que el que se compara
+	 */
+	bool operator>(const FTileValue& Other) const
+	{
+		return !(*this < Other || *this == Other);
+	}
+
+	/**
+	 * Operador ==
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es igual que el que se compara
+	 */
+	bool operator==(const FTileValue& Other) const
+	{
+		return Value == Other.Value;
+	}
+
+	/**
+	 * Operador !=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es diferente que el que se compara
+	 */
+	bool operator!=(const FTileValue& Other) const
+	{
+		return !(*this == Other);
+	}
+
+	/**
+	 * Operador <=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es menor o igual que el que se compara
+	 */
+	bool operator<=(const FTileValue& Other) const
+	{
+		return *this < Other || *this == Other;
+	}
+
+	/**
+	 * Operador >=
+	 * 
+	 * @param Other Elemento de la clase
+	 * @return El elemento actual es mayor o igual que el que se compara
+	 */
+	bool operator>=(const FTileValue& Other) const
+	{
+		return *this > Other || *this == Other;
+	}
 };
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -96,10 +163,16 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
-	 * Atributo que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento en cada turno
+	 * Cola con prioridad que almacena la mejor casilla y el valor de atractivo para establecer un asentamiento
+	 * en cada turno
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="AI")
-	FTileValue BestTileForSettlement;
+	TPriorityQueue<FTileValue> BestTileForSettlement;
+
+	/**
+	 * Array de posiciones en las que se ha planificado establecer un asentamiento
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="AI")
+	TArray<FIntPoint> PlannedSettlements;
 
 	/**
 	 * Diccionario que almacena los valores de atractivo de las casillas
@@ -198,7 +271,7 @@ public:
 	void TurnStarted();
 
 	UFUNCTION(BlueprintCallable)
-	void TurnFinished() const;
+	void TurnFinished();
 
 	//----------------------------------------------------------------------------------------------------------------//
 

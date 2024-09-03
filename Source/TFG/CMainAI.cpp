@@ -29,8 +29,11 @@ ACMainAI::ACMainAI()
 	// Se inicializa el estado del controlador
 	MilitaryState = EMilitaryState::Neutral;
 
-	// Se inicializa la casilla para establecer asentamientos
-	BestTileForSettlement = FTileValue(FIntPoint(0), -1);
+	// Se inicializa la cola para establecer asentamientos
+	BestTileForSettlement = TPriorityQueue<FTileValue>();
+
+	// Se inicializa la lista de asentamientos planificados
+	PlannedSettlements = TArray<FIntPoint>();
 
 	// Se inicializa el numero de unidades en movimiento
 	UnitsMoving = 0;
@@ -106,8 +109,8 @@ FIntPoint ACMainAI::GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& S
 
 void ACMainAI::UpdateTilesValue()
 {
-	// Se invalida el valor de atractivo de la mejor casilla actual para actualizarlo
-	BestTileForSettlement.Value = -1;
+	// Se crea una cola de valores de atractivo de las casillas para actualizarla
+	TPriorityQueue<FTileValue> BestTileQueue = TPriorityQueue<FTileValue>();
 
 	// Se recorren todas las casillas del mapa
 	for (int32 Row = 0; Row < TileMap->GetSize().X; ++Row)
@@ -121,7 +124,7 @@ void ACMainAI::UpdateTilesValue()
 			if (!TilesValue.Contains(Pos)) TilesValue.Add(Pos, 0.0);
 
 			// Si no se puede establecer un asentamiento, se le da un valor invalido
-			if (!TileMap->CanSetSettlementAtPos(Pos)) TilesValue[Pos] = -1.0;
+			if (!TileMap->CanSetSettlementAtPos(Pos, PlannedSettlements)) TilesValue[Pos] = -1.0;
 			else
 			{
 				// Se obtiene una referencia al valor para modificarlo
@@ -152,13 +155,14 @@ void ACMainAI::UpdateTilesValue()
 				}
 			}
 
-			// Si el valor de atractivo es mejor que el de la casilla actual, se actualiza
-			if (TilesValue[Pos] > BestTileForSettlement.Value)
-			{
-				BestTileForSettlement = FTileValue(Pos, TilesValue[Pos]);
-			}
+			// Se actualiza la cola de valores de atractivo de las casillas
+			BestTileQueue.Push(FTileValue(Pos, TilesValue[Pos]));
 		}
 	}
+
+	// Se actualiza la cola de valores de atractivo de las casillas
+	BestTileForSettlement.Empty();
+	BestTileForSettlement = BestTileQueue;
 }
 
 bool ACMainAI::IsSettlementNeeded() const
@@ -213,7 +217,13 @@ FIntPoint ACMainAI::CalculateBestPosForSettlement()
 	// Se actualizan los valores de atractivo de las casillas y se devuelve el mejor
 	UpdateTilesValue();
 
-	return BestTileForSettlement.Pos;
+	// Se obtiene el primer elemento de la cola
+	FTileValue BestTile = BestTileForSettlement.Pop();
+
+	// Se anade la posicion a la lista de asentamientos planificados
+	PlannedSettlements.Add(BestTile.Pos);
+
+	return BestTile.Pos;
 }
 
 FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos) const
@@ -576,7 +586,8 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 							PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
 
 						// Se establecen los elementos del trato
-						const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
+						const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount,
+						                                                FResource());
 						const FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
 
 						// Se propone el trato de paz
@@ -826,7 +837,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			break;
 		case ECivilUnitState::SettingSettlement:
 			// Se verifica que se pueda crear el asentamiento
-			if (!TileMap->CanSetSettlementAtPos(UnitInfo.Path.Last().Pos2D))
+			if (!TileMap->CanSetSettlementAtPos(UnitInfo.Path.Last().Pos2D, {}))
 			{
 				CivilUnit->RemovePath();
 				CivilUnit->SetCivilUnitState(ECivilUnitState::None);
@@ -842,32 +853,35 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 	{
 		FIntPoint NewPos;
 
-		// Se determina si se debe crear un nuevo asentamiento
-		if (CivilUnit->CanSetSettlement() && IsSettlementNeeded()) // (2.1)
+		if (!PlannedSettlements.Contains(UnitInfo.Pos2D))
 		{
-			// Se obtiene la posicion y se establece el estado de la unidad
-			NewPos = CalculateBestPosForSettlement();
-			CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
+			// Se determina si se debe crear un nuevo asentamiento
+			if (CivilUnit->CanSetSettlement() && IsSettlementNeeded()) // (2.1)
+			{
+				// Se obtiene la posicion y se establece el estado de la unidad
+				NewPos = CalculateBestPosForSettlement();
+				CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
 
-			// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
-			if (NewPos == -1) NewPos = UnitInfo.Pos2D;
-		}
-		else
-		{
-			// Se obtiene la posicion y se establece el estado de la unidad
-			NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
-			CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
-		}
+				// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
+				if (NewPos == -1) NewPos = UnitInfo.Pos2D;
+			}
+			else
+			{
+				// Se obtiene la posicion y se establece el estado de la unidad
+				NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+				CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
+			}
 
-		// Si no se ha calculado ninguna posicion y la unidad puede establecer un asentamiento, se establece
-		if (NewPos == UnitInfo.Pos2D && CivilUnit->CanSetSettlement())
-		{
-			// Se obtiene la posicion y se establece el estado de la unidad
-			NewPos = CalculateBestPosForSettlement();
-			CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
+			// Si no se ha calculado ninguna posicion y la unidad puede establecer un asentamiento, se establece
+			if (NewPos == UnitInfo.Pos2D && CivilUnit->CanSetSettlement())
+			{
+				// Se obtiene la posicion y se establece el estado de la unidad
+				NewPos = CalculateBestPosForSettlement();
+				CivilUnit->SetCivilUnitState(ECivilUnitState::SettingSettlement);
 
-			// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
-			if (NewPos == -1) NewPos = UnitInfo.Pos2D;
+				// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
+				if (NewPos == -1) NewPos = UnitInfo.Pos2D;
+			}
 		}
 
 		// (2.2)
@@ -1213,7 +1227,7 @@ void ACMainAI::TurnStarted()
 	}
 }
 
-void ACMainAI::TurnFinished() const
+void ACMainAI::TurnFinished()
 {
 	// Si la faccion no es valida, no se hace nada
 	if (PawnFaction)
@@ -1244,8 +1258,12 @@ void ACMainAI::TurnFinished() const
 				}
 				// Se verifica si puede establecer un asentamiento
 				else if (CivilUnit->GetCivilUnitState() == ECivilUnitState::SettingSettlement &&
-					CivilUnit->CanSetSettlement() && TileMap->CanSetSettlementAtPos(CivilUnit->GetPos()))
+					CivilUnit->CanSetSettlement() && TileMap->CanSetSettlementAtPos(CivilUnit->GetPos(), {}))
 				{
+					// Se elimina la posicion de los asentamientos planificados
+					PlannedSettlements.Remove(CivilUnit->GetPos());
+
+					// Se crea el asentamiento
 					CivilUnit->CreateSettlement();
 				}
 			}

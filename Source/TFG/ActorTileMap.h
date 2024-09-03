@@ -156,81 +156,6 @@ struct FPathData
 	}
 };
 
-/**
- * Clase para definir colas con prioridad
- */
-class FPriorityQueue
-{
-	/**
-	 * Lista de elementos parametrizada, el tipo de dato debe proporcionar los operadores implementados
-	 */
-	TArray<FPathData> Elements;
-
-public:
-	/**
-	 * Metodo que devuelve si la cadena esta vacia o no
-	 * 
-	 * @return La cadena esta vacia
-	 */
-	bool Empty() const
-	{
-		return Elements.Num() == 0;
-	}
-
-	/**
-	 * Metodo que inserta de forma ordenada el elemento dado segun su prioridad
-	 * 
-	 * @param Element Elemento a insertar
-	 */
-	void Push(const FPathData& Element)
-	{
-		// Se comprueba si el elemento tiene menos prioridad que el ultimo para evitar recorrer todo el array
-		if (Empty() || Element >= Elements.Last()) Elements.Add(Element);
-		else
-			for (int32 i = 0; i < Elements.Num(); ++i)
-			{
-				// Si el elemento tiene menos prioridad se inserta y se finaliza
-				if (Elements[i] >= Element)
-				{
-					Elements.Insert(Element, i);
-					break;
-				}
-			}
-	}
-
-	/**
-	 * Metodo que devuelve el elemento con mayor prioridad del array
-	 * 
-	 * @return El primer elemento del array
-	 */
-	FPathData Pop()
-	{
-		FPathData Element = Elements[0];
-		Elements.RemoveAt(0);
-
-		return Element;
-	}
-
-	/**
-	 * Metodo que devuelve la representacion legible de la instancia de esta clase
-	 * 
-	 * @return Cadena a mostrar
-	 */
-	FString ToString()
-	{
-		FString Str;
-
-		Str.Append(FString::Printf(TEXT("FrontierStart\n")));
-		for (const FPathData Element : Elements)
-		{
-			Str.Append(FString::Printf(TEXT("(%d, %d) - P(%d)\n"), Element.Pos2D.X, Element.Pos2D.Y, Element.Priority));
-		}
-		Str.Append(FString::Printf(TEXT("FrontierEnd\n")));
-
-		return Str;
-	}
-};
-
 //--------------------------------------------------------------------------------------------------------------------//
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D);
@@ -788,17 +713,19 @@ public:
 	 * @return Coordenadas de las casillas que se encuentran dentro del rango desde la posicion dada
 	 */
 	UFUNCTION(BlueprintCallable)
-	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true, bool CheckTileAccesibility = false);
+	TArray<FIntPoint> GetTilesWithinRange(const FIntPoint& Pos2D, const int32 Range, const bool CheckTileCost = true,
+	                                      bool CheckTileAccesibility = false);
 
 	/**
 	 * Metodo que verifica que la casilla en la que se quiere establecer el asentamiento es valida y se encuentra a mas
 	 * de 3 casillas de cualquier otro asentamiento
 	 * 
 	 * @param Pos Posicion en la que se quiere establecer el asentamiento
+	 * @param AdditionalSettlements
 	 * @return Si la posicion es valida
 	 */
 	UFUNCTION(BlueprintCallable)
-	bool CanSetSettlementAtPos(const FIntPoint& Pos) const;
+	bool CanSetSettlementAtPos(const FIntPoint& Pos, const TArray<FIntPoint>& AdditionalSettlements) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
