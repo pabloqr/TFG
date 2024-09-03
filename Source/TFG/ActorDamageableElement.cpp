@@ -109,19 +109,19 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 	return 30.0 * FMath::Exp(StrengthDifference / 25.0 * RandomModifier);
 }
 
-void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttackStats& Stats)
+void AActorDamageableElement::PerformAttack(const bool IsAttacking, const AActorDamageableElement* Element)
 {
 	// Se calcula el dano a aplicar
-	const float Damage = CalculateAttack(IsAttacking, Stats);
+	const float Damage = CalculateAttack(IsAttacking, Element->DamageableInfo.Stats);
 
 	// Se hace efectivo el dano
-	ApplyDamage(Damage);
+	ApplyDamage(Damage, Element);
 
 	// Se llama al evento para procesar el ataque
 	OnAttackTriggered.Broadcast();
 }
 
-void AActorDamageableElement::ApplyDamage(const float Damage)
+void AActorDamageableElement::ApplyDamage(const float Damage, const AActorDamageableElement* Element)
 {
 	// Se restan los puntos de vida correspondientes
 	DamageableInfo.HealthPoints = FMath::Max(0.0f, DamageableInfo.HealthPoints - Damage);

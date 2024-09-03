@@ -185,12 +185,12 @@ void AActorUnit::RestoreMovement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorUnit::ApplyDamage(const float Damage)
+void AActorUnit::ApplyDamage(const float Damage, const AActorDamageableElement* Element)
 {
-	Super::ApplyDamage(Damage);
+	Super::ApplyDamage(Damage, Element);
 
 	// Si no quedan puntos de vida, se llama al evento que gestiona la destruccion de la unidad
-	if (DamageableInfo.HealthPoints <= 0.0) OnUnitDestroyed.Broadcast(this);
+	if (DamageableInfo.HealthPoints <= 0.0) OnUnitDestroyed.Broadcast(Element, this);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

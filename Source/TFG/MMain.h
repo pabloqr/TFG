@@ -42,6 +42,12 @@ private:
 	void MakeExchangeDeal(const FDealInfo& Deal) const;
 
 protected:
+	UFUNCTION(BlueprintCallable)
+	void UpdateWarScore(const int32 FactionA, const int32 FactionB,
+	                    const AActorDamageableElement* DestroyedElement) const;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	virtual void BeginPlay() override;
 
 public:

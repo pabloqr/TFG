@@ -15,6 +15,9 @@ void AMMain::MakePeaceWithFaction(const FDealInfo& Deal) const
 	TMap<int32, APawnFaction*> Factions = State->GetFactions();
 	Factions[Deal.FactionAElements.FactionIndex]->MakePeaceWithFaction(Deal.FactionBElements.FactionIndex);
 	Factions[Deal.FactionBElements.FactionIndex]->MakePeaceWithFaction(Deal.FactionAElements.FactionIndex);
+
+	// Se actualiza el estado
+	State->EndWar(Deal.FactionAElements.FactionIndex, Deal.FactionBElements.FactionIndex);
 }
 
 void AMMain::MakeAllianceWithFaction(const FDealInfo& Deal) const
@@ -46,6 +49,22 @@ void AMMain::MakeExchangeDeal(const FDealInfo& Deal) const
 	// Se actualizan los recursos de la faccion objetivo
 	Factions[Deal.FactionBElements.FactionIndex]->AddResource(true, Deal.FactionAElements.Resource, -1);
 	Factions[Deal.FactionBElements.FactionIndex]->RemoveResource(true, Deal.FactionBElements.Resource, -1);
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+void AMMain::UpdateWarScore(const int32 FactionA, const int32 FactionB,
+                            const AActorDamageableElement* DestroyedElement) const
+{
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return;
+
+	// Se obtiene la informacion necesaria del elemento
+	const int32 ElementOwner = DestroyedElement->GetFactionOwner();
+	const float ElementStrength = DestroyedElement->GetBaseStrengthPoints();
+
+	// Se actualiza la puntuacion de guerra
+	State->UpdateWarScore(FactionA, FactionB, ElementOwner, ElementStrength);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -314,6 +333,9 @@ void AMMain::DeclareWarOnFaction(const int32 CurrentFaction, const int32 TargetF
 		Factions[CurrentFaction]->DeclareWarOnFaction(TargetFaction);
 		Factions[TargetFaction]->DeclareWarOnFaction(CurrentFaction);
 	}
+
+	// Se actualiza el estado
+	State->StartWar(CurrentFaction, TargetFaction);
 }
 
 float AMMain::GetWarScore(const int32 CurrentFaction, const int32 TargetFaction) const

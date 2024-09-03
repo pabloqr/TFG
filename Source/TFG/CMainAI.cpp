@@ -23,6 +23,9 @@ ACMainAI::ACMainAI()
 	// Se inicializa el mapa a un valor nulo
 	TileMap = nullptr;
 
+	// Se inicializa la tabla de datos a un valor nulo
+	UnitDataTable = nullptr;
+
 	// Se inicializa el estado del controlador
 	MilitaryState = EMilitaryState::Neutral;
 
@@ -135,8 +138,18 @@ void ACMainAI::UpdateTilesValue()
 					             ? 10.0 / (ULibraryTileMap::GetDistanceToElement(Pos, SettlementPos) - 3.0)
 					             : 0.0;
 
-				// Si la casilla tiene un recurso, se aumenta el valor
-				if (TileMap->TileHasResource(Pos)) TileValue += 15.0;
+				// Si la casilla tiene recursos adyacentes, se aumenta el valor
+				TArray<FIntPoint> InRange = TileMap->GetTilesWithinRange(Pos, 2, false, true);
+
+				for (const auto TilePos : InRange)
+				{
+					if (TileMap->TileHasResource(TilePos))
+					{
+						// Se calcula la distancia
+						const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, TilePos);
+						TileValue += Distance == 1 ? 2.0 : Distance == 2 ? 1.0 : 0.0;
+					}
+				}
 			}
 
 			// Si el valor de atractivo es mejor que el de la casilla actual, se actualiza
@@ -483,9 +496,10 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 				//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
 				//			(a.4) el numero de turnos es menor a 10
 				//		(b) si se debe tratar de firmar un pacto de paz:
-				//			(b.1) la puntuacion es igual o inferior a 0 y no se tiene fuerza militar suficiente
+				//			(b.1) la puntuacion es inferior a 0 y no se tiene fuerza militar suficiente
 				//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
-				//			(b.3) la puntuacion es cercana a 0, la fuerza es equiparable y es prolongada
+				//			(b.3) la puntuacion es muy superior
+				//			(b.4) la puntuacion es cercana a 0, la fuerza es equiparable y es prolongada
 				//		(c) si es imprescindible acabar con la guerra
 				//			(c.1) la puntuacion es bastante inferior a 0 y no se tiene fuerza militar suficiente
 				//			(c.2) en cualquier caso, se esta cerca de perder la guerra (quedan pocos asentamientos)
@@ -513,62 +527,88 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 				//		* Si se tiene mas fuerza y la diferencia es baja (hacia arriba)
 				const bool CondA2 = (ImWeaker && StrengthDiffRel <= 0.5) || (!ImWeaker && StrengthDiffRel >= 0.3);
 
-				// No se tiene fuerza militar suficiente:
-				//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
-				//		* Si se tiene mas fuerza y la diferencia es baja (hacia abajo)
-				const bool CondB1 = (ImWeaker && StrengthDiffRel >= 0.5) || (!ImWeaker && StrengthDiffRel <= 0.3);
-				// Se tiene fuerza militar suficiente:
-				//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
-				//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
-				const bool CondB2 = (ImWeaker && StrengthDiffRel <= 0.3) || (!ImWeaker && StrengthDiffRel >= 0.5);
-				// Se tiene fuerza militar equiparable:
-				//		* Si la diferencia es muy baja (hacia abajo)
-				const bool CondB3 = ScoreCloseToZero && StrengthDiffRel <= 0.1 && WarTurns >= 100;
-
-				// No se tiene fuerza militar suficiente:
-				//		* Si se tiene menos fuerza, aunque la diferencia es baja (hacia arriba)
-				//		* Si se tiene mas fuerza y la diferencia es media (hacia abajo)
-				const bool CondC1 = (ImWeaker && StrengthDiffRel >= 0.2) || (!ImWeaker && StrengthDiffRel <= 0.5);
-				if ((ScoreVeryLow && CondC1) || PawnFaction->GetNumSettlements() <= 2) // c
+				bool CondA3 = false;
+				// Se obtiene el estado para acceder a las facciones
+				if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
 				{
-					// Imprescindible acabar con la guerra
+					// Se obtienen las facciones
+					const TMap<int32, APawnFaction*> Factions = State->GetFactions();
 
-					// Se calcula la cantidad de dinero a ofrecer
-					const float MoneyAmount = MainMode->CalculateMoneyAmountForPeaceTreaty(
-						PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+					// Se obtiene el numero de asentamientos propios y enemigos
+					const int32 OwnSettlements = PawnFaction->GetNumSettlements();
+					const int32 EnemySettlements = Factions.Contains(FactionIndex)
+						                               ? Factions[FactionIndex]->GetNumSettlements()
+						                               : 0;
 
-					// Se establecen los elementos del trato
-					const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
-					const FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
+					// Se calcula la proporcion de asentamientos
+					const float Proportion = EnemySettlements / OwnSettlements;
+					// Se calcula el umbral sobre el que se decide si son pocos asentamientos
+					float Threshold = 0.5 - 0.01 * (OwnSettlements + EnemySettlements) / 2.0;
+					Threshold = FMath::Max(0.0f, FMath::Min(Threshold, 0.5f));
 
-					// Se propone el trato de paz
-					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+					CondA3 = OwnSettlements > EnemySettlements && Proportion < Threshold;
 				}
-				else if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB3) // b
+
+				if (!(ScoreHigh && CondA1) && !(ScoreCloseToZero && CondA2) && !CondA3 && WarTurns >= 10) // a
 				{
-					// Intentar acabar con la guerra
+					// No se tiene fuerza militar suficiente:
+					//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
+					//		* Si se tiene mas fuerza y la diferencia es baja (hacia abajo)
+					const bool CondB1 = (ImWeaker && StrengthDiffRel >= 0.5) || (!ImWeaker && StrengthDiffRel <= 0.3);
+					// Se tiene fuerza militar suficiente:
+					//		* Si se tiene menos fuerza y la diferencia es baja (hacia abajo)
+					//		* Si se tiene mas fuerza y la diferencia es media (hacia arriba)
+					const bool CondB2 = (ImWeaker && StrengthDiffRel <= 0.3) || (!ImWeaker && StrengthDiffRel >= 0.5);
+					// Se tiene fuerza militar equiparable:
+					//		* Si la diferencia es muy baja (hacia abajo)
+					const bool CondB4 = ScoreCloseToZero && StrengthDiffRel <= 0.1 && WarTurns >= 100;
 
-					// Se establecen los elementos del trato
-					FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
-					FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
+					// No se tiene fuerza militar suficiente:
+					//		* Si se tiene menos fuerza, aunque la diferencia es baja (hacia arriba)
+					//		* Si se tiene mas fuerza y la diferencia es media (hacia abajo)
+					const bool CondC1 = (ImWeaker && StrengthDiffRel >= 0.2) || (!ImWeaker && StrengthDiffRel <= 0.5);
+					if ((ScoreVeryLow && CondC1) || PawnFaction->GetNumSettlements() <= 2) // c
+					{
+						// Imprescindible acabar con la guerra
 
-					// Se calcula la cantidad de dinero a ofrecer o solicitar dependiendo de si es favorable o no
-					if (ScoreHigh || ScoreVeryHigh)
-					{
-						EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
-							FactionIndex, ImWeaker, WarScore, StrengthDiffRel);
-					}
-					else
-					{
-						OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+						// Se calcula la cantidad de dinero a ofrecer
+						const float MoneyAmount = MainMode->CalculateMoneyAmountForPeaceTreaty(
 							PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+
+						// Se establecen los elementos del trato
+						const FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), MoneyAmount, FResource());
+						const FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
+
+						// Se propone el trato de paz
+						MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+						return;
 					}
 
-					// Se propone el trato de paz
-					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
-				}
+					if ((ScoreLow && CondB1) || (ScoreHigh && CondB2) || ScoreVeryHigh || CondB4) // b
+					{
+						// Intentar acabar con la guerra
 
-				return;
+						// Se establecen los elementos del trato
+						FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
+						FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
+
+						// Se calcula la cantidad de dinero a ofrecer o solicitar dependiendo de si es favorable o no
+						if (ScoreHigh || ScoreVeryHigh)
+						{
+							EnemyElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+								FactionIndex, ImWeaker, WarScore, StrengthDiffRel);
+						}
+						else
+						{
+							OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
+								PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
+						}
+
+						// Se propone el trato de paz
+						MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
+						return;
+					}
+				}
 			}
 		}
 	}
@@ -660,7 +700,6 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 
 				// Se propone el trato y se finaliza
 				MainMode->ProposeDeal(FDealInfo(EDealType::AllianceDeal, OwnElements, EnemyElements));
-
 				return;
 			}
 		}

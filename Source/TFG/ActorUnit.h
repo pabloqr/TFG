@@ -15,7 +15,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitMoved, const FIntPoint&, Prev
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitStateChanged, const AActorUnit*, Unit, const EUnitState, State);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitDestroyed, AActorUnit*, Unit);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitDestroyed, const AActorDamageableElement*, Destroyer,
+                                             AActorUnit*, Unit);
 
 //--------------------------------------------------------------------------------------------------------------------//
 
@@ -221,8 +222,9 @@ public:
 	 * Metodo que aplica un dano a la unidad
 	 * 
 	 * @param Damage Dano a aplicar
+	 * @param Element
 	 */
-	virtual void ApplyDamage(const float Damage) override;
+	virtual void ApplyDamage(const float Damage, const AActorDamageableElement* Element) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

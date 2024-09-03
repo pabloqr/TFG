@@ -40,7 +40,7 @@ void AActorCivilUnit::GatherResource()
 	if (--CivilInfo.NumActions <= 0)
 	{
 		// Se llama al evento para gestionar la destruccion de la unidad
-		OnUnitDestroyed.Broadcast(this);
+		OnUnitDestroyed.Broadcast(nullptr, this);
 	}
 }
 
@@ -53,7 +53,7 @@ void AActorCivilUnit::CreateSettlement()
 		OnSettlementCreated.Broadcast(Info.Pos2D);
 
 		// Se llama al evento para gestionar la destruccion de la unidad
-		OnUnitDestroyed.Broadcast(this);
+		OnUnitDestroyed.Broadcast(nullptr, this);
 	}
 }
 

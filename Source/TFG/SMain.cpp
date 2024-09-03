@@ -72,7 +72,13 @@ APawnFaction* ASMain::NextFaction()
 		CurrentIndex = (CurrentIndex + 1) % NumFactions;
 
 		// Si se ha dado una vuelta a todas las facciones, se actualiza el numero de turno
-		if (CurrentIndex == 0) AddTurn();
+		if (CurrentIndex == 0)
+		{
+			AddTurn();
+
+			// Tambien se atualiza el numero de turno de todas las guerras activas
+			UpdateWarsTurns();
+		}
 
 		// Si se ha encontrado la faccion, se actualiza y se finaliza
 		if (FactionsAlive.Contains(CurrentIndex)) CurrentFaction = Factions[CurrentIndex];
@@ -84,17 +90,35 @@ APawnFaction* ASMain::NextFaction()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void ASMain::UpdateWarsTurns()
+{
+	// Se procesan todas las guerras
+	for (const auto War : CurrentWars)
+	{
+		++CurrentWars[War.Key].NumTurns;
+	}
+}
+
 void ASMain::StartWar(const int32 FactionA, const int32 FactionB)
 {
 	// Se anade la nueva entrada si no existe, en caso contrario, se restablecen los atributos
-	if (!CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
+	if (!CurrentWars.Contains(FFactionsPair(FactionA, FactionB)) &&
+		!CurrentWars.Contains(FFactionsPair(FactionB, FactionA)))
 	{
 		CurrentWars.Add(FFactionsPair(FactionA, FactionB), FWarInfo());
 	}
 	else
 	{
-		CurrentWars[FFactionsPair(FactionA, FactionB)].WarScore = 0.0;
-		CurrentWars[FFactionsPair(FactionA, FactionB)].NumTurns = 0;
+		if (CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
+		{
+			CurrentWars[FFactionsPair(FactionA, FactionB)].WarScore = 0.0;
+			CurrentWars[FFactionsPair(FactionA, FactionB)].NumTurns = 0;
+		}
+		else
+		{
+			CurrentWars[FFactionsPair(FactionB, FactionA)].WarScore = 0.0;
+			CurrentWars[FFactionsPair(FactionB, FactionA)].NumTurns = 0;
+		}
 	}
 }
 
@@ -112,12 +136,36 @@ int32 ASMain::GetWarTurns(const int32 FactionA, const int32 FactionB) const
 		       : -1;
 }
 
+void ASMain::UpdateWarScore(const int32 FactionA, const int32 FactionB, const int32 ElementOwner,
+                            const float ElementStrength)
+{
+	// Se verifica que exista la guerra
+	if (CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
+	{
+		// Se calcula la puntuacion de guerra en funcion de la faccion propietaria del elemento destruido
+		const float WarScore = FactionA == ElementOwner ? -ElementStrength : ElementStrength;
+
+		CurrentWars[FFactionsPair(FactionA, FactionB)].WarScore += WarScore;
+	}
+	else if (CurrentWars.Contains(FFactionsPair(FactionB, FactionA)))
+	{
+		// Se calcula la puntuacion de guerra en funcion de la faccion propietaria del elemento destruido
+		const float WarScore = FactionA == ElementOwner ? ElementStrength : -ElementStrength;
+
+		CurrentWars[FFactionsPair(FactionB, FactionA)].WarScore += WarScore;
+	}
+}
+
 void ASMain::EndWar(const int32 FactionA, const int32 FactionB)
 {
 	// Se verifica que la entrada existe y se elimina
 	if (CurrentWars.Contains(FFactionsPair(FactionA, FactionB)))
 	{
 		CurrentWars.Remove(FFactionsPair(FactionA, FactionB));
+	}
+	else if (CurrentWars.Contains(FFactionsPair(FactionB, FactionA)))
+	{
+		CurrentWars.Remove(FFactionsPair(FactionB, FactionA));
 	}
 }
 

@@ -152,9 +152,12 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	void UpdateWarsTurns();
+
 	void StartWar(const int32 FactionA, const int32 FactionB);
 	float GetWarScore(const int32 FactionA, const int32 FactionB) const;
 	int32 GetWarTurns(const int32 FactionA, const int32 FactionB) const;
+	void UpdateWarScore(const int32 FactionA, const int32 FactionB, int32 ElementOwner, const float ElementStrength);
 	void EndWar(const int32 FactionA, const int32 FactionB);
 
 	//----------------------------------------------------------------------------------------------------------------//

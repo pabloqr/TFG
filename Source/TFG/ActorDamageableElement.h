@@ -35,8 +35,10 @@ private:
 	void UpdateAttackAndDefenseParameters();
 
 public:
+	int32 GetFactionOwner() const { return DamageableInfo.Owner; }
 	float GetBaseHealthPoints() const { return DamageableInfo.BaseHealthPoints; }
 	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
+	float GetBaseStrengthPoints() const { return DamageableInfo.BaseStats.GetStrengthPoints(); }
 	float GetStrengthPoints() const { return DamageableInfo.Stats.GetStrengthPoints(); }
 	float GetAttackPoints() const { return DamageableInfo.Stats.AttackPoints; }
 	float GetDefensePoints() const { return DamageableInfo.Stats.DefensePoints; }
@@ -88,18 +90,19 @@ public:
 	 * Metodo que hace efectivo un ataque sobre otro elemento
 	 * 
 	 * @param IsAttacking
-	 * @param Stats Elemento que se ataca
+	 * @param Element Elemento que se ataca
 	 */
 	UFUNCTION(BlueprintCallable)
-	void PerformAttack(const bool IsAttacking, const FAttackStats& Stats);
+	void PerformAttack(const bool IsAttacking, const AActorDamageableElement* Element);
 
 	/**
 	 * Metodo que aplica un dano a un elemento. No se verifica si el elemento es destruido o no
 	 * 
 	 * @param Damage Dano a aplicar sobre un elemento
+	 * @param Element
 	 */
 	UFUNCTION(BlueprintCallable)
-	virtual void ApplyDamage(const float Damage);
+	virtual void ApplyDamage(const float Damage, const AActorDamageableElement* Element);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

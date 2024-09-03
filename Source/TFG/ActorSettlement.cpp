@@ -52,15 +52,11 @@ void AActorSettlement::OwnTileInRange()
 	TArray<FIntPoint> InRange = TileMap->GetTilesWithinRange(Info.Pos2D, 3, false, false);
 	for (const auto TilePos : InRange)
 	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Tile (%d, %d)"), TilePos.X, TilePos.Y))
-		
 		// Si la casilla ya tiene propietario, se omite
 		if (!TileMap->IsTileOwned(TilePos))
 		{
 			// Se calcula la distancia
 			const int32 Distance = ULibraryTileMap::GetDistanceToElement(Info.Pos2D, TilePos);
-
-			UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("Distance %d"), Distance))
 
 			// Se clasifica segun el resultado
 			if (Distance == 2) RangeTwo.Add(TilePos);
@@ -204,14 +200,8 @@ void AActorSettlement::TurnStarted()
 
 void AActorSettlement::TurnEnded()
 {
-	UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("TurnToOwnTile %d"), Info.TurnsToOwnTile))
-	
 	// Se actualiza el contador para la expansion y se obtiene una nueva casilla si procede
-	if (--Info.TurnsToOwnTile <= 0)
-	{
-		UE_LOG(LogTemp, Log, TEXT("%s"), *FString::Printf(TEXT("TimeToOwnTile")))
-		OwnTileInRange();
-	}
+	if (--Info.TurnsToOwnTile <= 0) OwnTileInRange();
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

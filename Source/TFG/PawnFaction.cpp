@@ -377,6 +377,10 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 			Info.KnownFactions[FactionIndex].WarInfo.WarScore = CurrentWars[FactionIndex].WarScore;
 			Info.KnownFactions[FactionIndex].WarInfo.NumTurns = CurrentWars[FactionIndex].NumTurns;
 		}
+		else
+		{
+			Info.KnownFactions[FactionIndex].WarInfo.NumTurns += 1;
+		}
 	}
 }
 
@@ -384,12 +388,20 @@ void APawnFaction::DeclareWarOnFaction(const int32 Faction)
 {
 	// Se actualiza la relacion diplomatica
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::AtWar);
+
+	// Se actualiza la informacion sobre la guerra entre las dos facciones
+	Info.KnownFactions[Faction].WarInfo.WarScore = 0.0;
+	Info.KnownFactions[Faction].WarInfo.NumTurns = 0;
 }
 
 void APawnFaction::MakePeaceWithFaction(const int32 Faction)
 {
 	// Se actualiza la relacion diplomatica
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Neutral);
+
+	// Se actualiza la informacion sobre la guerra entre las dos facciones
+	Info.KnownFactions[Faction].WarInfo.WarScore = 0.0;
+	Info.KnownFactions[Faction].WarInfo.NumTurns = 0;
 }
 
 void APawnFaction::MakeAllianceWithFaction(const int32 Faction)
