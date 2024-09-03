@@ -151,22 +151,31 @@ void APawnFaction::BeginPlay()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const
+bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType,
+                                  const bool CalculateProbability) const
 {
-	// Se verifica que la referencia a la tabla sea correcta
-	if (!DataTable) return true;
+	// Se verifica que la referencia a la tabla sea correcta y que se solicite la comprobacion de una unidad militar
+	if (!DataTable || UnitType == EUnitType::Civil) return true;
 
 	// Se obtiene la informacion de la unidad
 	const FUnitData UnitData = ULibraryDataTables::GetUnitDataFromType(DataTable, UnitType);
 	if (Info.StrategicResources.Contains(UnitData.RequiredResource.Resource))
 	{
+		// Se calcula una probabilidad de produccion dependiendo de la cantidad de dinero y balance disponibles
+		float Probability = CalculateProbability || Info.Money <= 0.0 ? 0.0 : 1.0;
+		if (CalculateProbability && Info.Money > 0.0)
+		{
+			Probability = Info.Money /
+				(Info.Money + (12.0 + UnitData.MaintenanceCost) * FMath::Abs(Info.MoneyBalance) + 1.0);
+		}
+
 		// Se verifica si hay dinero suficiente
-		const bool HasMoney = Info.Money > 0.0;
+		const bool HasMoney = Probability >= 0.5;
 		// Se verifica si hay recursos suficientes
 		const bool HasResources = Info.StrategicResources[UnitData.RequiredResource.Resource].GatheredResource.Quantity
 			>= UnitData.RequiredResource.Quantity;
 
-		return UnitType == EUnitType::Civil || (HasResources && HasMoney);
+		return HasResources && HasMoney;
 	}
 
 	return true;

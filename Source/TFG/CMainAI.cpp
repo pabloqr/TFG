@@ -992,9 +992,9 @@ EUnitType ACMainAI::CalculateBestUnitTypeToProduce() const
 
 	// Se crea una lista que indica si cada uno de los tipos puede ser producido
 	TArray<bool> ValidUnits = {
-		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::AntiTank),
-		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Infantry),
-		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Armoured)
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::AntiTank, true),
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Infantry, true),
+		PawnFaction->CanProduceUnit(UnitDataTable, EUnitType::Armoured, true)
 	};
 
 	// Se obtiene el indice de un tipo valido para producir

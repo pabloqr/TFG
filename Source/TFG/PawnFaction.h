@@ -101,7 +101,7 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
-	bool CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType) const;
+	bool CanProduceUnit(const UDataTable* DataTable, const EUnitType UnitType, bool CalculateProbability = false) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
