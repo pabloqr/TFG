@@ -23,6 +23,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyUpdated, float, Money);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMoneyBalanceUpdated, float, MoneyBalance);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceQuantityUpdated, EResource, Resource, int32, Quantity);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
@@ -184,4 +186,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnMoneyBalanceUpdated OnMoneyBalanceUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnResourceQuantityUpdated OnResourceQuantityUpdated;
 };

@@ -312,6 +312,9 @@ void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, c
 			// Se llama al evento para actualizar la interfaz
 			OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 		}
+
+		// Se llama al evento para actualizar la interfaz
+		OnResourceQuantityUpdated.Broadcast(Resource.Resource, Resources[Resource.Resource].GatheredResource.Quantity);
 	}
 }
 
@@ -338,6 +341,9 @@ void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource
 			// Se llama al evento para actualizar la interfaz
 			OnMoneyBalanceUpdated.Broadcast(Info.MoneyBalance);
 		}
+
+		// Se llama al evento para actualizar la interfaz
+		OnResourceQuantityUpdated.Broadcast(Resource.Resource, Resources[Resource.Resource].GatheredResource.Quantity);
 	}
 }
 
