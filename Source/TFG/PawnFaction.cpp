@@ -291,7 +291,7 @@ void APawnFaction::DisownResource(const EResource Resource, const FIntPoint& Pos
 	else if (Info.StrategicResources.Contains(Resource)) Info.StrategicResources[Resource].Tiles.Remove(Pos);
 }
 
-void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, const FIntPoint& Pos)
+void APawnFaction::AddResource(const bool CheckPos, const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
@@ -300,7 +300,7 @@ void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, c
 
 	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource) && (!FromDeal || Resources[Resource.Resource].Tiles.Contains(Pos)))
+	if (Resources.Contains(Resource.Resource) && (!CheckPos || Resources[Resource.Resource].Tiles.Contains(Pos)))
 	{
 		Resources[Resource.Resource].GatheredResource.Quantity += Resource.Quantity;
 
@@ -318,7 +318,7 @@ void APawnFaction::AddResource(const bool FromDeal, const FResource& Resource, c
 	}
 }
 
-void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource, const FIntPoint& Pos)
+void APawnFaction::RemoveResource(const bool CheckPos, const FResource& Resource, const FIntPoint& Pos)
 {
 	// Se obtiene el diccionario a modificar dependiendo del tipo de recurso dado
 	TMap<EResource, FResourceCollection>& Resources = Resource.Type == EResourceType::Monetary
@@ -327,7 +327,7 @@ void APawnFaction::RemoveResource(const bool FromDeal, const FResource& Resource
 
 	// Se comprueba si el recurso ya lo posee la faccion y se actualiza su cantidad, en caso contrario,
 	// no se hace nada, ya que no es un tipo de recurso valido
-	if (Resources.Contains(Resource.Resource) && (!FromDeal || Resources[Resource.Resource].Tiles.Contains(Pos)))
+	if (Resources.Contains(Resource.Resource) && (!CheckPos || Resources[Resource.Resource].Tiles.Contains(Pos)))
 	{
 		// Se hace que la cantidad siempre sea mayor o igual a 0
 		Resources[Resource.Resource].GatheredResource.Quantity =

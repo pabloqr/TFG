@@ -676,6 +676,7 @@ public:
 	 * @param Pos2D Coordenadas en el Array2D a verificar
 	 * @return Si el recurso contenido en la casilla puede ser recolectado
 	 */
+	UFUNCTION(BlueprintCallable)
 	bool CanGatherResourceAtPos(const FIntPoint& Pos2D) const;
 
 	/**

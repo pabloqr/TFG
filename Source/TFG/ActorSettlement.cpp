@@ -126,6 +126,9 @@ void AActorSettlement::AddToProductionQueue(const UDataTable* DataTable, const T
 
 		// Se anade el elemento a la cola de produccion
 		Info.ProductionQueue.Add(FProductionElement(UnitClass, UnitData.Type, UnitData.ProductionCost / 10.0));
+
+		// Se llama al evento para actualizar los recursos de la faccion
+		OnUnitProductionStarted.Broadcast(UnitType);
 	}
 
 	// Se actualiza el estado
@@ -145,8 +148,13 @@ void AActorSettlement::RemoveFromProduction(const UDataTable* DataTable, const i
 			DataTable, Info.ProductionQueue[Index].UnitType);
 		if (Info.ProductionQueue[Index].ProductionCost < UnitData.ProductionCost / 10.0)
 		{
-			// Si ya se ha trabajado en la unidad algun turno, se anade la entrada a la listaZ
+			// Si ya se ha trabajado en la unidad algun turno, se anade la entrada a la lista
 			Info.StartedProduction.Add(Info.ProductionQueue[Index]);
+		}
+		else
+		{
+			// Se llama al evento para actualizar los recursos de la faccion
+			OnUnitProductionCancelled.Broadcast(UnitData.Type);
 		}
 
 		// Se elimina el elemento de la lista

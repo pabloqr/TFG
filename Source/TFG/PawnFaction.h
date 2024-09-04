@@ -138,10 +138,10 @@ public:
 	void DisownResource(const EResource Resource, const FIntPoint& Pos);
 
 	UFUNCTION(BlueprintCallable)
-	void AddResource(bool FromDeal, const FResource& Resource, const FIntPoint& Pos);
+	void AddResource(bool CheckPos, const FResource& Resource, const FIntPoint& Pos);
 
 	UFUNCTION(BlueprintCallable)
-	void RemoveResource(bool FromDeal, const FResource& Resource, const FIntPoint& Pos);
+	void RemoveResource(bool CheckPos, const FResource& Resource, const FIntPoint& Pos);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

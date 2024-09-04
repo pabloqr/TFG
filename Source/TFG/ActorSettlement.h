@@ -17,6 +17,10 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileOwned, const FIntPoint&, Pos2
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileDisowned, const FIntPoint&, Pos2D);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitProductionStarted, EUnitType, UnitType);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnUnitProductionCancelled, EUnitType, UnitType);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, Pos2D, const FProductionElement&, Unit);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
@@ -157,6 +161,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnTileDisowned OnTileDisowned;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitProductionStarted OnUnitProductionStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnUnitProductionCancelled OnUnitProductionCancelled;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnUnitProduced OnUnitProduced;

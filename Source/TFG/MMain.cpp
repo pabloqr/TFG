@@ -43,12 +43,12 @@ void AMMain::MakeExchangeDeal(const FDealInfo& Deal) const
 	Factions[Deal.FactionBElements.FactionIndex]->RemoveMoney(Deal.FactionBElements.Money);
 
 	// Se actualizan los recursos de la faccion actual
-	Factions[Deal.FactionAElements.FactionIndex]->AddResource(true, Deal.FactionBElements.Resource, -1);
-	Factions[Deal.FactionAElements.FactionIndex]->RemoveResource(true, Deal.FactionAElements.Resource, -1);
+	Factions[Deal.FactionAElements.FactionIndex]->AddResource(false, Deal.FactionBElements.Resource, -1);
+	Factions[Deal.FactionAElements.FactionIndex]->RemoveResource(false, Deal.FactionAElements.Resource, -1);
 
 	// Se actualizan los recursos de la faccion objetivo
-	Factions[Deal.FactionBElements.FactionIndex]->AddResource(true, Deal.FactionAElements.Resource, -1);
-	Factions[Deal.FactionBElements.FactionIndex]->RemoveResource(true, Deal.FactionBElements.Resource, -1);
+	Factions[Deal.FactionBElements.FactionIndex]->AddResource(false, Deal.FactionAElements.Resource, -1);
+	Factions[Deal.FactionBElements.FactionIndex]->RemoveResource(false, Deal.FactionBElements.Resource, -1);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
