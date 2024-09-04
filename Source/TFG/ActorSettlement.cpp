@@ -15,6 +15,9 @@ AActorSettlement::AActorSettlement()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// Se inicializa la referencia al mapa a un valor nulo
+	TileMap = nullptr;
+
 	// Se inicializa la informacion del asentamiento
 	Info = FSettlementInfo();
 

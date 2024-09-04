@@ -90,10 +90,12 @@ public:
 	 * Metodo que hace efectivo un ataque sobre otro elemento
 	 * 
 	 * @param IsAttacking
+	 * @param ElementStats
 	 * @param Element Elemento que se ataca
 	 */
 	UFUNCTION(BlueprintCallable)
-	void PerformAttack(const bool IsAttacking, const AActorDamageableElement* Element);
+	void PerformAttack(const bool IsAttacking, const FAttackStats& ElementStats,
+	                   const AActorDamageableElement* Element);
 
 	/**
 	 * Metodo que aplica un dano a un elemento. No se verifica si el elemento es destruido o no

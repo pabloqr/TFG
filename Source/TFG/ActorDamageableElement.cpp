@@ -13,14 +13,17 @@ AActorDamageableElement::AActorDamageableElement()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Se inicializan los atributos con los datos por defecto del asentamiento
-	DamageableInfo = FDamageableInfo(-1, 400, FAttackStats(150.0, 200.0));
+	DamageableInfo = FDamageableInfo(-1, 400, FAttackStats(50.0, 200.0));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorDamageableElement::UpdateAttackAndDefenseParameters()
 {
-	const int32 HealthDamagePenalty = FMath::Floor(DamageableInfo.HealthPoints / 10.0) - 10;
+	// Se calcula la base dependiendo de la salud base
+	const float Base = DamageableInfo.BaseHealthPoints / 10.0;
+	// Se calcula un porcentaje de penalizacion que aumenta por cada 10 puntos de vida perdidos
+	const float HealthDamagePenalty = FMath::Abs(FMath::Floor(DamageableInfo.HealthPoints / Base) - 10.0) / 100.0;
 
 	// Se actualizan los puntos de ataque y defensa
 	DamageableInfo.Stats.AttackPoints = DamageableInfo.BaseStats.AttackPoints -
@@ -97,22 +100,23 @@ bool AActorDamageableElement::IsAlly() const
 float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const
 {
 	// Se calculan y obtienen los puntos de fuerza del atacante y el defensor
-	const float AttackStrength = DamageableInfo.Stats.GetStrengthPoints();
-	const float DefenseStrength = Stats.GetStrengthPoints();
+	const float SelfStrength = DamageableInfo.Stats.GetStrengthPoints();
+	const float EnemyStrength = Stats.GetStrengthPoints();
 
 	// Se calcula la diferencia entre los puntos de fuerza
-	const float StrengthDifference = IsAttacking ? DefenseStrength - AttackStrength : AttackStrength - DefenseStrength;
+	const float StrengthDifference = IsAttacking ? EnemyStrength - SelfStrength : SelfStrength - EnemyStrength;
 
 	// Se obtiene un valor que aleatorice ligeramente los parametros de ataque
 	const float RandomModifier = FMath::RandRange(0.75f, 1.25f);
 
-	return 30.0 * FMath::Exp(StrengthDifference / 25.0 * RandomModifier);
+	return 30.0 * FMath::Exp(StrengthDifference / 25.0) * RandomModifier;
 }
 
-void AActorDamageableElement::PerformAttack(const bool IsAttacking, const AActorDamageableElement* Element)
+void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttackStats& ElementStats,
+                                            const AActorDamageableElement* Element)
 {
 	// Se calcula el dano a aplicar
-	const float Damage = CalculateAttack(IsAttacking, Element->DamageableInfo.Stats);
+	const float Damage = CalculateAttack(IsAttacking, ElementStats);
 
 	// Se hace efectivo el dano
 	ApplyDamage(Damage, Element);

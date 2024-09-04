@@ -228,7 +228,10 @@ private:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	TSet<FIntPoint> GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range, const bool GetEnemy) const;
+	TSet<FIntPoint> GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range, const bool GetEnemy,
+	                                              bool CheckAccessibility) const;
+
+	int32 GetNumCloseUnitsToSettlements(bool CheckEnemies) const;
 
 	const AActorSettlement* GetClosestEnemySettlementFromPos(const FIntPoint& Pos) const;
 	const AActorSettlement* GetClosestOwnedSettlementFromPos(const FIntPoint& Pos) const;

@@ -260,13 +260,13 @@ FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos)
 //--------------------------------------------------------------------------------------------------------------------//
 
 TSet<FIntPoint> ACMainAI::GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, const int32 Range,
-                                                        const bool GetEnemy) const
+                                                        const bool GetEnemy, const bool CheckAccessibility) const
 {
 	// Coleccion de casillas con enemigos
 	TSet<FIntPoint> ElementsLocation = TSet<FIntPoint>();
 
 	// Se obtienen las casillas al alcance de la unidad y se procesan
-	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, false, true);
+	TArray<FIntPoint> TilesInRange = TileMap->GetTilesWithinRange(Pos, Range, false, CheckAccessibility);
 	for (auto TilePos : TilesInRange)
 	{
 		// Si la casilla tiene un enemigo, se anade a la coleccion
@@ -274,6 +274,23 @@ TSet<FIntPoint> ACMainAI::GetEnemyOrAllyLocationInRange(const FIntPoint& Pos, co
 	}
 
 	return ElementsLocation;
+}
+
+int32 ACMainAI::GetNumCloseUnitsToSettlements(const bool CheckEnemies) const
+{
+	// Se crea la coleccion de enemigos
+	TSet<FIntPoint> CloseUnits = TSet<FIntPoint>();
+
+	// Se obtienen los asentamientos y se procesan
+	const TArray<AActorSettlement*> Settlements = PawnFaction->GetSettlements();
+	for (const auto Settlement : Settlements)
+	{
+		// Se obtienen los enemigos cercanos al asentamiento y se anaden a la coleccion
+		CloseUnits.Append(GetEnemyOrAllyLocationInRange(Settlement->GetPos(), 3, CheckEnemies, false));
+	}
+
+	// Se devuelve el numero de enemigos cercanos
+	return CloseUnits.Num();
 }
 
 const AActorSettlement* ACMainAI::GetClosestEnemySettlementFromPos(const FIntPoint& Pos) const
@@ -712,6 +729,9 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 				MainMode->ProposeDeal(FDealInfo(EDealType::AllianceDeal, OwnElements, EnemyElements));
 				return;
 			}
+
+			// TODO: borrar
+			MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), FactionIndex);
 		}
 	}
 
@@ -951,6 +971,40 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 		//		* 0.0-0.7: se cura la unidad
 		//		* 0.7-1.0: se explora el mapa
 		UnitAction = HealthPercentage < 0.7 ? EUnitAction::Heal : EUnitAction::MoveAround;
+		if (UnitAction == EUnitAction::MoveAround)
+		{
+			const TSet<int32> FactionsAtWar = PawnFaction->GetFactionsAtWar();
+			if (FactionsAtWar.Num() > 0)
+			{
+				// Se obtiene el numero de enemigos y aliados cercanos a las casillas propias
+				const int32 CloseEnemies = GetNumCloseUnitsToSettlements(true);
+				const int32 CloseAllies = GetNumCloseUnitsToSettlements(false);
+
+				// Se calcula un valor que determine como de importante es proteger los asentamientos propios
+				// o atacar los del enemigo
+				float Relevance = 0.0;
+				if (CloseAllies <= CloseEnemies)
+				{
+					// Se calcula la diferencia de numero de unidades
+					const int32 Diff = CloseEnemies - CloseAllies;
+					// Se calcula un valor para la escala que obliga a que la diferencia sea mayor cuanto mas grandes
+					// son los valores
+					const float Scale = FMath::Loge(1.0 + CloseEnemies);
+					// Se calcula una penalizacion que aumenta cuanto mas grande es la diferencia
+					const float Penalty = FMath::Exp(-Diff);
+
+					// Se calcula la relevancia base
+					const float BaseRelevance = 1.0 / (1.0 + FMath::Exp(-Diff / Scale));
+
+					// Se aplica la penalizacion y se acota entre 0 y 1
+					Relevance = BaseRelevance * (1.0 - Penalty);
+					Relevance = FMath::Clamp(Relevance, 0.0f, 1.0f);
+				}
+
+				// Se actualiza la accion dependiendo de la relevancia calculada
+				UnitAction = Relevance >= 0.5 ? EUnitAction::MoveTowardsAllyTiles : EUnitAction::MoveTowardsEnemyTiles;
+			}
+		}
 	}
 
 	// Dependiendo de la accion se aplican las modificaciones necesarias
@@ -1046,7 +1100,8 @@ void ACMainAI::ManageElements()
 		ManageUnits();
 
 		// Tercero: se gestiona la produccion de los asentamientos
-		ManageSettlementsProduction();
+		// TODO: descomentar
+		// ManageSettlementsProduction();
 	}
 
 	// Se finaliza el turno actual
@@ -1065,16 +1120,17 @@ void ACMainAI::ManageUnits()
 		const FUnitInfo UnitInfo = Unit->GetInfo();
 
 		// PRIMERO: se comprueba si hay enemigos cerca
-		EnemiesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, true);
+		EnemiesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, true, true);
 
 		// Tambien se obtienen las posiciones de las unidades aliadas cercanas
-		AlliesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, false);
+		AlliesLocation = GetEnemyOrAllyLocationInRange(UnitInfo.Pos2D, UnitInfo.BaseMovementPoints, false, true);
 
 		// Segun el tipo de unidad, se realiza una operacion u otra
 		if (UnitInfo.Type != EUnitType::None)
 		{
 			if (UnitInfo.Type == EUnitType::Civil) ManageCivilUnit(Unit);
-			else ManageMilitaryUnit(Unit);
+			// TODO: descomentar
+			// else ManageMilitaryUnit(Unit);
 		}
 	}
 }

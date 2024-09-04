@@ -238,6 +238,9 @@ void APawnFaction::AddUnit(AActorUnit* Unit)
 	// Se anade la unidad a la lista
 	Info.Units.AddUnique(Unit);
 
+	if (Unit->GetType() == EUnitType::Civil) Info.CivilUnits.AddUnique(Info.Units.Find(Unit));
+	else Info.MilitaryUnits.AddUnique(Info.Units.Find(Unit));
+
 	// Se actualiza la fuerza militar para que se tenga en cuenta la unidad anadida
 	Info.MilitaryStrength += Unit->GetStrengthPoints();
 

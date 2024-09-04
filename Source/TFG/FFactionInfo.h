@@ -119,6 +119,10 @@ struct FFactionInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<AActorUnit*> Units;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
+	TArray<int32> CivilUnits;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
+	TArray<int32> MilitaryUnits;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> ManualUnits;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Elements")
 	TArray<int32> AutomaticUnits;
@@ -135,14 +139,14 @@ struct FFactionInfo
 
 	FFactionInfo(): FFactionInfo(-1, 0.0, 0.0, 0.0, {}, {},
 	                             {}, {}, {}, {}, {},
-	                             {}, {})
+	                             {}, {}, {}, {})
 	{
 	}
 
 	FFactionInfo(const int32 Index, const float MilitaryStrength, const float Money, const float MoneyBalance,
 	             const TArray<AActorSettlement*>& Settlements, const TArray<int32>& IdleSettlements,
-	             const TArray<AActorUnit*>& Units, const TArray<int32>& ManualUnits,
-	             const TArray<int32>& AutomaticUnits,
+	             const TArray<AActorUnit*>& Units, const TArray<int32>& CivilUnits, const TArray<int32>& MilitaryUnits,
+	             const TArray<int32>& ManualUnits, const TArray<int32>& AutomaticUnits,
 	             const TMap<EResource, FResourceCollection>& MonetaryResources,
 	             const TMap<EResource, FResourceCollection>& StrategicResources,
 	             const TMap<int32, FOpponentFactionInfo>& KnownFactions,
@@ -154,6 +158,8 @@ struct FFactionInfo
 		  Settlements(Settlements),
 		  IdleSettlements(IdleSettlements),
 		  Units(Units),
+		  CivilUnits(CivilUnits),
+		  MilitaryUnits(MilitaryUnits),
 		  ManualUnits(ManualUnits),
 		  AutomaticUnits(AutomaticUnits),
 		  MonetaryResources(MonetaryResources),

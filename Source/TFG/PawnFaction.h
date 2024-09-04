@@ -75,6 +75,10 @@ public:
 	const TMap<EResource, FResourceCollection>& GetMonetaryResources() const { return Info.MonetaryResources; }
 	const TMap<EResource, FResourceCollection>& GetStrategicResources() const { return Info.StrategicResources; }
 	const TArray<AActorUnit*>& GetUnits() const { return Info.Units; }
+	const TArray<int32>& GetCivilUnits() const { return Info.CivilUnits; }
+	const TArray<int32>& GetMilitaryUnits() const { return Info.MilitaryUnits; }
+	int32 GetNumCivilUnits() const { return Info.CivilUnits.Num(); }
+	int32 GetNumMilitaryUnits() const { return Info.MilitaryUnits.Num(); }
 	const TArray<int32>& GetManualUnits() const { return Info.ManualUnits; }
 	const TArray<int32>& GetAutomaticUnits() const { return Info.AutomaticUnits; }
 
