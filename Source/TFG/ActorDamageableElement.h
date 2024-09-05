@@ -28,13 +28,8 @@ public:
 	 */
 	AActorDamageableElement();
 
-private:
-	/**
-	 * Metodo privado que actualiza los puntos de ataque y defensa del elemento
-	 */
-	void UpdateAttackAndDefenseParameters();
+	//----------------------------------------------------------------------------------------------------------------//
 
-public:
 	int32 GetFactionOwner() const { return DamageableInfo.Owner; }
 	float GetBaseHealthPoints() const { return DamageableInfo.BaseHealthPoints; }
 	float GetHealthPoints() const { return DamageableInfo.HealthPoints; }
@@ -48,7 +43,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetFactionOwner(const int32 OwnerFaction) { DamageableInfo.Owner = OwnerFaction; }
 
+	UFUNCTION(BlueprintCallable)
 	void SetHealthPoints(const float Points) { DamageableInfo.HealthPoints = Points; }
+
 	void SetAttackPoints(const float Points) { DamageableInfo.Stats.AttackPoints = Points; }
 	void SetDefensePoints(const float Points) { DamageableInfo.Stats.DefensePoints = Points; }
 
@@ -75,6 +72,12 @@ public:
 	bool IsAlly() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que actualiza los puntos de ataque y defensa del elemento
+	 */
+	UFUNCTION(BlueprintCallable)
+	void UpdateAttackAndDefenseParameters();
 
 	/**
 	 * Metodo que calcula el dano que se debe aplicar a cada elemento al realizar un ataque

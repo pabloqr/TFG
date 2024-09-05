@@ -214,6 +214,9 @@ void AActorUnit::TurnStarted()
 			// Si se estaba curando, se cambia el estado de la unidad
 			if (Info.State == EUnitState::Healing) SetState(EUnitState::WaitingForOrders);
 		}
+
+		// Se actualizan los atributos de ataque de acuerdo a la vida restante
+		UpdateAttackAndDefenseParameters();
 	}
 
 	// Se restablecen los puntos de movimiento al comienzo del turno

@@ -26,6 +26,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnUnitProduced, const FIntPoint&, 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementStateChanged, const AActorSettlement*, Settlement,
                                              ESettlementState, State);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSettlementConquered, const AActorDamageableElement*, Conqueror,
+                                             AActorSettlement*, Settlement);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS()
@@ -60,13 +63,6 @@ protected:
 
 	UFUNCTION(BlueprintCallable)
 	void DisownTile(const FIntPoint& Pos);
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado cuando el juego es iniciado o el actor es generado
-	 */
-	virtual void BeginPlay() override;
 
 public:
 	/**
@@ -131,6 +127,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveFromProduction(const UDataTable* DataTable, const int32 Index);
 
+	UFUNCTION(BlueprintCallable)
+	void ResetProduction();
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	virtual void ApplyDamage(const float Damage, const AActorDamageableElement* Element) override;
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
@@ -173,4 +176,7 @@ public:
 
 	UPROPERTY(BlueprintAssignable)
 	FOnSettlementStateChanged OnSettlementStateChanged;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnSettlementConquered OnSettlementConquered;
 };

@@ -528,6 +528,48 @@ void APawnFaction::TurnEnded()
 	}
 }
 
+void APawnFaction::CleanInfoAfterLosing()
+{
+	// Se restablece la fuerza militar
+	Info.MilitaryStrength = 0.0;
+
+	// Se restablece el dinero
+	Info.Money = 0.0;
+	Info.MoneyBalance = 0.0;
+
+	// Se restablecen los asentamientos
+	Info.IdleSettlements.Empty();
+
+	// Se restablecen las unidades
+	Info.CivilUnits.Empty();
+	Info.MilitaryUnits.Empty();
+	Info.ManualUnits.Empty();
+	Info.AutomaticUnits.Empty();
+
+	// Se restablecen los recursos monetarios
+	for (const auto Resource : Info.MonetaryResources)
+	{
+		Info.MonetaryResources[Resource.Key].GatheredResource.Quantity = 0.0;
+		Info.MonetaryResources[Resource.Key].Tiles.Empty();
+	}
+
+	// Se restablecen los recursos estrategicos
+	for (const auto Resource : Info.StrategicResources)
+	{
+		Info.StrategicResources[Resource.Key].GatheredResource.Quantity = 0.0;
+		Info.StrategicResources[Resource.Key].Tiles.Empty();
+	}
+
+	// Se restablecen las facciones conocidas
+	Info.KnownFactions.Empty();
+
+	// Se restablecen las relaciones con las facciones
+	for (const auto Relationship : Info.FactionsWithDiplomaticRelationship)
+	{
+		Info.FactionsWithDiplomaticRelationship[Relationship.Key].Factions.Empty();
+	}
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 void APawnFaction::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

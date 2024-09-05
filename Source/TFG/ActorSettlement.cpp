@@ -171,17 +171,40 @@ void AActorSettlement::RemoveFromProduction(const UDataTable* DataTable, const i
 	}
 }
 
+void AActorSettlement::ResetProduction()
+{
+	// Si hay un elemento en produccion se cancela
+	if (Info.ProductionQueue.Num() > 0)
+	{
+		// Se llama al evento para actualizar los recursos de la faccion
+		OnUnitProductionCancelled.Broadcast(Info.ProductionQueue[0].UnitType);
+	}
+	
+	// Se limpian las colas de produccion
+	Info.ProductionQueue.Empty();
+	Info.StartedProduction.Empty();
+}
+
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorSettlement::BeginPlay()
+void AActorSettlement::ApplyDamage(const float Damage, const AActorDamageableElement* Element)
 {
-	Super::BeginPlay();
+	Super::ApplyDamage(Damage, Element);
+
+	// Si no quedan puntos de vida, se llama al evento que gestiona la destruccion de la unidad
+	if (DamageableInfo.HealthPoints <= 0.0) OnSettlementConquered.Broadcast(Element, this);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
 
 void AActorSettlement::TurnStarted()
 {
+	// Se actualizan los puntos de vida
+	DamageableInfo.HealthPoints = FMath::Min(DamageableInfo.HealthPoints + 10.0f, DamageableInfo.BaseHealthPoints);
+
+	// Se actualizan los atributos de ataque de acuerdo a la vida restante
+	UpdateAttackAndDefenseParameters();
+	
 	// Se comprueba si hay elementos en produccion
 	if (Info.ProductionQueue.Num() > 0)
 	{

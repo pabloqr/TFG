@@ -18,22 +18,6 @@ AActorDamageableElement::AActorDamageableElement()
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-void AActorDamageableElement::UpdateAttackAndDefenseParameters()
-{
-	// Se calcula la base dependiendo de la salud base
-	const float Base = DamageableInfo.BaseHealthPoints / 10.0;
-	// Se calcula un porcentaje de penalizacion que aumenta por cada 10 puntos de vida perdidos
-	const float HealthDamagePenalty = FMath::Abs(FMath::Floor(DamageableInfo.HealthPoints / Base) - 10.0) / 100.0;
-
-	// Se actualizan los puntos de ataque y defensa
-	DamageableInfo.Stats.AttackPoints = DamageableInfo.BaseStats.AttackPoints -
-		DamageableInfo.BaseStats.AttackPoints * HealthDamagePenalty;
-	DamageableInfo.Stats.DefensePoints = DamageableInfo.BaseStats.DefensePoints -
-		DamageableInfo.BaseStats.DefensePoints * HealthDamagePenalty;
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
 bool AActorDamageableElement::IsHuman() const
 {
 	return DamageableInfo.Owner == 0;
@@ -97,6 +81,20 @@ bool AActorDamageableElement::IsAlly() const
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorDamageableElement::UpdateAttackAndDefenseParameters()
+{
+	// Se calcula la base dependiendo de la salud base
+	const float Base = DamageableInfo.BaseHealthPoints / 10.0;
+	// Se calcula un porcentaje de penalizacion que aumenta por cada 10 puntos de vida perdidos
+	const float HealthDamagePenalty = FMath::Abs(FMath::Floor(DamageableInfo.HealthPoints / Base) - 10.0) / 100.0;
+
+	// Se actualizan los puntos de ataque y defensa
+	DamageableInfo.Stats.AttackPoints = DamageableInfo.BaseStats.AttackPoints -
+		DamageableInfo.BaseStats.AttackPoints * HealthDamagePenalty;
+	DamageableInfo.Stats.DefensePoints = DamageableInfo.BaseStats.DefensePoints -
+		DamageableInfo.BaseStats.DefensePoints * HealthDamagePenalty;
+}
+
 float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAttackStats& Stats) const
 {
 	// Se calculan y obtienen los puntos de fuerza del atacante y el defensor
@@ -130,6 +128,6 @@ void AActorDamageableElement::ApplyDamage(const float Damage, const AActorDamage
 	// Se restan los puntos de vida correspondientes
 	DamageableInfo.HealthPoints = FMath::Max(0.0f, DamageableInfo.HealthPoints - Damage);
 
-	// Se actualizan los atributos de la unidad de acuerdo a la vida restante
+	// Se actualizan los atributos de ataque de acuerdo a la vida restante
 	UpdateAttackAndDefenseParameters();
 }

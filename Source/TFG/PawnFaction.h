@@ -171,6 +171,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void TurnEnded();
 
+	void CleanInfoAfterLosing();
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**

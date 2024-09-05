@@ -313,6 +313,9 @@ const AActorSettlement* ACMainAI::GetClosestEnemySettlementFromPos(const FIntPoi
 				const AActorSettlement* ClosestSettlement =
 					GetClosestSettlementFromPos(Pos, Factions[FactionIndex]->GetSettlements());
 
+				// Si no se ha obtenido ningun asentamiento, se omite
+				if (!ClosestSettlement) continue;
+
 				// Se obtiene la distancia y, si es menor que la actual, se actualizan las variables
 				const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, ClosestSettlement->GetPos());
 				if (Distance < MinDistance)
@@ -1129,8 +1132,7 @@ void ACMainAI::ManageUnits()
 		if (UnitInfo.Type != EUnitType::None)
 		{
 			if (UnitInfo.Type == EUnitType::Civil) ManageCivilUnit(Unit);
-			// TODO: descomentar
-			// else ManageMilitaryUnit(Unit);
+			else ManageMilitaryUnit(Unit);
 		}
 	}
 }
