@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FFactionsPair.h"
-#include "FWarInfo.h"
+#include "FRelationshipInfo.h"
 #include "PawnFaction.h"
 #include "GameFramework/GameStateBase.h"
 #include "SMain.generated.h"
@@ -53,7 +53,13 @@ protected:
 	 * Diccionario de guerras en curso en la partida
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
-	TMap<FFactionsPair, FWarInfo> CurrentWars = TMap<FFactionsPair, FWarInfo>();
+	TMap<FFactionsPair, FRelationshipInfo> CurrentWars = TMap<FFactionsPair, FRelationshipInfo>();
+
+	/**
+	 * Diccionario de guerras en curso en la partida
+	 */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	TMap<FFactionsPair, FRelationshipInfo> CurrentAlliances = TMap<FFactionsPair, FRelationshipInfo>();
 
 	/**
 	 * Numero del turno actual
@@ -97,8 +103,9 @@ public:
 	 */
 	const TSet<int32>& GetFactionsAlive() const { return FactionsAlive; }
 
-	const TMap<FFactionsPair, FWarInfo>& GetCurrentWars() const { return CurrentWars; }
-	TMap<FFactionsPair, FWarInfo> GetCurrentWarsForFaction(const int32 Faction) const;
+	const TMap<FFactionsPair, FRelationshipInfo>& GetCurrentWars() const { return CurrentWars; }
+	TMap<FFactionsPair, FRelationshipInfo> GetCurrentWarsForFaction(const int32 Faction) const;
+	TMap<FFactionsPair, FRelationshipInfo> GetCurrentAlliancesForFaction(const int32 Faction) const;
 
 	/**
 	 * Getter del atributo CurrentTurn
@@ -158,7 +165,19 @@ public:
 	float GetWarScore(const int32 FactionA, const int32 FactionB) const;
 	int32 GetWarTurns(const int32 FactionA, const int32 FactionB) const;
 	void UpdateWarScore(const int32 FactionA, const int32 FactionB, int32 ElementOwner, const float ElementStrength);
+	void ResetWarPetitionTurns(const int32 FactionA, const int32 FactionB);
 	void EndWar(const int32 FactionA, const int32 FactionB);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	void UpdateAlliancesTurns();
+
+	void StartAlliance(const int32 FactionA, const int32 FactionB);
+	float GetAllianceScore(const int32 FactionA, const int32 FactionB) const;
+	int32 GetAllianceTurns(const int32 FactionA, const int32 FactionB) const;
+	void UpdateAllianceScore(const int32 FactionA, const int32 FactionB, const float AllianceScore);
+	void ResetAlliancePetitionTurns(const int32 FactionA, const int32 FactionB);
+	void EndAlliance(const int32 FactionA, const int32 FactionB);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

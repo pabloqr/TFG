@@ -52,7 +52,8 @@ protected:
 
 public:
 	TMap<int32, float> GetFactionsMilitaryStrength() const;
-	TMap<int32, FWarInfo> GetFactionsAtWarInfo() const;
+	TMap<int32, FRelationshipInfo> GetFactionsAtWarInfo() const;
+	TMap<int32, FRelationshipInfo> GetAllyFactionsInfo() const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

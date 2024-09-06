@@ -353,7 +353,8 @@ void APawnFaction::RemoveResource(const bool CheckPos, const FResource& Resource
 //--------------------------------------------------------------------------------------------------------------------//
 
 void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength,
-                                           TMap<int32, FWarInfo> CurrentWars)
+                                           const TMap<int32, FRelationshipInfo>& CurrentWars,
+                                           const TMap<int32, FRelationshipInfo>& CurrentAlliances)
 {
 	// Se obtienen todos los indices de las facciones conocidas y se procesan
 	TArray<int32> FactionsIndex;
@@ -380,11 +381,11 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 				Info.FactionsWithDiplomaticRelationship[EDiplomaticRelationship::Ally].Factions.Remove(FactionIndex);
 			}
 
-			// Se elimina de la lista de guerras en curso
-			CurrentWars.Remove(FactionIndex);
-
 			continue;
 		}
+
+		// Si no existe la entrada para la faccion actual, se anade
+		if (!Info.KnownFactions.Contains(FactionIndex)) AddKnowFaction(FactionIndex, FOpponentFactionInfo());
 
 		// Se actualiza la fuerza militar de la faccion
 		Info.KnownFactions[FactionIndex].MilitaryStrength = FactionsStrength[FactionIndex];
@@ -392,12 +393,31 @@ void APawnFaction::UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStr
 		// Se actualizan los datos sobre la guerra
 		if (CurrentWars.Contains(FactionIndex))
 		{
-			Info.KnownFactions[FactionIndex].WarInfo.WarScore = CurrentWars[FactionIndex].WarScore;
-			Info.KnownFactions[FactionIndex].WarInfo.NumTurns = CurrentWars[FactionIndex].NumTurns;
+			// Se actualiza la relacion
+			Info.KnownFactions[FactionIndex].Relationship = EDiplomaticRelationship::AtWar;
+
+			// Se actualiza la informacion sobre la guerra
+			Info.KnownFactions[FactionIndex].WarInfo.Score = CurrentWars[FactionIndex].Score;
+			Info.KnownFactions[FactionIndex].WarInfo.Turns = CurrentWars[FactionIndex].Turns;
 		}
 		else
 		{
-			Info.KnownFactions[FactionIndex].WarInfo.NumTurns += 1;
+			Info.KnownFactions[FactionIndex].WarInfo.Turns += 1;
+		}
+
+		// Se actualizan los datos sobre la alianza
+		if (CurrentAlliances.Contains(FactionIndex))
+		{
+			// Se actualiza la relacion
+			Info.KnownFactions[FactionIndex].Relationship = EDiplomaticRelationship::Ally;
+
+			// Se actualiza la informacion sobre la alianza
+			Info.KnownFactions[FactionIndex].AllianceInfo.Score = CurrentAlliances[FactionIndex].Score;
+			Info.KnownFactions[FactionIndex].AllianceInfo.Turns = CurrentAlliances[FactionIndex].Turns;
+		}
+		else
+		{
+			Info.KnownFactions[FactionIndex].AllianceInfo.Turns += 1;
 		}
 	}
 }
@@ -408,8 +428,15 @@ void APawnFaction::DeclareWarOnFaction(const int32 Faction)
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::AtWar);
 
 	// Se actualiza la informacion sobre la guerra entre las dos facciones
-	Info.KnownFactions[Faction].WarInfo.WarScore = 0.0;
-	Info.KnownFactions[Faction].WarInfo.NumTurns = 0;
+	Info.KnownFactions[Faction].WarInfo.Score = 0.0;
+	Info.KnownFactions[Faction].WarInfo.Turns = 0;
+
+	ResetWarPetitionTurns(Faction);
+}
+
+void APawnFaction::ResetWarPetitionTurns(const int32 Faction)
+{
+	Info.KnownFactions[Faction].WarInfo.PetitionTurns = 0;
 }
 
 void APawnFaction::MakePeaceWithFaction(const int32 Faction)
@@ -418,20 +445,35 @@ void APawnFaction::MakePeaceWithFaction(const int32 Faction)
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Neutral);
 
 	// Se actualiza la informacion sobre la guerra entre las dos facciones
-	Info.KnownFactions[Faction].WarInfo.WarScore = 0.0;
-	Info.KnownFactions[Faction].WarInfo.NumTurns = 0;
+	Info.KnownFactions[Faction].WarInfo.Score = 0.0;
+	Info.KnownFactions[Faction].WarInfo.Turns = 0;
 }
 
 void APawnFaction::MakeAllianceWithFaction(const int32 Faction)
 {
 	// Se actualiza la relacion diplomatica
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Ally);
+
+	// Se actualiza la informacion sobre la alianza entre las dos facciones
+	Info.KnownFactions[Faction].AllianceInfo.Score = 0.0;
+	Info.KnownFactions[Faction].AllianceInfo.Turns = 0;
+}
+
+void APawnFaction::ResetAlliancePetitionTurns(const int32 Faction)
+{
+	Info.KnownFactions[Faction].WarInfo.PetitionTurns = 0;
 }
 
 void APawnFaction::BreakAllianceWithFaction(const int32 Faction)
 {
 	// Se actualiza la relacion diplomatica
 	UpdateFactionDiplomaticRelationship(Faction, EDiplomaticRelationship::Neutral);
+
+	// Se actualiza la informacion sobre la alianza entre las dos facciones
+	Info.KnownFactions[Faction].AllianceInfo.Score = 0.0;
+	Info.KnownFactions[Faction].AllianceInfo.Turns = 0;
+
+	ResetAlliancePetitionTurns(Faction);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

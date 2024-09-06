@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FResourceInfo.h"
-#include "FWarInfo.h"
+#include "FRelationshipInfo.h"
 #include "UObject/Object.h"
 #include "FFactionInfo.generated.h"
 
@@ -78,17 +78,22 @@ struct FOpponentFactionInfo
 	float MilitaryStrength;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
-	FWarInfo WarInfo;
+	FRelationshipInfo WarInfo;
 
-	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0, FWarInfo())
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="OpponentFactionInfo")
+	FRelationshipInfo AllianceInfo;
+
+	FOpponentFactionInfo(): FOpponentFactionInfo(EDiplomaticRelationship::Neutral, 0.0,
+	                                             FRelationshipInfo(), FRelationshipInfo())
 	{
 	}
 
 	FOpponentFactionInfo(const EDiplomaticRelationship Relationship, const float MilitaryStrength,
-	                     const FWarInfo& WarInfo)
+	                     const FRelationshipInfo& WarInfo, const FRelationshipInfo& AllianceInfo)
 		: Relationship(Relationship),
 		  MilitaryStrength(MilitaryStrength),
-		  WarInfo(WarInfo)
+		  WarInfo(WarInfo),
+		  AllianceInfo(AllianceInfo)
 	{
 	}
 };

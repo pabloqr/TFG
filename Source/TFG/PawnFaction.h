@@ -6,7 +6,7 @@
 #include "ActorUnit.h"
 #include "FFactionInfo.h"
 #include "FResourceInfo.h"
-#include "FWarInfo.h"
+#include "FRelationshipInfo.h"
 #include "Engine/DataTable.h"
 #include "GameFramework/Pawn.h"
 #include "PawnFaction.generated.h"
@@ -149,16 +149,22 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength, TMap<int32, FWarInfo> CurrentWars);
+	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength,
+	                             const TMap<int32, FRelationshipInfo>& CurrentWars,
+	                             const TMap<int32, FRelationshipInfo>& CurrentAlliances);
 
 	UFUNCTION(BlueprintCallable)
 	void DeclareWarOnFaction(const int32 Faction);
+
+	void ResetWarPetitionTurns(const int32 Faction);
 
 	UFUNCTION(BlueprintCallable)
 	void MakePeaceWithFaction(const int32 Faction);
 
 	UFUNCTION(BlueprintCallable)
 	void MakeAllianceWithFaction(const int32 Faction);
+
+	void ResetAlliancePetitionTurns(const int32 Faction);
 
 	UFUNCTION(BlueprintCallable)
 	void BreakAllianceWithFaction(const int32 Faction);

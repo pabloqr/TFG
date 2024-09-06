@@ -518,16 +518,18 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 		if (FactionsInfo.Contains(FactionIndex))
 		{
 			// Se obtiene la puntuacion de guerra
-			const int32 WarScore = FactionsInfo[FactionIndex].WarInfo.WarScore;
+			const int32 WarScore = FactionsInfo[FactionIndex].WarInfo.Score;
 			// Se obtienen los turnos transcurridos desde el comienzo de la guerra
-			const int32 WarTurns = FactionsInfo[FactionIndex].WarInfo.NumTurns;
+			const int32 WarTurns = FactionsInfo[FactionIndex].WarInfo.Turns;
+			// Se obtienen los turnos transcurridos desde la ultima peticion de paz
+			const int32 WarPetitionTurns = FactionsInfo[FactionIndex].WarInfo.PetitionTurns;
 
 			// Se debe decidir:
 			//		(a) si se sigue con la guerra:
 			//			(a.1) la puntuacion es mayor que 0, si se tiene fuerza militar suficiente para continuar
 			//			(a.2) la puntuacion es cercana a 0, si se tiene fuerza militar suficiente para continuar
 			//			(a.3) en cualquier caso, se esta cerca de ganar la guerra
-			//			(a.4) el numero de turnos es menor a 10
+			//			(a.4) el numero de turnos es menor a 10 o se realizo una peticion de paz en los ultimos 5 turnos
 			//		(b) si se debe tratar de firmar un pacto de paz:
 			//			(b.1) la puntuacion es inferior a 0 y no se tiene fuerza militar suficiente
 			//			(b.2) la puntuacion es superior a 0 y se puede obtener un tratado beneficioso
@@ -593,7 +595,8 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 				CondA3 = OwnSettlements > EnemySettlements && Proportion < Threshold;
 			}
 
-			if (!(ScoreHigh && CondA1) && !(ScoreCloseToZero && CondA2) && !CondA3 && WarTurns >= 10) // a
+			if (!(ScoreHigh && CondA1) && !(ScoreCloseToZero && CondA2) && !CondA3 && WarTurns >= 10 &&
+				WarPetitionTurns >= 5) // a
 			{
 				// No se tiene fuerza militar suficiente:
 				//		* Si se tiene menos fuerza y la diferencia es media (hacia arriba)
@@ -624,6 +627,9 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 					                                                FResource());
 					const FDealElements EnemyElements = FDealElements(FactionIndex, 0.0, FResource());
 
+					// Se restablecen los turnos antes de solicitar el trato
+					PawnFaction->ResetWarPetitionTurns(FactionIndex);
+
 					// Se propone el trato de paz
 					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
 					return;
@@ -648,6 +654,9 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 						OwnElements.Money = MainMode->CalculateMoneyAmountForPeaceTreaty(
 							PawnFaction->GetIndex(), ImWeaker, WarScore, StrengthDiffRel);
 					}
+
+					// Se restablecen los turnos antes de solicitar el trato
+					PawnFaction->ResetWarPetitionTurns(FactionIndex);
 
 					// Se propone el trato de paz
 					MainMode->ProposeDeal(FDealInfo(EDealType::WarDeal, OwnElements, EnemyElements));
@@ -677,6 +686,9 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 			const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
 			const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
 
+			// Se obtienen los turnos desde la ultima peticion de alianza
+			const int32 AlliancePetitionTurns = FactionsInfo[FactionIndex].AllianceInfo.PetitionTurns;
+
 			// Se debe decidir:
 			//		(a) si se declara la guerra:
 			//			(a.1) otras facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
@@ -686,6 +698,7 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 			//			(b.1) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
 			//			(b.2) otras facciones en guerra estan en guerra y la fuerza militar se complementa
 			//			(b.3) la fuerza militar es insuficiente
+			//			(b.4) han pasado mas de 5 turnos desde que se realizo la ultima peticion de alianza
 			//		(c) si se mantiene la relacion
 
 			// Se obtiene la fuerza de la faccion que se esta procesando
@@ -756,7 +769,7 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 				MainMode->DeclareWarOnFaction(PawnFaction->GetIndex(), FactionIndex);
 			}
 			// b
-			else if (CondB1 || CondB2 || CondB3)
+			else if (CondB1 || CondB2 || CondB3 || AlliancePetitionTurns >= 5)
 			{
 				// Se establecen los elementos del trato
 				FDealElements OwnElements = FDealElements(PawnFaction->GetIndex(), 0.0, FResource());
@@ -773,6 +786,9 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 					EnemyElements.Money = MainMode->CalculateMoneyAmountForAllianceTreaty(
 						FactionIndex, StrengthDiffRel);
 				}
+
+				// Se restablecen los turnos antes de solicitar el trato
+				PawnFaction->ResetAlliancePetitionTurns(FactionIndex);
 
 				// Se propone el trato y se finaliza
 				MainMode->ProposeDeal(FDealInfo(EDealType::AllianceDeal, OwnElements, EnemyElements));
@@ -801,6 +817,11 @@ void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 			const TSet<int32> NeutralFactions = PawnFaction->GetNeutralFactions();
 			const TSet<int32> AllyFactions = PawnFaction->GetAllyFactions();
 
+			// Se obtiene la puntuacion de la alianza
+			const int32 AllianceScore = FactionsInfo[FactionIndex].AllianceInfo.Score;
+			// Se obtienen los turnos transcurridos desde el comienzo de la alianza
+			const int32 AllianceTurns = FactionsInfo[FactionIndex].AllianceInfo.Turns;
+
 			// Se debe decidir:
 			//		(a) si se rompe la alianza:
 			//			(a.1) todas facciones aliadas le han declarado la guerra y la fuerza militar es suficiente
@@ -812,6 +833,7 @@ void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 			//			(b.2) otras facciones aliadas tambien son aliadas y la fuerza militar se complementa
 			//			(b.3) otras facciones en guerra le han declarado la guerra y la fuerza militar se complementa
 			//			(b.4) la fuerza militar es insuficiente
+			//			(b.5) el numero de turnos es menor a 10
 
 			// Se obtiene la fuerza de la faccion que se esta procesando
 			const float FactionAtWarStrength = FactionsInfo[FactionIndex].MilitaryStrength;
@@ -879,7 +901,8 @@ void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 			// b
 			const bool CondAlliance = AllyFactions.Num() == AlliedFactionsAllied ||
 				(AllyFactions.Num() != 0 && AlliedFactionsAllied / AllyFactions.Num() >= 0.5 && CondB23) ||
-				(FactionsAtWar.Num() != 0 && AllyFactionAtWar / FactionsAtWar.Num() >= 0.5 && CondB23) || CondB4;
+				(FactionsAtWar.Num() != 0 && AllyFactionAtWar / FactionsAtWar.Num() >= 0.5 && CondB23) || CondB4 ||
+				AllianceTurns < 10;
 
 			// Se determina si se mantiene la alianza o se rompe
 			if (CondBreakAlliance && !CondAlliance)

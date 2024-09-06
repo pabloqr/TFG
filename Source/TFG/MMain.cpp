@@ -27,6 +27,9 @@ void AMMain::MakeAllianceWithFaction(const FDealInfo& Deal) const
 	TMap<int32, APawnFaction*> Factions = State->GetFactions();
 	Factions[Deal.FactionAElements.FactionIndex]->MakeAllianceWithFaction(Deal.FactionBElements.FactionIndex);
 	Factions[Deal.FactionBElements.FactionIndex]->MakeAllianceWithFaction(Deal.FactionAElements.FactionIndex);
+
+	// Se actualiza el estado
+	State->StartAlliance(Deal.FactionAElements.FactionIndex, Deal.FactionBElements.FactionIndex);
 }
 
 void AMMain::MakeExchangeDeal(const FDealInfo& Deal) const
@@ -118,9 +121,9 @@ TMap<int32, float> AMMain::GetFactionsMilitaryStrength() const
 	return FactionsMilitaryStrength;
 }
 
-TMap<int32, FWarInfo> AMMain::GetFactionsAtWarInfo() const
+TMap<int32, FRelationshipInfo> AMMain::GetFactionsAtWarInfo() const
 {
-	TMap<int32, FWarInfo> FactionsAtWarInfo = TMap<int32, FWarInfo>();
+	TMap<int32, FRelationshipInfo> FactionsAtWarInfo = TMap<int32, FRelationshipInfo>();
 
 	// Se verifica que la instancia del estado sea valida
 	if (!State) return FactionsAtWarInfo;
@@ -129,7 +132,7 @@ TMap<int32, FWarInfo> AMMain::GetFactionsAtWarInfo() const
 	const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
 
 	// Se obtienen las guerras para la faccion actual y se procesan
-	const TMap<FFactionsPair, FWarInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
+	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
 	for (const auto War : CurrentWarsForFaction)
 	{
 		// Se verifica que el indice de la faccion actual sea valido
@@ -141,6 +144,31 @@ TMap<int32, FWarInfo> AMMain::GetFactionsAtWarInfo() const
 	}
 
 	return FactionsAtWarInfo;
+}
+
+TMap<int32, FRelationshipInfo> AMMain::GetAllyFactionsInfo() const
+{
+	TMap<int32, FRelationshipInfo> AllyFactionsInfo = TMap<int32, FRelationshipInfo>();
+
+	// Se verifica que la instancia del estado sea valida
+	if (!State) return AllyFactionsInfo;
+
+	// Se obtiene el indice de la faccion actual
+	const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
+
+	// Se obtienen las guerras para la faccion actual y se procesan
+	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
+	for (const auto War : CurrentWarsForFaction)
+	{
+		// Se verifica que el indice de la faccion actual sea valido
+		if (!War.Key.Contains(CurrentIndex)) continue;
+
+		// Se actualiza el diccionario de facciones y guerras
+		const int32 FactionIndex = War.Key.FactionA == CurrentIndex ? War.Key.FactionB : War.Key.FactionA;
+		AllyFactionsInfo.Add(FactionIndex, War.Value);
+	}
+
+	return AllyFactionsInfo;
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -283,20 +311,28 @@ void AMMain::ProposeDeal(const FDealInfo& Deal) const
 void AMMain::ResolveDeal(const float DealResult, const FDealInfo& Deal) const
 {
 	// Si se ha aceptado el trato, se ejecuta la accion correspondiente dependiendo del tipo de trato
-	if (DealResult > 0.0)
+	// en caso contrario, se restablecen los turnos para pedir un trato
+	switch (Deal.Type)
 	{
-		switch (Deal.Type)
+	case EDealType::WarDeal:
+		if (DealResult > 0.0) MakePeaceWithFaction(Deal);
+		else if (State)
 		{
-		case EDealType::WarDeal:
-			MakePeaceWithFaction(Deal);
-			break;
-		case EDealType::AllianceDeal:
-			MakeAllianceWithFaction(Deal);
-			break;
-		case EDealType::ExchangeDeal:
-			MakeExchangeDeal(Deal);
-			break;
+			State->ResetWarPetitionTurns(Deal.FactionAElements.FactionIndex,
+			                             Deal.FactionBElements.FactionIndex);
 		}
+		break;
+	case EDealType::AllianceDeal:
+		if (DealResult > 0.0) MakeAllianceWithFaction(Deal);
+		else if (State)
+		{
+			State->ResetAlliancePetitionTurns(Deal.FactionAElements.FactionIndex,
+			                                  Deal.FactionBElements.FactionIndex);
+		}
+		break;
+	case EDealType::ExchangeDeal:
+		if (DealResult > 0.0) MakeExchangeDeal(Deal);
+		break;
 	}
 
 	// Se verifica que la instancia del estado sea valida
@@ -367,6 +403,9 @@ void AMMain::BreakAllianceWithFaction(const int32 CurrentFaction, const int32 Ta
 		Factions[CurrentFaction]->BreakAllianceWithFaction(TargetFaction);
 		Factions[TargetFaction]->BreakAllianceWithFaction(CurrentFaction);
 	}
+
+	// Se actualiza el estado
+	State->EndAlliance(CurrentFaction, TargetFaction);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -380,7 +419,8 @@ void AMMain::NextTurn() const
 	if (APawnFaction* CurrentFaction = State->NextFaction())
 	{
 		// Antes de iniciar el turno, se actualiza la informacion sobre las facciones conocidas por la actual
-		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength(), GetFactionsAtWarInfo());
+		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength(), GetFactionsAtWarInfo(),
+		                                        GetAllyFactionsInfo());
 
 		// Se inicia el turno de la faccion actual
 		CurrentFaction->TurnStarted();
