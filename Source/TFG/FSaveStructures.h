@@ -103,4 +103,14 @@ struct FSettlementSaveData
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	FSettlementInfo Info;
+
+	FSettlementSaveData(): FSettlementSaveData(-1, FSettlementInfo())
+	{
+	}
+
+	FSettlementSaveData(const int32 Owner, const FSettlementInfo& Info)
+		: Owner(Owner),
+		  Info(Info)
+	{
+	}
 };

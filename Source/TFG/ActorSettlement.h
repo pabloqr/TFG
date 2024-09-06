@@ -66,6 +66,13 @@ protected:
 
 public:
 	/**
+	 * Getter del atributo Info
+	 * 
+	 * @return Informacion del asentamiento
+	 */
+	const FSettlementInfo& GetInfo() const { return Info; }
+
+	/**
 	 * Getter del atributo Pos2D
 	 * 
 	 * @return Posicion en el Array2D de casillas

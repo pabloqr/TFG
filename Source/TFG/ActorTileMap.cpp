@@ -9,6 +9,8 @@
 #include "GInstance.h"
 #include "LibrarySaves.h"
 #include "LibraryTileMap.h"
+#include "SaveMainGame.h"
+#include "SMain.h"
 #include "TPriorityQueue.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -17,7 +19,7 @@ AActorTileMap::AActorTileMap()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	UpdatingMap = true;
+	Updating = true;
 
 	TilesInfo = TMap<FIntPoint, FTileInfo>();
 	TilesWithState = TMap<ETileState, FTilesArray>();
@@ -395,7 +397,7 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
                                 const float WaterChance)
 {
 	// Se actualiza el flag de actualizacion
-	UpdatingMap = true;
+	Updating = true;
 
 	// Se actualizan los valores del tamano del mapa
 	Rows = Size2D.X;
@@ -465,7 +467,7 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 	}
 
 	// Se actualiza el flag de actualizacion
-	UpdatingMap = false;
+	Updating = false;
 }
 
 void AActorTileMap::SetResourcesFromSave(const TArray<FResourceInfo>& ResourcesData) const
@@ -724,7 +726,7 @@ FString AActorTileMap::SaveMap(const FString CustomName) const
 
 		MapSaveInstance->WaterTileChance = WaterTileChance;
 
-		// Se inicilaiza la estructura de casillas con la informacion del mapa actual
+		// Se inicializa la estructura de casillas con la informacion del mapa actual
 		for (auto Tile : TilesInfo)
 		{
 			MapSaveInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Type));
@@ -753,13 +755,14 @@ FString AActorTileMap::SaveMap(const FString CustomName) const
 		return SaveFileName;
 	}
 
+	UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
 	return TEXT("");
 }
 
 void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 {
 	// Se actualiza el flag de actualizacion
-	UpdatingMap = true;
+	Updating = true;
 
 	if (const USaveMap* LoadedGame = Cast<USaveMap>(UGameplayStatics::LoadGameFromSlot(MapSaveData.SaveName, 0)))
 	{
@@ -797,7 +800,7 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 	}
 
 	// Se actualiza el flag de actualizacion
-	UpdatingMap = false;
+	Updating = false;
 }
 
 void AActorTileMap::DeleteMap(const FSaveData& MapSaveData)
@@ -813,6 +816,105 @@ void AActorTileMap::DeleteMap(const FSaveData& MapSaveData)
 			                              MapSaveData.CustomName);
 		}
 	}
+}
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+FString AActorTileMap::SaveGame(const FString CustomName) const
+{
+	// Se crea el archivo de guardado para el mapa
+	const FString MapSaveName = SaveMap();
+
+	if (!MapSaveName.IsEmpty())
+	{
+		// Se crea el archivo de guardado para la partida
+		if (USaveMainGame* GameSaveInstance = Cast<USaveMainGame>(
+			UGameplayStatics::CreateSaveGameObject(USaveMainGame::StaticClass())))
+		{
+			// Se obtiene el estado para almacenar los datos generales de la partida
+			if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
+			{
+				// Faccion(es) en juego
+				GameSaveInstance->NumFactions = State->GetNumFactions();
+				GameSaveInstance->CurrentIndex = State->GetCurrentIndex();
+
+				// Informacion de las facciones
+				GameSaveInstance->FactionsAlive = State->GetFactionsAlive();
+				GameSaveInstance->CurrentWars = State->GetCurrentWars();
+				GameSaveInstance->CurrentAlliances = State->GetCurrentAlliances();
+
+				// Turno actual
+				GameSaveInstance->CurrentTurn = State->GetCurrentTurn();
+
+				// Se inicializan las unidades y los asentamientos
+				GameSaveInstance->Units = TArray<FUnitSaveData>();
+				GameSaveInstance->Settlements = TArray<FSettlementSaveData>();
+
+				// Se obtienen las facciones y se procesan
+				const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+				for (const auto Faction : Factions)
+				{
+					// Se obtienen las unidades de cada una de las facciones y se procesan
+					const TArray<AActorUnit*> Units = Faction.Value->GetUnits();
+					for (const auto Unit : Units)
+					{
+						// Se obtiene la informacion para el guardado
+						const FUnitSaveData UnitData = FUnitSaveData(Unit->GetFactionOwner(), Unit->GetInfo());
+
+						// Se anade a la coleccion
+						GameSaveInstance->Units.Add(UnitData);
+					}
+
+					// Se obtienen los asentamientos de cada una de las facciones y se procesan
+					const TArray<AActorSettlement*> Settlements = Faction.Value->GetSettlements();
+					for (const auto Settlement : Settlements)
+					{
+						// Se obteiene la informacion para el guardado
+						const FSettlementSaveData SettlementData = FSettlementSaveData(
+							Settlement->GetFactionOwner(), Settlement->GetInfo());
+
+						// Se anade a la coleccion
+						GameSaveInstance->Settlements.Add(SettlementData);
+					}
+				}
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
+				return TEXT("");
+			}
+
+			// Se obtiene el nombre con el que se almacena el archivo de guardado
+			const FString SaveFileName = ULibrarySaves::GetSaveName(ESaveType::GameSave);
+			if (!UGameplayStatics::SaveGameToSlot(GameSaveInstance, SaveFileName, 0))
+			{
+				UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar la partida"))
+				return TEXT("");
+			}
+
+			UE_LOG(LogTemp, Log, TEXT("Guardado correcto de la partida"))
+
+			// Se actualiza el archivo de guardado 'master'
+			ULibrarySaves::UpdateSaveList(true, SaveFileName, ESaveType::GameSave,
+			                              CustomName.IsEmpty() ? SaveFileName : CustomName);
+
+			return SaveFileName;
+		}
+
+		UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar la partida"))
+		return TEXT("");
+	}
+
+	UE_LOG(LogTemp, Error, TEXT("ERROR: fallo al intentar guardar el mapa"))
+	return TEXT("");
+}
+
+void AActorTileMap::LoadGame(const FSaveData& GameSaveData)
+{
+}
+
+void AActorTileMap::DeleteGame(const FSaveData& GameSaveData)
+{
 }
 
 //--------------------------------------------------------------------------------------------------------------------//

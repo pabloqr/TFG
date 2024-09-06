@@ -187,7 +187,7 @@ protected:
 	 * Flag para determinar si el mapa se esta actualizando
 	 */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Map")
-	bool UpdatingMap;
+	bool Updating;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -607,6 +607,30 @@ protected:
 	 */
 	UFUNCTION(BlueprintCallable, Category="Map|Save")
 	static void DeleteMap(const FSaveData& MapSaveData);
+
+	//----------------------------------------------------------------------------------------------------------------//
+
+	/**
+	 * Metodo que almacena la informacion de la partida en un archivo de guardado para su posterior carga
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure=false)
+	FString SaveGame(const FString CustomName = TEXT("")) const;
+
+	/**
+	 * Metodo que lee la informacion de la partida de un archivo de guardado para actualizar el juego
+	 * 
+	 * @param GameSaveData Informacion del archivo de guardado
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Save")
+	void LoadGame(const FSaveData& GameSaveData);
+
+	/**
+	 * Metodo que elimina el archivo de guardado correspondiente a la partida seleccionada
+	 * 
+	 * @param GameSaveData Informacion del archivo de guardado
+	 */
+	UFUNCTION(BlueprintCallable, Category="Map|Save")
+	static void DeleteGame(const FSaveData& GameSaveData);
 
 	//----------------------------------------------------------------------------------------------------------------//
 

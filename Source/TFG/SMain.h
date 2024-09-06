@@ -20,6 +20,11 @@ class TFG_API ASMain : public AGameStateBase
 	GENERATED_BODY()
 
 protected:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="MainState")
+	FString CurrentGameName;
+
+	//----------------------------------------------------------------------------------------------------------------//
+
 	/**
 	 * Numero de facciones en juego al inicio de la partida
 	 */
@@ -105,6 +110,7 @@ public:
 
 	const TMap<FFactionsPair, FRelationshipInfo>& GetCurrentWars() const { return CurrentWars; }
 	TMap<FFactionsPair, FRelationshipInfo> GetCurrentWarsForFaction(const int32 Faction) const;
+	const TMap<FFactionsPair, FRelationshipInfo>& GetCurrentAlliances() const { return CurrentAlliances; }
 	TMap<FFactionsPair, FRelationshipInfo> GetCurrentAlliancesForFaction(const int32 Faction) const;
 
 	/**
