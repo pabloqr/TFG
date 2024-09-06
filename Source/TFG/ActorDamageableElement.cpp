@@ -114,11 +114,11 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttackStats& ElementStats,
                                             const AActorDamageableElement* Element)
 {
-	// Solo se calcula el dano si el atacante no es una unidad civil
-	if (!IsAttacking && Cast<AActorCivilUnit>(Element) == nullptr)
+	// Solo se calcula el dano si el defensor no es una unidad civil
+	if (Cast<AActorCivilUnit>(Element) == nullptr)
 	{
 		// Si no es una unidad civil, se calcula el dano a aplicar, en caso contrario, se aplica toda la vida restante
-		const float Damage = IsAttacking && Cast<AActorCivilUnit>(this) == nullptr
+		const float Damage = Cast<AActorCivilUnit>(this) == nullptr
 			                     ? CalculateAttack(IsAttacking, ElementStats)
 			                     : DamageableInfo.HealthPoints;
 
