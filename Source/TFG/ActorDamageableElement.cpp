@@ -3,6 +3,7 @@
 
 #include "ActorDamageableElement.h"
 
+#include "ActorCivilUnit.h"
 #include "SMain.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -13,7 +14,7 @@ AActorDamageableElement::AActorDamageableElement()
 	PrimaryActorTick.bCanEverTick = true;
 
 	// Se inicializan los atributos con los datos por defecto del asentamiento
-	DamageableInfo = FDamageableInfo(-1, 400, FAttackStats(50.0, 200.0));
+	DamageableInfo = FDamageableInfo(-1, 200, FAttackStats(50.0, 200.0));
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -113,11 +114,17 @@ float AActorDamageableElement::CalculateAttack(const bool IsAttacking, const FAt
 void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttackStats& ElementStats,
                                             const AActorDamageableElement* Element)
 {
-	// Se calcula el dano a aplicar
-	const float Damage = CalculateAttack(IsAttacking, ElementStats);
+	// Solo se calcula el dano si el atacante no es una unidad civil
+	if (!IsAttacking && Cast<AActorCivilUnit>(Element) == nullptr)
+	{
+		// Si no es una unidad civil, se calcula el dano a aplicar, en caso contrario, se aplica toda la vida restante
+		const float Damage = IsAttacking && Cast<AActorCivilUnit>(this) == nullptr
+			                     ? CalculateAttack(IsAttacking, ElementStats)
+			                     : DamageableInfo.HealthPoints;
 
-	// Se hace efectivo el dano
-	ApplyDamage(Damage, Element);
+		// Se hace efectivo el dano
+		ApplyDamage(Damage, Element);
+	}
 
 	// Se llama al evento para procesar el ataque
 	OnAttackTriggered.Broadcast();

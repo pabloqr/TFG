@@ -208,7 +208,7 @@ public:
 	ACMainAI();
 
 private:
-	static float CalculateStrengthDifferenceRelevance(const float StrengthA, const float StrengthB);
+	static float CalculateStrengthDifferenceRelevance(const float StrengthA, const float StrengthB, float TotalStrength);
 
 	//----------------------------------------------------------------------------------------------------------------//
 
