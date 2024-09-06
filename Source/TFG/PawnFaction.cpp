@@ -239,10 +239,13 @@ void APawnFaction::AddUnit(AActorUnit* Unit)
 	Info.Units.AddUnique(Unit);
 
 	if (Unit->GetType() == EUnitType::Civil) Info.CivilUnits.AddUnique(Info.Units.Find(Unit));
-	else Info.MilitaryUnits.AddUnique(Info.Units.Find(Unit));
+	else
+	{
+		Info.MilitaryUnits.AddUnique(Info.Units.Find(Unit));
 
-	// Se actualiza la fuerza militar para que se tenga en cuenta la unidad anadida
-	Info.MilitaryStrength += Unit->GetStrengthPoints();
+		// Se actualiza la fuerza militar para que se tenga en cuenta la unidad anadida
+		Info.MilitaryStrength += Unit->GetStrengthPoints();
+	}
 
 	// Se actualiza el balance de dinero para que tenga en cuenta la unidad anadida
 	Info.MoneyBalance -= Unit->GetMaintenanceCost();
@@ -268,7 +271,7 @@ void APawnFaction::RemoveUnit(AActorUnit* Unit)
 		Info.Units.Remove(Unit);
 
 		// Se actualiza la fuerza militar para que no se tenga en cuenta la unidad eliminada
-		Info.MilitaryStrength -= Unit->GetStrengthPoints();
+		if (Unit->GetType() != EUnitType::Civil) Info.MilitaryStrength -= Unit->GetStrengthPoints();
 
 		// Se actualiza el balance de dinero para que no tenga en cuenta la unidad eliminada
 		Info.MoneyBalance += Unit->GetMaintenanceCost();
@@ -510,7 +513,7 @@ void APawnFaction::TurnStarted()
 		Info.MoneyBalance -= Unit->GetMaintenanceCost();
 
 		// Se actualiza la fuerza militar de la faccion con la fuerza de ataque de la unidad actualF
-		Info.MilitaryStrength += Unit->GetStrengthPoints();
+		if (Unit->GetType() != EUnitType::Civil) Info.MilitaryStrength += Unit->GetStrengthPoints();
 	}
 
 	// Se inicia el turno de los asentamientos de la faccion y se verifica si requieren seleccionar un nuevo
