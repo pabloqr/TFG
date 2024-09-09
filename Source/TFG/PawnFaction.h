@@ -104,6 +104,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetIndex(const int32 I) { Info.Index = I; }
 
+	UFUNCTION(BlueprintCallable)
+	void SetMoney(const float Money) { Info.Money = Money; }
+
 	//----------------------------------------------------------------------------------------------------------------//
 
 	UFUNCTION(BlueprintCallable)
@@ -149,6 +152,7 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
+	UFUNCTION(BlueprintCallable)
 	void UpdateKnownFactionsInfo(const TMap<int32, float>& FactionsStrength,
 	                             const TMap<int32, FRelationshipInfo>& CurrentWars,
 	                             const TMap<int32, FRelationshipInfo>& CurrentAlliances);
@@ -193,7 +197,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FOnTurnStarted OnTurnStarted;
 
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnMoneyUpdated OnMoneyUpdated;
 
 	UPROPERTY(BlueprintAssignable)

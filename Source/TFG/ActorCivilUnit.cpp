@@ -3,6 +3,10 @@
 
 #include "ActorCivilUnit.h"
 
+#include "SMain.h"
+#include "PawnFaction.h"
+#include "Kismet/GameplayStatics.h"
+
 
 // Sets default values
 AActorCivilUnit::AActorCivilUnit()
@@ -37,7 +41,7 @@ void AActorCivilUnit::GatherResource()
 	CivilInfo.TargetPos = -1;
 
 	// Se realiza la llamada al evento para que se gestione la recoleccion del recurso
-	OnResourceGathered.Broadcast(Info.Pos2D);
+	OnResourceGathered.Broadcast(Info.Pos2D, DamageableInfo.Owner);
 
 	// Se verifica si quedan acciones
 	if (--CivilInfo.NumActions <= 0)

@@ -122,6 +122,9 @@ void AActorDamageableElement::PerformAttack(const bool IsAttacking, const FAttac
 			                     ? CalculateAttack(IsAttacking, ElementStats)
 			                     : DamageableInfo.HealthPoints;
 
+		// Se llama al evento para mostrar informacion del ataque
+		OnHealthPointsChanged.Broadcast(-Damage);
+
 		// Se hace efectivo el dano
 		ApplyDamage(Damage, Element);
 	}

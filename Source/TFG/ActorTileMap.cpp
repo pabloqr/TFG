@@ -236,14 +236,21 @@ ETileType AActorTileMap::GenerateTileType(const FIntPoint& Pos, TArray<FTileProb
 	return GeneratedTile;
 }
 
-void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileType)
+void AActorTileMap::SetTileAtPos(const FIntPoint& Pos2D, const int32 FactionOwner, const ETileType TileType)
 {
 	// Se actualiza la posicion en la escena de la casilla
 	GridSize.X = Pos2D.Y * HorizontalOffset;
 	GridSize.Y = Pos2D.Y % 2 == 0 ? Pos2D.X * VerticalOffset : Pos2D.X * VerticalOffset + RowOffset;
 
+	// Se establece el estado de la casilla dependiendo de la faccion propietaria
+	const ETileState TileState = FactionOwner == -1 ? ETileState::None : ETileState::Owned;
+	// Se inicializa la informacion de la casilla
+	const FTileInfo TileInfo = FTileInfo(Pos2D, GridSize, FactionOwner, TileType, FTileElements(), {TileState});
+
 	// Se anade la informacion de la casilla al diccionario que la almacena
-	TilesInfo.Add(Pos2D, FTileInfo(Pos2D, GridSize, -1, TileType, FTileElements(), {ETileState::None}));
+	if (!TilesInfo.Contains(Pos2D)) TilesInfo.Add(Pos2D, TileInfo);
+	else TilesInfo[Pos2D] = TileInfo;
+
 	// Se actualiza el diccionaro que almacena el conteo de casillas por tipo
 	TileTypeCount[TileType] += 1;
 
@@ -277,14 +284,34 @@ void AActorTileMap::SetMapFromSave(const TArray<FTileSaveData>& TilesData)
 	for (int32 i = 0; i < TilesData.Num(); ++i)
 	{
 		const FIntPoint Pos = TilesData[i].Pos2D;
+		const int32 FactionOwner = TilesData[i].Owner;
 		const ETileType TileType = TilesData[i].Type;
 
 		// Se actualiza la casilla
-		UpdateTileAtPos(Pos, TileType);
+		UpdateTileAtPos(Pos, FactionOwner, TileType);
 
-		// Se llama al evento para crear el actor correspondiente
+		// Se obtiene el indice de la casilla a actualizar
 		const int32 Index = GetPositionInArray(Pos);
-		if (Index != -1 && !Tiles[Index] && TilesInfo.Contains(Pos)) OnTileUpdated.Broadcast(TilesInfo[Pos]);
+
+		// Si no existe el actor, se llama al evento para crear el actor correspondiente
+		if (Index != -1 && !Tiles[Index] && TilesInfo.Contains(Pos))
+		{
+			OnTileUpdated.Broadcast(TilesInfo[Pos]);
+		}
+		// En caso contrario, se actualizan sus datos
+		else if (Index != -1 && Tiles[Index])
+		{
+			// Se obtiene la casilla y sus propiedades
+			AActorTile* Tile = Tiles[Index];
+			const FTileInfo TileInfo = TilesInfo[Pos];
+
+			// Se actualizan los datos de la casilla
+			Tile->SetFactionOwner(TileInfo.Owner);
+			Tile->SetState(TileInfo.States);
+
+			// Se llama al evento para actualizar el color de la casilla
+			OnTileOwnerUpdated.Broadcast(TileInfo);
+		}
 	}
 }
 
@@ -372,13 +399,6 @@ bool AActorTileMap::AreTilesValid() const
 	return true;
 }
 
-bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos) const
-{
-	// Se verifica el indice, si no es correcto, se devuelve 'false'
-	const int32 Index = GetPositionInArray(Pos);
-	return Index != -1 && Tiles[Index] ? Tiles[Index]->IsAccesible() : false;
-}
-
 AActorTile* AActorTileMap::GetTileAtPos(const FIntPoint& Pos) const
 {
 	// Se verifica el indice, si no es correcto, se devuelve 'nullptr'
@@ -454,7 +474,7 @@ void AActorTileMap::GenerateMap(const FIntPoint& Size2D, const EMapTemperature T
 			const FIntPoint Pos2D = FIntPoint(Row, Col);
 			const ETileType TileType = GenerateTileType(Pos2D, Probabilities);
 
-			UpdateTileAtPos(Pos2D, TileType);
+			UpdateTileAtPos(Pos2D, -1, TileType);
 		}
 	}
 
@@ -533,7 +553,7 @@ TMap<int32, FTilesArray> AActorTileMap::GenerateStartingPositions(const int32 Nu
 	return Positions;
 }
 
-void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileType)
+void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const int32 FactionOwner, const ETileType TileType)
 {
 	// Se verifica que el indice que se obtiene es correcto
 	const int32 Index = GetPositionInArray(Pos);
@@ -566,7 +586,7 @@ void AActorTileMap::UpdateTileAtPos(const FIntPoint& Pos, const ETileType TileTy
 	}
 
 	// Se actualizan los datos de la casilla
-	SetTileAtPos(Pos, TileType);
+	SetTileAtPos(Pos, FactionOwner, TileType);
 }
 
 void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const FTileInfo& TileInfo)
@@ -585,10 +605,12 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 	if (NewTile)
 	{
 		NewTile->SetPos(TileInfo.Pos2D, TileInfo.MapPos2D);
+		NewTile->SetFactionOwner(TileInfo.Owner);
 		NewTile->SetType(TileInfo.Type);
+		NewTile->SetState(TileInfo.States);
 
-		// TODO quitar para lanzamiento
-		NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
+		// DONE quitar para lanzamiento
+		// NewTile->SetActorLabel(FString::Printf(TEXT("Tile_%d_%d"), TileInfo.Pos2D.X, TileInfo.Pos2D.Y));
 	}
 
 	// Se actualiza el array de casillas con la que se ha anadido
@@ -598,8 +620,21 @@ void AActorTileMap::DisplayTileAtPos(const TSubclassOf<AActorTile> Tile, const F
 
 //--------------------------------------------------------------------------------------------------------------------//
 
+void AActorTileMap::SetTileFactionOwner(const FIntPoint& Pos, const int32 FactionOwner)
+{
+	// Se verifica que la posicion sea valida
+	const int32 Index = GetPositionInArray(Pos);
+	if (Index == -1 || !Tiles[Index]) return;
+
+	// Se actualiza la casilla
+	Tiles[Index]->SetFactionOwner(FactionOwner);
+
+	// Se actualiza la informacion del mapa
+	TilesInfo[Pos].Owner = FactionOwner;
+}
+
 void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AActorResource> ResourceClass,
-                                      const FResource& Resource)
+                                      const FResource& Resource, const int32 FactionOwner)
 {
 	// Se verifica que la posicion sea valida
 	const int32 Index = GetPositionInArray(Pos);
@@ -617,7 +652,7 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 	if (NewResource)
 	{
 		// Se actualizan los atributos del recurso
-		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), -1, Resource));
+		NewResource->SetInfo(FResourceInfo(Tile->GetPos(), FactionOwner, Resource));
 
 		// Se actualiza el contador de recursos si la casilla ya contiene uno
 		const AActorResource* ResourceInTile;
@@ -729,7 +764,7 @@ FString AActorTileMap::SaveMap(const FString CustomName) const
 		// Se inicializa la estructura de casillas con la informacion del mapa actual
 		for (auto Tile : TilesInfo)
 		{
-			MapSaveInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Type));
+			MapSaveInstance->Tiles.Add(FTileSaveData(Tile.Key, Tile.Value.Owner, Tile.Value.Type));
 
 			// Si contiene un recurso, se anade a la lista de recursos del mapa
 			if (Tile.Value.Elements.Resource)
@@ -805,16 +840,20 @@ void AActorTileMap::LoadMap(const FSaveData& MapSaveData)
 
 void AActorTileMap::DeleteMap(const FSaveData& MapSaveData)
 {
+	bool Deleted = true;
+
 	// Se comprueba si existe el archivo de guardado
 	if (UGameplayStatics::DoesSaveGameExist(MapSaveData.SaveName, 0))
 	{
 		// Se intenta eliminar el archivo de guardado
-		if (UGameplayStatics::DeleteGameInSlot(MapSaveData.SaveName, 0))
-		{
-			// Se actualiza el archivo de guardado 'master'
-			ULibrarySaves::UpdateSaveList(false, MapSaveData.SaveName, ESaveType::MapSave,
-			                              MapSaveData.CustomName);
-		}
+		Deleted = UGameplayStatics::DeleteGameInSlot(MapSaveData.SaveName, 0);
+	}
+
+	// En cualquier caso, se actualiza el archivo de guardado 'master'
+	if (Deleted)
+	{
+		ULibrarySaves::UpdateSaveList(false, MapSaveData.SaveName, ESaveType::MapSave,
+		                              MapSaveData.CustomName);
 	}
 }
 
@@ -831,6 +870,9 @@ FString AActorTileMap::SaveGame(const FString CustomName) const
 		if (USaveMainGame* GameSaveInstance = Cast<USaveMainGame>(
 			UGameplayStatics::CreateSaveGameObject(USaveMainGame::StaticClass())))
 		{
+			// Se actualiza el nombre del archivo de guardado del mapa
+			GameSaveInstance->MapSaveName = MapSaveName;
+
 			// Se obtiene el estado para almacenar los datos generales de la partida
 			if (const ASMain* State = Cast<ASMain>(UGameplayStatics::GetGameState(GetWorld())))
 			{
@@ -854,12 +896,16 @@ FString AActorTileMap::SaveGame(const FString CustomName) const
 				const TMap<int32, APawnFaction*> Factions = State->GetFactions();
 				for (const auto Faction : Factions)
 				{
+					// Se guarda la informacion referente al dinero de la faccion
+					GameSaveInstance->Money.Add(Faction.Key, Faction.Value->GetMoney());
+
 					// Se obtienen las unidades de cada una de las facciones y se procesan
 					const TArray<AActorUnit*> Units = Faction.Value->GetUnits();
 					for (const auto Unit : Units)
 					{
 						// Se obtiene la informacion para el guardado
-						const FUnitSaveData UnitData = FUnitSaveData(Unit->GetFactionOwner(), Unit->GetInfo());
+						const FUnitSaveData UnitData = FUnitSaveData(
+							Unit->GetFactionOwner(), Unit->GetHealthPoints(), Unit->GetInfo());
 
 						// Se anade a la coleccion
 						GameSaveInstance->Units.Add(UnitData);
@@ -871,7 +917,7 @@ FString AActorTileMap::SaveGame(const FString CustomName) const
 					{
 						// Se obteiene la informacion para el guardado
 						const FSettlementSaveData SettlementData = FSettlementSaveData(
-							Settlement->GetFactionOwner(), Settlement->GetInfo());
+							Settlement->GetFactionOwner(), Settlement->GetHealthPoints(), Settlement->GetInfo());
 
 						// Se anade a la coleccion
 						GameSaveInstance->Settlements.Add(SettlementData);
@@ -911,10 +957,72 @@ FString AActorTileMap::SaveGame(const FString CustomName) const
 
 void AActorTileMap::LoadGame(const FSaveData& GameSaveData)
 {
+	// Se actualiza el flag de actualizacion
+	Updating = true;
+
+	if (const USaveMainGame* LoadedGame = Cast<USaveMainGame>(
+		UGameplayStatics::LoadGameFromSlot(GameSaveData.SaveName, 0)))
+	{
+		// Se obtiene la lista de archivos de guardado de mapas
+		const TArray<FSaveData> MapSaves = ULibrarySaves::GetSavesList(ESaveType::MapSave);
+
+		// Se obtiene el indice del archivo de guardado del mapa
+		int32 Index = INDEX_NONE;
+		for (int32 i = 0; i < MapSaves.Num() && Index == INDEX_NONE; ++i)
+		{
+			if (MapSaves[i].SaveName == LoadedGame->MapSaveName) Index = i;
+		}
+
+		// Se continua la ejecucion si el indice es valido
+		if (Index != INDEX_NONE)
+		{
+			// Se carga el mapa
+			LoadMap(MapSaves[Index]);
+
+			// Se llama al evento para esperar para la carga de los elementos del mapa
+			OnMapLoading.Broadcast(LoadedGame);
+		}
+	}
 }
 
 void AActorTileMap::DeleteGame(const FSaveData& GameSaveData)
 {
+	// Se trata de leer el archivo de guardado
+	if (const USaveMainGame* LoadedGame = Cast<USaveMainGame>(
+		UGameplayStatics::LoadGameFromSlot(GameSaveData.SaveName, 0)))
+	{
+		// Se obtiene la lista de archivos de guardado de mapas
+		const TArray<FSaveData> MapSaves = ULibrarySaves::GetSavesList(ESaveType::MapSave);
+
+		// Se obtiene el indice del archivo de guardado del mapa
+		int32 Index = INDEX_NONE;
+		for (int32 i = 0; i < MapSaves.Num() && Index == INDEX_NONE; ++i)
+		{
+			if (MapSaves[i].SaveName == LoadedGame->MapSaveName) Index = i;
+		}
+
+		// Se borra el mapa si el indice es valido
+		if (Index != INDEX_NONE)
+		{
+			DeleteMap(MapSaves[Index]);
+		}
+	}
+
+	bool Deleted = true;
+
+	// Se comprueba si existe el archivo de guardado
+	if (UGameplayStatics::DoesSaveGameExist(GameSaveData.SaveName, 0))
+	{
+		// Se intenta eliminar el archivo de guardado
+		Deleted = UGameplayStatics::DeleteGameInSlot(GameSaveData.SaveName, 0);
+	}
+
+	// En cualquier caso, se actualiza el archivo de guardado 'master'
+	if (Deleted)
+	{
+		ULibrarySaves::UpdateSaveList(false, GameSaveData.SaveName, ESaveType::GameSave,
+		                              GameSaveData.CustomName);
+	}
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -950,6 +1058,13 @@ void AActorTileMap::JsonToMap()
 */
 
 //--------------------------------------------------------------------------------------------------------------------//
+
+bool AActorTileMap::IsTileAccesible(const FIntPoint& Pos) const
+{
+	// Se verifica el indice, si no es correcto, se devuelve 'false'
+	const int32 Index = GetPositionInArray(Pos);
+	return Index != -1 && Tiles[Index] ? Tiles[Index]->IsAccesible() : false;
+}
 
 bool AActorTileMap::IsTileOwned(const FIntPoint& Pos2D) const
 {

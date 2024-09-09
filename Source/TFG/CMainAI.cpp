@@ -97,14 +97,14 @@ FIntPoint ACMainAI::GetClosestTilePos(const FIntPoint& Pos, TArray<FIntPoint>& S
 			Pos, TSet<FIntPoint>(SettlementOwnedTiles));
 
 		// Si la casilla no contiene ningun elemento, se actualizan las variables y se finaliza el bucle
-		if (!TileMap->TileHasElement(ClosestSettlementTile))
+		if (!TileMap->TileHasElement(ClosestSettlementTile) && TileMap->IsTileAccesible(ClosestSettlementTile))
 		{
 			ClosestPos = ClosestSettlementTile;
 			break;
 		}
 
 		// Se elimina la casilla de la lista
-		SettlementOwnedTiles.RemoveAt(i);
+		SettlementOwnedTiles.Remove(ClosestSettlementTile);
 
 		// Se actualiza el indice
 		--i;
@@ -227,31 +227,14 @@ FIntPoint ACMainAI::GetClosestResourceToGatherPos(const FIntPoint& Pos)
 	// Variable que almacena la distancia al recurso mas cercano
 	int32 MinDistance = 999;
 
-	// Se obtienen todos los recursos y se procesan
-	TMap<EResource, FResourceCollection> Resources = PawnFaction->GetMonetaryResources();
-	Resources.Append(PawnFaction->GetStrategicResources());
-
-	for (const auto Resource : Resources)
+	for (const auto ResourcePos : PendingResourcesToGather)
 	{
-		// Se procesan todos los recursos en posesion
-		for (const auto ResourcePos : Resource.Value.Tiles)
+		// Se obtiene la distancia y, si es menor, se actualiza las variables
+		const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, ResourcePos);
+		if (Distance < MinDistance && !PlannedResourcesToGather.Contains(ResourcePos))
 		{
-			// Si el recurso ha sido recolectado, se omite
-			if (TileMap->IsResourceGathered(ResourcePos)) continue;
-
-			// Si el recurso no esta en la coleccion de recursos para recolectar se anade
-			if (!PlannedResourcesToGather.Contains(ResourcePos) && !PendingResourcesToGather.Contains(ResourcePos))
-			{
-				PendingResourcesToGather.Add(ResourcePos);
-			}
-
-			// Se obtiene la distancia y, si es menor, se actualiza las variables
-			const int32 Distance = ULibraryTileMap::GetDistanceToElement(Pos, ResourcePos);
-			if (Distance < MinDistance && !PlannedResourcesToGather.Contains(ResourcePos))
-			{
-				MinDistance = Distance;
-				ClosestResource = ResourcePos;
-			}
+			MinDistance = Distance;
+			ClosestResource = ResourcePos;
 		}
 	}
 
@@ -551,7 +534,7 @@ void ACMainAI::ManageFactionAtWar(const int32 FactionIndex)
 					                 : 0.0;
 			}
 
-			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
+			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - TotalStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionStrength, TotalStrength);
 
@@ -713,7 +696,7 @@ void ACMainAI::ManageNeutralFaction(const int32 FactionIndex)
 					                 : 0.0;
 			}
 
-			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionStrength;
+			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - TotalStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
 				PawnFaction->GetMilitaryStrength(), FactionStrength, TotalStrength);
 
@@ -836,7 +819,7 @@ void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 			//			(b.5) el numero de turnos es menor a 10
 
 			// Se obtiene la fuerza de la faccion que se esta procesando
-			const float FactionAtWarStrength = FactionsInfo[FactionIndex].MilitaryStrength;
+			const float FactionStrength = FactionsInfo[FactionIndex].MilitaryStrength;
 
 			// Se calcula la fuerza total de todas las facciones con las que se esta en guerra
 			float TotalStrength = 0.0;
@@ -847,9 +830,9 @@ void ACMainAI::ManageAllyFaction(const int32 FactionIndex)
 					                 : 0.0;
 			}
 
-			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - FactionAtWarStrength;
+			const float StrengthDiff = PawnFaction->GetMilitaryStrength() - TotalStrength;
 			const float StrengthDiffRel = CalculateStrengthDifferenceRelevance(
-				PawnFaction->GetMilitaryStrength(), FactionAtWarStrength, TotalStrength);
+				PawnFaction->GetMilitaryStrength(), FactionStrength, TotalStrength);
 
 			const bool ImWeaker = StrengthDiff < 0.0;
 
@@ -980,8 +963,16 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 
 		if (CivilUnit->GetTargetPos() == -1 && !PlacingSettlement && !GatheringResource)
 		{
+			// Se decide si se puede recolectar un recurso
+			if (IsResourceGatheringNeeded()) // (2.1)
+			{
+				// Se obtiene la posicion y se establece el estado de la unidad
+				NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
+				CivilUnit->SetTargetPos(NewPos != UnitInfo.Pos2D ? NewPos : -1);
+				CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
+			}
 			// Se determina si se debe crear un nuevo asentamiento
-			if (CivilUnit->CanSetSettlement() && IsSettlementNeeded()) // (2.1)
+			else if (CivilUnit->CanSetSettlement())
 			{
 				// Se obtiene la posicion y se establece el estado de la unidad
 				NewPos = CalculateBestPosForSettlement();
@@ -993,14 +984,16 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 			}
 			else
 			{
-				// Se obtiene la posicion y se establece el estado de la unidad
-				NewPos = GetClosestResourceToGatherPos(UnitInfo.Pos2D);
-				CivilUnit->SetTargetPos(NewPos != UnitInfo.Pos2D ? NewPos : -1);
-				CivilUnit->SetCivilUnitState(ECivilUnitState::GatheringResource);
+				// Se establece el estado de la unidad para ser destruida
+				if (CivilUnit->GetCivilUnitState() != ECivilUnitState::Destroying)
+				{
+					CivilUnit->SetCivilUnitState(ECivilUnitState::Destroying);
+					CivilUnit->SetTurnsToBeDestroyed(0);
+				}
 			}
 
 			// Si no se ha calculado ninguna posicion y la unidad puede establecer un asentamiento, se establece
-			if (NewPos == UnitInfo.Pos2D && CivilUnit->CanSetSettlement())
+			/*if (NewPos == UnitInfo.Pos2D && CivilUnit->CanSetSettlement())
 			{
 				// Se obtiene la posicion y se establece el estado de la unidad
 				NewPos = CalculateBestPosForSettlement();
@@ -1009,7 +1002,7 @@ void ACMainAI::ManageCivilUnit(AActorUnit* Unit)
 
 				// Si la posicion dada no es valida, quiere decir que se debe establecer en la actual
 				if (NewPos == -1) NewPos = UnitInfo.Pos2D;
-			}
+			}*/
 		}
 
 		// (2.2)
@@ -1122,6 +1115,7 @@ void ACMainAI::ManageMilitaryUnit(AActorUnit* Unit) const
 
 	// Se asigna el camino calculado a la unidad
 		Unit->AssignPath(Path);
+		Unit->ContinuePath();
 		break;
 	}
 }
@@ -1209,6 +1203,25 @@ void ACMainAI::ManageUnits()
 {
 	// Si la faccion o la instancia del mapa no es valida, no se hace nada
 	if (!PawnFaction || !TileMap) return;
+
+	// Se obtienen todos los recursos y se procesan para actualizar los recursos para recolectar
+	TMap<EResource, FResourceCollection> Resources = PawnFaction->GetMonetaryResources();
+	Resources.Append(PawnFaction->GetStrategicResources());
+	for (const auto Resource : Resources)
+	{
+		// Se procesan todos los recursos en posesion
+		for (const auto ResourcePos : Resource.Value.Tiles)
+		{
+			// Si el recurso ha sido recolectado, se omite
+			if (TileMap->IsResourceGathered(ResourcePos)) continue;
+
+			// Si el recurso no esta en la coleccion de recursos para recolectar se anade
+			if (!PlannedResourcesToGather.Contains(ResourcePos) && !PendingResourcesToGather.Contains(ResourcePos))
+			{
+				PendingResourcesToGather.Add(ResourcePos);
+			}
+		}
+	}
 
 	const TArray<AActorUnit*> Units = PawnFaction->GetUnits();
 	for (const auto Unit : Units)
@@ -1412,8 +1425,14 @@ void ACMainAI::TurnFinished()
 			// Se realiza el cast para poder acceder a los metodos de la clase
 			AActorCivilUnit* CivilUnit = Cast<AActorCivilUnit>(Unit);
 
+			// Si no se puede hacer nada, se llama al evento que gestiona la destruccion de la unidad
+			if (CivilUnit->GetCivilUnitState() == ECivilUnitState::Destroying &&
+				CivilUnit->GetTurnsToBeDestroyed() >= 10)
+			{
+				CivilUnit->OnUnitDestroyed.Broadcast(nullptr, CivilUnit);
+			}
 			// Se verifica que haya completado el camino y le queden puntos de movimiento
-			if (CivilUnit && CivilUnit->GetPath().Num() == 0 && CivilUnit->GetMovementPoints() > 0)
+			else if (CivilUnit && CivilUnit->GetPath().Num() == 0 && CivilUnit->GetMovementPoints() > 0)
 			{
 				// Se verifica si puede recolectar un recurso
 				if (CivilUnit->GetCivilUnitState() == ECivilUnitState::GatheringResource &&

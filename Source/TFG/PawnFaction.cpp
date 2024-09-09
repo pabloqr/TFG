@@ -186,11 +186,17 @@ bool APawnFaction::CanProduceUnit(const UDataTable* DataTable, const EUnitType U
 void APawnFaction::AddMoney(const int32 Amount)
 {
 	Info.Money += Amount;
+
+	// Se llama al evento para actualizar la interfaz
+	OnMoneyUpdated.Broadcast(Info.Money);
 }
 
 void APawnFaction::RemoveMoney(const int32 Amount)
 {
 	Info.Money -= Amount;
+
+	// Se llama al evento para actualizar la interfaz
+	OnMoneyUpdated.Broadcast(Info.Money);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -548,28 +554,18 @@ void APawnFaction::TurnStarted()
 
 void APawnFaction::TurnEnded()
 {
-	// Se procesan todas las unidades y asentamientos
-	for (int32 i = 0; i < Info.Units.Num() || i < Info.Settlements.Num(); ++i)
+	// Se procesan todas las unidades
+	for (const auto Unit : Info.Units)
 	{
-		// Se trata de obtener la unidad
-		if (i < Info.Units.Num())
-		{
-			// Se obtiene la unidad
-			AActorUnit* Unit = Info.Units[i];
+		// Se finaliza el turno
+		Unit->TurnEnded();
+	}
 
-			// Se finaliza el turno de la unidad
-			Unit->TurnEnded();
-		}
-
-		// Se trata de obtener el asentamiento
-		if (i < Info.Settlements.Num())
-		{
-			// Se obtiene el asentamiento
-			AActorSettlement* Settlement = Info.Settlements[i];
-
-			// Se finaliza el turno del asentamiento
-			Settlement->TurnEnded();
-		}
+	// Se procesan todos los asentamientos
+	for (const auto Settlement : Info.Settlements)
+	{
+		// Se finaliza el turno
+		Settlement->TurnEnded();
 	}
 }
 

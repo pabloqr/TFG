@@ -43,9 +43,12 @@ public:
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Game|Elements")
-	TArray<FUnitSaveData> Units;
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Game|Factions")
+	TMap<int32, float> Money;
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Game|Elements")
 	TArray<FSettlementSaveData> Settlements;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves|Game|Elements")
+	TArray<FUnitSaveData> Units;
 };

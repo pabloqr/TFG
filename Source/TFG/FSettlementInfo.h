@@ -21,25 +21,25 @@ struct FSettlementInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	FIntPoint Pos2D;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	int32 TurnsToOwnTile;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	TArray<FIntPoint> OwnedTiles;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	TArray<FProductionElement> ProductionQueue;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	TArray<FProductionElement> StartedProduction;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	float MoneyYield;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Settlement")
 	ESettlementState State;
 
 	FSettlementInfo(): FSettlementInfo(FIntPoint(-1), 0, TArray<FIntPoint>(),

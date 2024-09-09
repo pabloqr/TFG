@@ -162,7 +162,11 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileInfoUpdated, FIntPoint, Pos2D
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileUpdated, FTileInfo, TileInfo);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileOwnerUpdated, FTileInfo, TileInfo);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSaveMapTilesUpdated, const TArray<FResourceInfo>&, ResourcesData);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMapLoading, const USaveMainGame*, LoadedGame);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceCreation, FResourceInfo, ResourceInfo);
 
@@ -388,9 +392,10 @@ private:
 	 * Metodo privado que actualiza la casilla deseada al tipo especificado
 	 * 
 	 * @param Pos2D Coordenadas en el Array2D
+	 * @param FactionOwner Faccion propietaria de la casilla
 	 * @param TileType Tipo de casilla
 	 */
-	void SetTileAtPos(const FIntPoint& Pos2D, const ETileType TileType);
+	void SetTileAtPos(const FIntPoint& Pos2D, const int32 FactionOwner, const ETileType TileType);
 
 	/**
 	 * Metodo privado que actualiza las casillas del mapa dada la informacion proporcionada del archivo de guardado
@@ -454,15 +459,6 @@ protected:
 	bool AreTilesValid() const;
 
 	/**
-	 * Metodo que verifica si la casilla con las coordenadas dadas es accesible
-	 * 
-	 * @param Pos Coordenadas en el Array2D
-	 * @return Si la casilla pedida es accesible
-	 */
-	UFUNCTION(BlueprintCallable)
-	bool IsTileAccesible(const FIntPoint& Pos) const;
-
-	/**
 	 * Metodo que devuelve una casilla del mapa dada su posicion en el mismo
 	 * 
 	 * @param Pos Coordenadas en el Array2D
@@ -515,10 +511,11 @@ protected:
 	 * Metodo que actualiza la casilla dada su posicion teniendo en cuenta las casillas existentes
 	 * 
 	 * @param Pos Coordenadas en el Array2D
+	 * @param FactionOwner Faccion propietaria de la casilla
 	 * @param TileType Tipo de casilla
 	 */
 	UFUNCTION(BlueprintCallable)
-	void UpdateTileAtPos(const FIntPoint& Pos, ETileType TileType);
+	void UpdateTileAtPos(const FIntPoint& Pos, const int32 FactionOwner, ETileType TileType);
 
 	/**
 	 * Metodo que crea y almacena una nueva casilla en el mapa
@@ -532,15 +529,25 @@ protected:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que actualiza el propietario de la casilla dada
+	 * 
+	 * @param Pos Coordenadas en el Array2D de casillas
+	 * @param FactionOwner Faccion propietaria de la casilla
+	 */
+	UFUNCTION(BlueprintCallable)
+	void SetTileFactionOwner(const FIntPoint& Pos, const int32 FactionOwner);
+
+	/**
 	 * Metodo que anade una instancia de un recurso a la casilla dada
 	 * 
 	 * @param Pos Posicion en la que anadir el recurso
 	 * @param ResourceClass Clase del actor a generar
 	 * @param Resource Informacion sobre el recurso
+	 * @param FactionOwner
 	 */
 	UFUNCTION(BlueprintCallable)
 	void AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AActorResource> ResourceClass,
-	                       const FResource& Resource);
+	                       const FResource& Resource, int32 FactionOwner);
 
 	/**
 	 * Metodo que elimina una instancia de un recurso de la casilla dada
@@ -671,6 +678,15 @@ public:
 	//----------------------------------------------------------------------------------------------------------------//
 
 	/**
+	 * Metodo que verifica si la casilla con las coordenadas dadas es accesible
+	 * 
+	 * @param Pos Coordenadas en el Array2D
+	 * @return Si la casilla pedida es accesible
+	 */
+	UFUNCTION(BlueprintCallable)
+	bool IsTileAccesible(const FIntPoint& Pos) const;
+
+	/**
 	 * Metodo que verifica si la casilla dada es propiedad de alguna faccion
 	 * 
 	 * @param Pos2D Coordenadas en el Array2D a verificar
@@ -774,9 +790,14 @@ public:
 	FOnTileInfoUpdated OnTileInfoUpdated;
 	UPROPERTY(BlueprintAssignable)
 	FOnTileUpdated OnTileUpdated;
+	UPROPERTY(BlueprintAssignable)
+	FOnTileOwnerUpdated OnTileOwnerUpdated;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnSaveMapTilesUpdated OnSaveMapTilesUpdated;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnMapLoading OnMapLoading;
 
 	UPROPERTY(BlueprintAssignable)
 	FOnResourceCreation OnResourceCreation;

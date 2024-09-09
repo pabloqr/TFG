@@ -16,6 +16,7 @@ enum class ECivilUnitState : uint8
 	WaitingForNextTurn = 1 UMETA(DisplayName"WaitingForNextTurn"),
 	GatheringResource = 2 UMETA(DisplayName="GatheringResource"),
 	SettingSettlement = 3 UMETA(DisplayName="SettingSettlement"),
+	Destroying = 4 UMETA(DisplayName="Destroying"),
 };
 
 USTRUCT(BlueprintType)
@@ -32,14 +33,19 @@ struct FCivilUnitInfo
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
 	ECivilUnitState State;
 
-	FCivilUnitInfo(): FCivilUnitInfo(0, -1, ECivilUnitState::None)
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Civil")
+	int32 TurnsToBeDestroyed;
+
+	FCivilUnitInfo(): FCivilUnitInfo(0, -1, ECivilUnitState::None, 0)
 	{
 	}
 
-	FCivilUnitInfo(const int32 NumActions, const FIntPoint& TargetPos, const ECivilUnitState State)
+	FCivilUnitInfo(const int32 NumActions, const FIntPoint& TargetPos, const ECivilUnitState State,
+	               const int32 TurnsToBeDestroyed)
 		: NumActions(NumActions),
 		  TargetPos(TargetPos),
-		  State(State)
+		  State(State),
+		  TurnsToBeDestroyed(TurnsToBeDestroyed)
 	{
 	}
 };

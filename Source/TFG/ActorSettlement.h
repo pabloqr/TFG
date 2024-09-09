@@ -13,7 +13,7 @@ class AActorUnit;
 
 //--------------------------------------------------------------------------------------------------------------------//
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileOwned, const FIntPoint&, Pos2D);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnTileOwned, const FIntPoint&, Pos2D, int32, FactionOwner);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnTileDisowned, const FIntPoint&, Pos2D);
 
@@ -154,15 +154,6 @@ public:
 	 */
 	UFUNCTION(BlueprintCallable)
 	void TurnEnded();
-
-	//----------------------------------------------------------------------------------------------------------------//
-
-	/**
-	 * Metodo ejecutado en cada frame
-	 * 
-	 * @param DeltaTime Tiempo transcurrido desde el ultimo frame
-	 */
-	virtual void Tick(float DeltaTime) override;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

@@ -8,7 +8,11 @@
 #include "GameFramework/Actor.h"
 #include "ActorCivilUnit.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnResourceGathered, const FIntPoint&, Pos2D);
+class APawnFaction;
+
+//--------------------------------------------------------------------------------------------------------------------//
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnResourceGathered, const FIntPoint&, Pos2D, int32, FactionOwner);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSettlementCreated, const FIntPoint&, Pos2D);
 
@@ -34,11 +38,13 @@ protected:
 public:
 	const FIntPoint& GetTargetPos() const { return CivilInfo.TargetPos; }
 	ECivilUnitState GetCivilUnitState() const { return CivilInfo.State; }
+	int32 GetTurnsToBeDestroyed() const { return CivilInfo.TurnsToBeDestroyed; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
 	void SetTargetPos(const FIntPoint& Pos) { CivilInfo.TargetPos = Pos; }
 	void SetCivilUnitState(const ECivilUnitState State) { CivilInfo.State = State; }
+	void SetTurnsToBeDestroyed(const int32 Turns) { CivilInfo.TurnsToBeDestroyed = Turns; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 
@@ -52,6 +58,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void CreateSettlement();
+
+	void AddTurnToBeDestroyed() { ++CivilInfo.TurnsToBeDestroyed; }
 
 	//----------------------------------------------------------------------------------------------------------------//
 

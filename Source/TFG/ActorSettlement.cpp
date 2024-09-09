@@ -39,7 +39,7 @@ void AActorSettlement::OwnTile(const FIntPoint& Pos)
 	Info.OwnedTiles.Add(Pos);
 
 	// Se llama al evento para actualizar el propietario de la casilla
-	OnTileOwned.Broadcast(Pos);
+	OnTileOwned.Broadcast(Pos, DamageableInfo.Owner);
 }
 
 void AActorSettlement::OwnTileInRange()
@@ -87,11 +87,11 @@ void AActorSettlement::SetInitialOwnedTiles()
 		MapSize = GameInstance->Size2D;
 	}
 
-	// Se actualizan las casillas para que sean propiedad de la faccion actual
-	for (const FIntPoint Pos : ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize)) OwnTile(Pos);
-
-	// Se realiza el mismo proceso para la casilla en la que se situa el asentamiento
+	// Se actualizan la casilla en la que se situa el asentamiento para que sea propiedad de la faccion actual
 	OwnTile(Info.Pos2D);
+
+	// Se realiza el mismo procedimiento con las casillas vecinas
+	for (const FIntPoint Pos : ULibraryTileMap::GetNeighbors(Info.Pos2D, MapSize)) OwnTile(Pos);
 }
 
 void AActorSettlement::DisownTile(const FIntPoint& Pos)
@@ -179,7 +179,7 @@ void AActorSettlement::ResetProduction()
 		// Se llama al evento para actualizar los recursos de la faccion
 		OnUnitProductionCancelled.Broadcast(Info.ProductionQueue[0].UnitType);
 	}
-	
+
 	// Se limpian las colas de produccion
 	Info.ProductionQueue.Empty();
 	Info.StartedProduction.Empty();
@@ -200,11 +200,20 @@ void AActorSettlement::ApplyDamage(const float Damage, const AActorDamageableEle
 void AActorSettlement::TurnStarted()
 {
 	// Se actualizan los puntos de vida
-	DamageableInfo.HealthPoints = FMath::Min(DamageableInfo.HealthPoints + 10.0f, DamageableInfo.BaseHealthPoints);
+	if (DamageableInfo.HealthPoints < DamageableInfo.BaseHealthPoints)
+	{
+		float Points = DamageableInfo.BaseHealthPoints - DamageableInfo.HealthPoints;
+		Points = Points > 10.0 ? 10.0 : Points;
+
+		DamageableInfo.HealthPoints += Points;
+
+		// Se llama al evento para mostrar informacion de la curacion
+		OnHealthPointsChanged.Broadcast(Points);
+	}
 
 	// Se actualizan los atributos de ataque de acuerdo a la vida restante
 	UpdateAttackAndDefenseParameters();
-	
+
 	// Se comprueba si hay elementos en produccion
 	if (Info.ProductionQueue.Num() > 0)
 	{
@@ -236,11 +245,4 @@ void AActorSettlement::TurnEnded()
 {
 	// Se actualiza el contador para la expansion y se obtiene una nueva casilla si procede
 	if (--Info.TurnsToOwnTile <= 0) OwnTileInRange();
-}
-
-//--------------------------------------------------------------------------------------------------------------------//
-
-void AActorSettlement::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
 }

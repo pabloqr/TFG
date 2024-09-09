@@ -11,6 +11,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAttackTriggered);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHealthPointsChanged, float, Points);
+
 //--------------------------------------------------------------------------------------------------------------------//
 
 UCLASS(Abstract)
@@ -113,4 +115,7 @@ public:
 
 	UPROPERTY(BlueprintCallable, BlueprintAssignable)
 	FOnAttackTriggered OnAttackTriggered;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnHealthPointsChanged OnHealthPointsChanged;
 };

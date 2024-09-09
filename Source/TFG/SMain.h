@@ -140,7 +140,16 @@ public:
 	void AddFaction(APawnFaction* Faction);
 
 	/**
+	 * Metodo que restablece toda la informacion referente a la faccion dada
+	 * 
+	 * @param Index Indice de la faccion a restablecer
+	 */
+	UFUNCTION(BlueprintCallable)
+	void ResetFaction(const int32 Index);
+
+	/**
 	 * Metodo que actualiza la coleccion de facciones para reflejar la eliminacion de una de ellas en la partida
+	 * y restablece toda su informacion
 	 * 
 	 * @param Index Indice de la faccion eliminada
 	 * @return Numero de facciones aun en juego

@@ -3,6 +3,7 @@
 
 #include "ActorUnit.h"
 
+#include "ActorCivilUnit.h"
 #include "ActorTileMap.h"
 #include "LibraryTileMap.h"
 
@@ -118,6 +119,9 @@ void AActorUnit::RemovePath()
 
 void AActorUnit::ContinuePath()
 {
+	// Si no hay un camino asignado, no se hace nada
+	if (Info.Path.Num() <= 0) return;
+
 	// Se limpian las casillas completadas en el turno previo
 	Info.PathCompleted.Empty();
 
@@ -131,7 +135,7 @@ void AActorUnit::ContinuePath()
 	while (Info.State == EUnitState::FollowingPath) MoveUnit();
 
 	// Se llama al evento para que se actualicen los datos en el resto de actores
-	OnUnitMoved.Broadcast(PrevPos);
+	if (Info.PathCompleted.Num() > 0) OnUnitMoved.Broadcast(PrevPos);
 }
 
 //--------------------------------------------------------------------------------------------------------------------//
@@ -168,6 +172,7 @@ void AActorUnit::MoveUnit()
 
 			return;
 		}
+
 		// Si no se puede mover, pero le quedan puntos de movimiento, se actualiza el estado
 		SetState(EUnitState::WaitingForNextTurn);
 
@@ -200,20 +205,29 @@ void AActorUnit::TurnStarted()
 	// Se cura la unidad si es posible
 	if (Info.IsHealing)
 	{
+		// Se inicializan los puntos de vida a anadir
+		float Points = 10.0;
+
 		// Se actualizan los puntos de vida
-		DamageableInfo.HealthPoints += 10.0f;
+		DamageableInfo.HealthPoints += Points;
 
 		// Se actualiza el estado de curacion
 		Info.IsHealing = false;
 
 		if (DamageableInfo.HealthPoints >= DamageableInfo.BaseHealthPoints)
 		{
+			// Se actualizan los puntos a aplicar
+			Points -= DamageableInfo.HealthPoints - DamageableInfo.BaseHealthPoints;
+
 			// Si la unidad tiene todos los puntos de vida, se obliga a que no superen a los base
 			DamageableInfo.HealthPoints = DamageableInfo.BaseHealthPoints;
 
 			// Si se estaba curando, se cambia el estado de la unidad
 			if (Info.State == EUnitState::Healing) SetState(EUnitState::WaitingForOrders);
 		}
+
+		// Se llama al evento para mostrar informacion de la curacion
+		OnHealthPointsChanged.Broadcast(Points);
 
 		// Se actualizan los atributos de ataque de acuerdo a la vida restante
 		UpdateAttackAndDefenseParameters();
@@ -245,4 +259,7 @@ void AActorUnit::TurnEnded()
 		// Se actualiza el estado de curacion
 		Info.IsHealing = true;
 	}
+
+	// Si es una unidad civil, se actualizan los turnos para que sea destruida
+	if (AActorCivilUnit* CivilUnit = Cast<AActorCivilUnit>(this)) CivilUnit->AddTurnToBeDestroyed();
 }

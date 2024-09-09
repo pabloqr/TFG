@@ -51,9 +51,12 @@ protected:
 	virtual void BeginPlay() override;
 
 public:
+	UFUNCTION(BlueprintCallable)
 	TMap<int32, float> GetFactionsMilitaryStrength() const;
-	TMap<int32, FRelationshipInfo> GetFactionsAtWarInfo() const;
-	TMap<int32, FRelationshipInfo> GetAllyFactionsInfo() const;
+	UFUNCTION(BlueprintCallable)
+	TMap<int32, FRelationshipInfo> GetFactionsAtWarInfo(int32 Faction) const;
+	UFUNCTION(BlueprintCallable)
+	TMap<int32, FRelationshipInfo> GetAllyFactionsInfo(int32 Faction) const;
 
 	//----------------------------------------------------------------------------------------------------------------//
 

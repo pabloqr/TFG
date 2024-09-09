@@ -48,15 +48,15 @@ struct FUnitInfo
 	/**
 	 * Posicion en el Array2D de casillas
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	FIntPoint Pos2D;
 
 	//----------------------------------------------------------------------------------------------------------------//
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
 	EUnitType Type;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Unit|Military")
 	FResource RequiredResource;
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -64,29 +64,29 @@ struct FUnitInfo
 	/**
 	 * Estado de movimiento
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	bool IsMoving;
 
 	/**
 	 * Puntos de movimiento base
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	int32 BaseMovementPoints;
 	/**
 	 * Puntos de movimiento en un instante concreto
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	int32 MovementPoints;
 
 	/**
 	 * Camino a seguir
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info|Path")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info|Path")
 	TArray<FMovement> Path;
 	/**
 	 * Casillas completadas del camino en el turno actual
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info|Path")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info|Path")
 	TArray<FMovement> PathCompleted;
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -94,7 +94,7 @@ struct FUnitInfo
 	/**
 	 * Puntos de visibilidad
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	int32 VisibilityPoints;
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -102,7 +102,7 @@ struct FUnitInfo
 	/**
 	 * Coste de mantenimiento
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	float MaintenanceCost;
 
 	//----------------------------------------------------------------------------------------------------------------//
@@ -110,13 +110,13 @@ struct FUnitInfo
 	/**
 	 * Estado actual
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	EUnitState State;
 
 	/**
 	 * Estado de la curacion
 	 */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Info")
 	bool IsHealing;
 
 	//----------------------------------------------------------------------------------------------------------------//

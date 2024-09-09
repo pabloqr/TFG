@@ -121,50 +121,44 @@ TMap<int32, float> AMMain::GetFactionsMilitaryStrength() const
 	return FactionsMilitaryStrength;
 }
 
-TMap<int32, FRelationshipInfo> AMMain::GetFactionsAtWarInfo() const
+TMap<int32, FRelationshipInfo> AMMain::GetFactionsAtWarInfo(const int32 Faction) const
 {
 	TMap<int32, FRelationshipInfo> FactionsAtWarInfo = TMap<int32, FRelationshipInfo>();
 
 	// Se verifica que la instancia del estado sea valida
 	if (!State) return FactionsAtWarInfo;
 
-	// Se obtiene el indice de la faccion actual
-	const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
-
 	// Se obtienen las guerras para la faccion actual y se procesan
-	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
+	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(Faction);
 	for (const auto War : CurrentWarsForFaction)
 	{
 		// Se verifica que el indice de la faccion actual sea valido
-		if (!War.Key.Contains(CurrentIndex)) continue;
+		if (!War.Key.Contains(Faction)) continue;
 
 		// Se actualiza el diccionario de facciones y guerras
-		const int32 FactionIndex = War.Key.FactionA == CurrentIndex ? War.Key.FactionB : War.Key.FactionA;
+		const int32 FactionIndex = War.Key.FactionA == Faction ? War.Key.FactionB : War.Key.FactionA;
 		FactionsAtWarInfo.Add(FactionIndex, War.Value);
 	}
 
 	return FactionsAtWarInfo;
 }
 
-TMap<int32, FRelationshipInfo> AMMain::GetAllyFactionsInfo() const
+TMap<int32, FRelationshipInfo> AMMain::GetAllyFactionsInfo(const int32 Faction) const
 {
 	TMap<int32, FRelationshipInfo> AllyFactionsInfo = TMap<int32, FRelationshipInfo>();
 
 	// Se verifica que la instancia del estado sea valida
 	if (!State) return AllyFactionsInfo;
 
-	// Se obtiene el indice de la faccion actual
-	const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
-
 	// Se obtienen las guerras para la faccion actual y se procesan
-	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(CurrentIndex);
+	const TMap<FFactionsPair, FRelationshipInfo> CurrentWarsForFaction = State->GetCurrentWarsForFaction(Faction);
 	for (const auto War : CurrentWarsForFaction)
 	{
 		// Se verifica que el indice de la faccion actual sea valido
-		if (!War.Key.Contains(CurrentIndex)) continue;
+		if (!War.Key.Contains(Faction)) continue;
 
 		// Se actualiza el diccionario de facciones y guerras
-		const int32 FactionIndex = War.Key.FactionA == CurrentIndex ? War.Key.FactionB : War.Key.FactionA;
+		const int32 FactionIndex = War.Key.FactionA == Faction ? War.Key.FactionB : War.Key.FactionA;
 		AllyFactionsInfo.Add(FactionIndex, War.Value);
 	}
 
@@ -182,7 +176,7 @@ float AMMain::CalculateMoneyAmountForPeaceTreaty(const int32 TargetFaction, cons
 	// Se verifica que la faccion es valida
 	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
 	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
-	if (FactionsAlive.Contains(TargetFaction) && Factions.Contains(TargetFaction))
+	if (!FactionsAlive.Contains(TargetFaction) || !Factions.Contains(TargetFaction))
 	{
 		return 0.0;
 	}
@@ -218,7 +212,7 @@ float AMMain::CalculateMoneyAmountForAllianceTreaty(const int32 TargetFaction, c
 	// Se verifica que la faccion es valida
 	const TSet<int32> FactionsAlive = State->GetFactionsAlive();
 	const TMap<int32, APawnFaction*> Factions = State->GetFactions();
-	if (FactionsAlive.Contains(TargetFaction) && Factions.Contains(TargetFaction))
+	if (!FactionsAlive.Contains(TargetFaction) || !Factions.Contains(TargetFaction))
 	{
 		return 0.0;
 	}
@@ -315,7 +309,32 @@ void AMMain::ResolveDeal(const float DealResult, const FDealInfo& Deal) const
 	switch (Deal.Type)
 	{
 	case EDealType::WarDeal:
-		if (DealResult > 0.0) MakePeaceWithFaction(Deal);
+		if (DealResult > 0.0)
+		{
+			MakePeaceWithFaction(Deal);
+
+			// Se actualiza el dinero para ambas facciones
+			if (State)
+			{
+				// Se obtienen las facciones
+				const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+				const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+
+				// Se verifica que la faccion A es valida y se actualiza
+				if (FactionsAlive.Contains(Deal.FactionAElements.FactionIndex) &&
+					Factions.Contains(Deal.FactionAElements.FactionIndex))
+				{
+					Factions[Deal.FactionAElements.FactionIndex]->AddMoney(Deal.FactionBElements.Money);
+				}
+
+				// Se verifica que la faccion B es valida y se actualiza
+				if (FactionsAlive.Contains(Deal.FactionBElements.FactionIndex) &&
+					Factions.Contains(Deal.FactionBElements.FactionIndex))
+				{
+					Factions[Deal.FactionBElements.FactionIndex]->AddMoney(Deal.FactionAElements.Money);
+				}
+			}
+		}
 		else if (State)
 		{
 			State->ResetWarPetitionTurns(Deal.FactionAElements.FactionIndex,
@@ -323,7 +342,32 @@ void AMMain::ResolveDeal(const float DealResult, const FDealInfo& Deal) const
 		}
 		break;
 	case EDealType::AllianceDeal:
-		if (DealResult > 0.0) MakeAllianceWithFaction(Deal);
+		if (DealResult > 0.0)
+		{
+			MakeAllianceWithFaction(Deal);
+
+			// Se actualiza el dinero para ambas facciones
+			if (State)
+			{
+				// Se obtienen las facciones
+				const TMap<int32, APawnFaction*> Factions = State->GetFactions();
+				const TSet<int32> FactionsAlive = State->GetFactionsAlive();
+
+				// Se verifica que la faccion A es valida y se actualiza
+				if (FactionsAlive.Contains(Deal.FactionAElements.FactionIndex) &&
+					Factions.Contains(Deal.FactionAElements.FactionIndex))
+				{
+					Factions[Deal.FactionAElements.FactionIndex]->AddMoney(Deal.FactionBElements.Money);
+				}
+
+				// Se verifica que la faccion B es valida y se actualiza
+				if (FactionsAlive.Contains(Deal.FactionBElements.FactionIndex) &&
+					Factions.Contains(Deal.FactionBElements.FactionIndex))
+				{
+					Factions[Deal.FactionBElements.FactionIndex]->AddMoney(Deal.FactionAElements.Money);
+				}
+			}
+		}
 		else if (State)
 		{
 			State->ResetAlliancePetitionTurns(Deal.FactionAElements.FactionIndex,
@@ -418,9 +462,13 @@ void AMMain::NextTurn() const
 	// Se obtiene la faccion
 	if (APawnFaction* CurrentFaction = State->NextFaction())
 	{
+		// Se obtiene el indice de la faccion actual
+		const int32 CurrentIndex = State->GetCurrentFaction()->GetIndex();
+
 		// Antes de iniciar el turno, se actualiza la informacion sobre las facciones conocidas por la actual
-		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength(), GetFactionsAtWarInfo(),
-		                                        GetAllyFactionsInfo());
+		CurrentFaction->UpdateKnownFactionsInfo(GetFactionsMilitaryStrength(),
+		                                        GetFactionsAtWarInfo(CurrentIndex),
+		                                        GetAllyFactionsInfo(CurrentIndex));
 
 		// Se inicia el turno de la faccion actual
 		CurrentFaction->TurnStarted();

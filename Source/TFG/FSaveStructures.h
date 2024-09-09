@@ -51,17 +51,22 @@ struct FTileSaveData
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	FIntPoint Pos2D;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	int32 Owner;
+
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	ETileType Type;
 
-	FTileSaveData(): FTileSaveData(FIntPoint(-1), ETileType::None)
+	FTileSaveData(): FTileSaveData(FIntPoint(-1), -1, ETileType::None)
 	{
 	}
 
-	FTileSaveData(const FIntPoint& Pos, const ETileType TileType)
+	FTileSaveData(const FIntPoint& Pos2D, const int32 Owner, const ETileType Type)
+		: Pos2D(Pos2D),
+		  Owner(Owner),
+		  Type(Type)
 	{
-		Pos2D = Pos;
-		Type = TileType;
 	}
 };
 
@@ -77,14 +82,18 @@ struct FUnitSaveData
 	int32 Owner;
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	float HealthPoints;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	FUnitInfo Info;
 
-	FUnitSaveData(): FUnitSaveData(-1, FUnitInfo())
+	FUnitSaveData(): FUnitSaveData(-1, 0.0, FUnitInfo())
 	{
 	}
 
-	FUnitSaveData(const int32 Owner, const FUnitInfo& Info)
+	FUnitSaveData(const int32 Owner, const float HealthPoints, const FUnitInfo& Info)
 		: Owner(Owner),
+		  HealthPoints(HealthPoints),
 		  Info(Info)
 	{
 	}
@@ -102,14 +111,18 @@ struct FSettlementSaveData
 	int32 Owner;
 
 	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
+	float HealthPoints;
+
+	UPROPERTY(SaveGame, VisibleInstanceOnly, BlueprintReadWrite, Category="Saves")
 	FSettlementInfo Info;
 
-	FSettlementSaveData(): FSettlementSaveData(-1, FSettlementInfo())
+	FSettlementSaveData(): FSettlementSaveData(-1, 0.0, FSettlementInfo())
 	{
 	}
 
-	FSettlementSaveData(const int32 Owner, const FSettlementInfo& Info)
+	FSettlementSaveData(const int32 Owner, const float HealthPoints, const FSettlementInfo& Info)
 		: Owner(Owner),
+		  HealthPoints(HealthPoints),
 		  Info(Info)
 	{
 	}

@@ -48,6 +48,19 @@ void ASMain::AddFaction(APawnFaction* Faction)
 	if (!FactionsAlive.Contains(Index)) FactionsAlive.Add(Index);
 }
 
+void ASMain::ResetFaction(const int32 Index)
+{
+	// Se eliminan las guerras y alianzas que pudiese tener activas
+	for (const auto Faction : FactionsAlive)
+	{
+		EndWar(Index, Faction);
+		EndAlliance(Index, Faction);
+	}
+
+	// Se restablecen los datos de la faccion
+	if (Factions.Contains(Index)) Factions[Index]->CleanInfoAfterLosing();
+}
+
 int32 ASMain::SetFactionDead(const int32 Index)
 {
 	// Si el array esta vacio, no se hace nada
@@ -59,11 +72,8 @@ int32 ASMain::SetFactionDead(const int32 Index)
 		// Se elimina el indice de la lista de facciones en juego
 		FactionsAlive.Remove(Index);
 
-		// Se eliminan las guerras que pudiese tener activas
-		for (const auto Faction : FactionsAlive) EndWar(Index, Faction);
-
-		// Se restablecen los datos de la faccion
-		if (Factions.Contains(Index)) Factions[Index]->CleanInfoAfterLosing();
+		// Se restablece toda la informacion de la faccion
+		ResetFaction(Index);
 	}
 
 	// Se devuelve el numero de facciones aun en juego
@@ -72,15 +82,9 @@ int32 ASMain::SetFactionDead(const int32 Index)
 
 void ASMain::RemoveFaction(const int32 Index)
 {
-	// Si el array esta vacio, no se hace nada
-	if (FactionsAlive.Num() == 0) return;
-
 	// Se elimina la faccion de ambas listas
-	if (FactionsAlive.Contains(Index))
-	{
-		FactionsAlive.Remove(Index);
-		Factions.Remove(Index);
-	}
+	FactionsAlive.Remove(Index);
+	Factions.Remove(Index);
 }
 
 APawnFaction* ASMain::NextFaction()
