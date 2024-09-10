@@ -9,7 +9,7 @@ Se trata de un proyecto desarrollado en _Unreal Engine_ en el que se ofrece un e
 - **Edición de mundos:** la aplicación ofrece la posibilidad de que el usuario, además, cree mapas a su gusto modificando cada una de las casillas y recursos que estos pueden contener.
 - **Gestión de archivos de guardado:** otra posibilidad interesante es la de almacenar mapas y partidas para cargarlas posteriormente.
 
-## Sobre el repositorio
+## Sobre este repositorio
 
 ### Contenido
 
@@ -88,4 +88,28 @@ Además, a través del menú de pausa, puede guardar el mapa actual y cargar aqu
 
 #### Modo Principal
 
-Finalmente, en este modo en el que se desarrolla la partida, el jugador, en su turno, puede realizar diferentes acciones para lograr la victoria.
+Finalmente, en este modo en el que se desarrolla la partida, el jugador, en su turno, puede realizar diferentes acciones para lograr la victoria. Sin embargo, se deben conocer antes algunos conceptos que intervienen:
+
+- **Casillas:** componen el mapa y existen diferentes tipos que se pueden claseificar como:
+  - _Accesibles_: aquellas sobre las que se pueden mover las unidades. Son las casillas de _llanura_, _colina_, _bosque_ y _nieve_.
+  - _No accesibles_: aquellas sobre las que no se pueden mover las unidades. Son las casillas de _montaña_, _agua_ e _hielo_.
+  
+  En cualquier caso, cada una de estas casillas tiene un coste de movimiento diferente que hace que las unidades puedan desplazarse más o menos rápido.
+- **Recursos:** se trata de elementos que proporcionan una ventaja para aquella facción que los posea. Se engloban dentro de dos tipos:
+  - _Materiales_: se encuentran en el mapa y deben ser _recolectados_ para obtener su beneficio. A su vez, existen dos tipos:
+    - Estratégicos: usados para producir unidades militares.
+    - Monetarios: que proporcionan una cantidad de _dinero_ por turno.
+  - _Dinero_: que se puede emplear para realizar tratos y acuerdos con otras facciones y se obtiene a partir de materiales.
+- **Unidades**: son uno de los elementos principales del juego dado que, a través de ellas, la facción realizará todas las acciones que considere para ganar la partida. Existen dos tipos:
+  - _Civiles_: cuya finalidad es establecer _asentamientos_ y recolectar _materiales_.
+  - _Militares_: empleadas para atacar los _asentamientos_ y _unidades_ de las facciones enemigas. Existen tres tipos (infantería, unidad blindada y unidad anti-tanque) con parámetros de ataque y defensa diferentes, además del _material estratégico_ necesario para su producción.
+- **Asentamientos:** empleados para la producción de _unidades_. Además, asocian una serie de casillas a su alrededor a la facción propietaria, de manera que todos los recursos que se encuentran en dichas casillas pueden ser recolectados.
+
+Toda la información referente a los elementos descritos que son propiedad de la facción del jugador humano son visibles en la IU y actualizados en tiempo real.
+
+![main_mode_infocivil](https://github.com/user-attachments/assets/d70fab3b-14e6-4e8c-8c17-6cefd8563dc3)
+![main_mode_infomilitary](https://github.com/user-attachments/assets/9e6b02a7-8f9a-4b90-9820-60324299197d)
+
+Al igual que en el _Modo Editor_, en este modo también es posible realizar guardados de las partidas para ser cargadas posteriormente.
+
+![main_mode_pausemenu_gamesaves](https://github.com/user-attachments/assets/19c9bdab-aa37-4595-9afb-5a7e7c1a7a38)
