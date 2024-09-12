@@ -664,10 +664,10 @@ void AActorTileMap::AddResourceToTile(const FIntPoint& Pos, const TSubclassOf<AA
 
 		// Se actualiza el contador de recursos
 		ResourceCount[Resource.Resource] += 1;
-
-		// Se llama al evento para actualiza la interfaz
-		OnResourceCreated.Broadcast(NewResource);
 	}
+
+	// Se llama al evento para actualiza la interfaz
+	OnResourceCreated.Broadcast(TilesInfo[Pos].Elements.Resource);
 }
 
 void AActorTileMap::RemoveResourceFromTile(const FIntPoint& Pos)
